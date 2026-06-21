@@ -6,7 +6,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).parent.parent
 
-PRIMARY_MODEL = os.getenv("PRIMARY_MODEL", "gemini-2.5-flash")
+PRIMARY_MODEL = os.getenv("PRIMARY_MODEL", "gemini-3.5-flash")
 EMBEDDING_MODEL = "text-embedding-004"
 
 CONFIDENCE_THRESHOLD = 0.85
