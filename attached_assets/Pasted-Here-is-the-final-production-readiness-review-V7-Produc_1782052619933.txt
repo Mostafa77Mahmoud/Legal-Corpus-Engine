@@ -1,0 +1,118 @@
+Here is the final production-readiness review.
+
+V7 Production-Readiness Review
+A. Critical Changes Required Before Coding Starts
+1. Hybrid Extraction Architecture — Approved and Required
+The risk with Gemini-first: The V7 plan routes every PDF through Gemini regardless of extractability. Egyptian laws span from 1948 (scanned microfilm) to 2020 (born-digital PDFs). Running Gemini OCR on a clean digital PDF wastes API budget, adds latency, and introduces hallucination risk where none existed — PyMuPDF would have returned perfect character-level text.
+
+Approved hybrid approach:
+
+Stage 1 — Extraction (Revised)
+For each PDF:
+│
+├── Attempt PyMuPDF native extraction
+│
+├── Run Stage 1.5 confidence scoring on PyMuPDF output
+│   │
+│   ├── confidence >= 0.85 → Save to extracted_raw/ (source: "pymupdf")
+│   │                         Skip Gemini entirely
+│   │
+│   └── confidence < 0.85  → Fall back to Gemini OCR
+│                             Save to extracted_raw/ (source: "gemini_ocr")
+│                             Log token cost to cost_tracker
+
+Each extracted file records extraction_source: "pymupdf" | "gemini_ocr" in its metadata. This makes it auditable later if output quality differs between source types.
+
+Why this is low-risk to implement: Stage 1.5 confidence scoring was already planned. It runs on whatever text Stage 1 produces. The only change is inserting a PyMuPDF attempt before the Gemini call. utils/debug_extractors.py already exists in the V6 repo structure as a fallback utility — promote its PyMuPDF extractor to primary in Stage 1.
+
+Estimated cost impact: Modern laws (PDPL, E-Signature, Labor) will almost certainly extract cleanly via PyMuPDF. If 40–60% of PDFs clear the confidence threshold natively, the Gemini API budget for Stage 1 drops by the same proportion.
+
+2. Chunking Strategy — Replace Fixed-Size with Paragraph-First
+The risk with fixed 500-token splits on \n\n: Arabic legal drafting frequently uses numbered sub-clauses (أولاً, ثانياً, فقرة 1) separated by \n\n. A fixed-size split will cut mid-list in articles with 4–6 conditions, breaking the semantic unit that a retrieval query needs to match. This directly harms retrieval precision for contract analysis queries like "what are the conditions for valid termination."
+
+Approved chunking strategy:
+
+For each article:
+1. Split on paragraph boundaries (\n\n)
+   → Each \n\n-separated block is a candidate chunk
+2. Merge consecutive blocks until token count approaches 400
+   (leave 100-token headroom before the 500-token ceiling)
+3. If a single block exceeds 500 tokens on its own:
+   → Split at Arabic sentence boundary (. or ؛)
+   → Never split mid-sentence
+4. Result: chunks that are semantically coherent paragraphs,
+   bounded by a 500-token hard ceiling
+
+No overlap. Overlap was already removed in V7 — correct decision, overlap multiplies embedding storage and retrieval noise without proportional quality gain for article-level legal text (articles are short enough that the parent article is always fetched for LLM reasoning anyway).
+
+This adds approximately 15 lines of logic to stage_3_7_chunks.py versus the fixed approach. Implementation complexity is unchanged.
+
+3. Golden Benchmark — Build After First Pilot Law, Not Before
+The risk of building before implementation: The golden set format (field names, ID scheme, article structure) will solidify only after the first real pipeline run. Building it against a design-time schema that then changes during the pilot creates rework — the benchmark file must be rebuilt and re-reviewed. That defeats the purpose of a stable quality gate.
+
+Approved sequence:
+
+1. Implement full pipeline
+2. Run pilot law (Evidence Law — see Section D)
+3. Manually inspect output of ~100 articles
+4. Select 50 representative articles across:
+   - Short articles (< 100 words)
+   - Long articles (> 400 words) with sub-clauses
+   - Articles with explicit cross-references
+   - At least 2 articles adjacent to sequence gaps or repealed articles
+5. Verify each manually → Freeze as golden set
+6. Write test_golden_benchmark.py against the frozen set
+7. Run all remaining laws with benchmark as the gate
+
+This costs one extra day (manual review of pilot output) but eliminates the risk of maintaining a benchmark that was wrong before the pipeline existed.
+
+B. Optional Improvements
+These are not blockers — implement only if time permits after the core pipeline is working.
+
+#	Improvement	Rationale	Effort
+1	Log PyMuPDF extraction fallback rate per law	Reveals which laws will always require Gemini; useful for cost projection before full-corpus run	1 hour
+2	Add chunk count to release_metadata.json	Easy sanity check — if a 686-article law produces 0 chunks, something failed silently	30 min
+3	Store paragraph_index on each chunk	Allows reconstructing article paragraph order during retrieval; costs nothing at generation time	30 min
+4	Add extraction_source field to review_queue_{law_id}.json	Reviewers can quickly see whether a flagged article came from PyMuPDF or Gemini, guiding triage	30 min
+C. Approved Final V7 Architecture
+9-stage pipeline, zero V6 reinstatements:
+
+Stage 1:   PyMuPDF extraction → confidence check → Gemini fallback only if needed
+Stage 1.3: Arabic cleanup + audit logs
+Stage 1.5: Confidence scoring (5-factor formula, threshold 0.85)
+Stage 2:   Article splitting (regex-first, LLM fallback)
+Stage 2.5: Split validation (6-code error taxonomy, continuity checks)
+Stage 3:   Metadata enrichment (keywords, concepts, explicit refs, article_type)
+Stage 3.7: Chunking only — paragraph-first, 500-token ceiling, no overlap
+Stage 4:   Human review JSON export sorted by priority score
+Stage 5:   Rule-based validation + LLM re-validation for ERROR_INVALID_REFERENCE only
+Stage 6:   Assembly, deduplication, is_current_version / is_repealed resolution
+Stage 7:   MongoDB + JSON export + release_metadata.json
+Post-export (separate script, not in pipeline):
+  scripts/generate_embeddings.py — one-shot chunk embedding via text-embedding-004
+
+Config files (3 only): settings.py, law_registry.py, taxonomy.py
+
+MongoDB collections (2): egyptian_law_articles, egyptian_law_chunks
+
+Quality gate (1): Golden benchmark — split F1 ≥ 0.98, explicit ref F1 ≥ 0.95
+
+What stays permanently cut: amendment registry, temporal reconstruction, semantic relationship generation (Stage 3.5), Streamlit dashboard, retrieval evaluation framework, release receipt signing, runtime prompt hash verification, taxonomy drift migration.
+
+D. Recommended Pilot Execution Order
+The sequencing principle: start with laws that give fast feedback on pipeline correctness, then progress toward scale and OCR difficulty.
+
+Order	Law	Articles (est.)	PDF Type	Why This Slot
+1	Personal Data Protection Law	~50	Digital (2020)	Smallest corpus, modern formatting, high PyMuPDF confidence expected. Validates the full pipeline end-to-end in under an hour. First success signal.
+2	Evidence Law	~95	Mixed	Small, but older classical drafting with مادة patterns. First real test of the Arabic article splitter under traditional legal style. Build golden benchmark here.
+3	Electronic Signature Law	~30	Digital (2004)	Very small, has explicit cross-references to PDPL. Tests explicit_cross_refs resolution and reference validation.
+4	Labor Law	~250	Mixed	First medium-size law. Heavy use of numbered sub-clauses — directly stress-tests the paragraph-first chunking strategy. Most likely to expose chunk boundary failures.
+5	Rent Law	~80	Scanned (older)	First predominantly scanned PDF. Reveals how often Gemini fallback triggers and at what cost. Validates the hybrid extractor under real OCR conditions.
+6	Civil Procedure Law	~400+	Mixed	First large law. Tests pipeline throughput, cost accumulation, and whether the review queue remains manageable at scale.
+7	Commercial Law	~700	Mixed	Core Nezam-relevant law. Run after pipeline is proven on smaller laws.
+8	Egyptian Civil Code	~686	Mixed (1948)	The most important law for contract analysis, but also the highest risk for scanned extraction failures. Run it 8th, not 1st.
+9	Penal Code	~500+	Scanned	Heavy OCR load. Gemini fallback expected on most articles. Run late to avoid blowing the OCR budget before the pipeline is tuned.
+10	Intellectual Property Law	~200	Digital	Lowest priority for Nezam contract analysis. Run last.
+The critical sequence rule: Do not run the Egyptian Civil Code until the pipeline has succeeded on at least 4 laws including one scanned law (Rent Law, slot 5). The Civil Code is too important to be the first law that exposes a splitting bug you could have caught on Evidence Law.
+
+
