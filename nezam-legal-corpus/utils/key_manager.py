@@ -116,6 +116,23 @@ class KeyManager:
                 old_suffix, reason, COOLDOWN_SECONDS // 60,
             )
 
+    def mark_rpm_limited(self, key: str, cooldown_seconds: int = 90) -> None:
+        """Short cooldown for per-minute quota hits (RPM limit, not daily quota)."""
+        with self._lock:
+            record = self._record_for(key)
+            if record is None or record._rate_limited:
+                return
+            record._rate_limited = True
+            record._cooldown_end = time.time() + cooldown_seconds
+            record.total_failures += 1
+            self._rotation_log.info(
+                "RPM_LIMITED  %s  cooldown=%ds", record.suffix, cooldown_seconds,
+            )
+            logger.warning(
+                "Key %s RPM-limited. Cooldown for %ds.",
+                record.suffix, cooldown_seconds,
+            )
+
     def mark_permanently_disabled(self, key: str, reason: str = "INVALID_KEY") -> None:
         """Permanently remove a key from the pool (leaked / revoked keys)."""
         with self._lock:

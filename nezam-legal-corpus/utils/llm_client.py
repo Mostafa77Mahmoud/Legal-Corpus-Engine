@@ -248,16 +248,25 @@ def ocr_pdf(
 
             except Exception as exc:
                 if _is_rate_limit(exc):
+                    # First 2 attempts: short wait, retry same key (RPM limit)
+                    if gen_attempt < 2:
+                        wait_secs = 30 * (gen_attempt + 1)
+                        logger.warning(
+                            "[%s] Key %s hit RPM limit (attempt %d) — waiting %ds before retry.",
+                            stage, key_suffix, gen_attempt + 1, wait_secs,
+                        )
+                        time.sleep(wait_secs)
+                        continue
+                    # After 2 retries: mark RPM-limited (90s) and rotate key
                     logger.warning(
-                        "[%s] Key %s hit rate limit during generation — "
-                        "marking rate-limited and re-uploading with new key.",
+                        "[%s] Key %s exhausted RPM retries — rotating key.",
                         stage, key_suffix,
                     )
-                    manager.mark_rate_limited(pinned_key, reason="RESOURCE_EXHAUSTED on generate")
+                    manager.mark_rpm_limited(pinned_key, cooldown_seconds=90)
                     cost_tracker.record_key_failure(key_suffix)
                     new_key = manager.get_available_key_or_wait()
                     new_suffix = f"****{new_key[-3:]}"
-                    cost_tracker.record_rotation(key_suffix, new_suffix, "RESOURCE_EXHAUSTED")
+                    cost_tracker.record_rotation(key_suffix, new_suffix, "RPM_EXHAUSTED")
                     try:
                         client.files.delete(name=uploaded.name)
                     except Exception:
