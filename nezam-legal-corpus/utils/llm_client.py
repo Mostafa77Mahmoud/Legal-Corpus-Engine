@@ -1,5 +1,19 @@
-import time
+"""
+Gemini LLM client with integrated key rotation.
+
+On 429 / RESOURCE_EXHAUSTED:
+  1. Mark current key rate-limited (60-min cooldown)
+  2. Rotate to next available key
+  3. Retry immediately with new key
+
+On 500 / 503 / 504 (transient server errors):
+  Exponential backoff on the same key.
+
+If all keys are exhausted: block and wait — never crash.
+"""
+
 import logging
+import time
 from pathlib import Path
 
 from google import genai
@@ -7,7 +21,6 @@ from google.genai import types
 from google.genai import errors as genai_errors
 
 from config.settings import (
-    GEMINI_API_KEY,
     PRIMARY_MODEL,
     GEMINI_MAX_RETRIES,
     GEMINI_RETRY_BASE_DELAY,
@@ -15,24 +28,29 @@ from config.settings import (
     GEMINI_FLASH_OUTPUT_COST_PER_1M,
 )
 from utils.cost_tracker import CostTracker
+from utils import key_manager as _km
 
 logger = logging.getLogger(__name__)
 
-_RETRYABLE_STATUS_CODES = {429, 500, 503, 504}
+_RATE_LIMIT_CODES = {429}
+_TRANSIENT_CODES = {500, 503, 504}
 
 
-def _client() -> genai.Client:
-    if not GEMINI_API_KEY:
-        raise EnvironmentError(
-            "GEMINI_API_KEY is not set. Add it to your .env file or environment."
-        )
-    return genai.Client(api_key=GEMINI_API_KEY)
-
-
-def _is_retryable(exc: Exception) -> bool:
+def _is_rate_limit(exc: Exception) -> bool:
     if isinstance(exc, genai_errors.APIError):
-        return exc.code in _RETRYABLE_STATUS_CODES
+        return exc.code in _RATE_LIMIT_CODES
+    msg = str(exc).upper()
+    return "RESOURCE_EXHAUSTED" in msg or "429" in msg
+
+
+def _is_transient(exc: Exception) -> bool:
+    if isinstance(exc, genai_errors.APIError):
+        return exc.code in _TRANSIENT_CODES
     return False
+
+
+def _make_client(key: str) -> genai.Client:
+    return genai.Client(api_key=key)
 
 
 def generate_text(
@@ -44,13 +62,18 @@ def generate_text(
     temperature: float = 0.0,
     max_output_tokens: int = 8192,
 ) -> str:
-    client = _client()
+    manager = _km.get_manager()
     config = types.GenerateContentConfig(
         temperature=temperature,
         max_output_tokens=max_output_tokens,
     )
+    transient_backoff = GEMINI_RETRY_BASE_DELAY
 
     for attempt in range(GEMINI_MAX_RETRIES):
+        current_key = manager.get_available_key_or_wait()
+        key_suffix = f"****{current_key[-3:]}"
+        client = _make_client(current_key)
+
         try:
             response = client.models.generate_content(
                 model=model_name,
@@ -58,6 +81,7 @@ def generate_text(
                 config=config,
             )
             usage = response.usage_metadata
+            manager.record_request(current_key, success=True)
             cost_tracker.record(
                 stage=stage,
                 law_id=law_id,
@@ -66,20 +90,38 @@ def generate_text(
                 output_tokens=usage.candidates_token_count or 0,
                 input_cost_per_1m=GEMINI_FLASH_INPUT_COST_PER_1M,
                 output_cost_per_1m=GEMINI_FLASH_OUTPUT_COST_PER_1M,
+                api_key_suffix=key_suffix,
             )
             return response.text
-        except Exception as exc:
-            if _is_retryable(exc) and attempt < GEMINI_MAX_RETRIES - 1:
-                delay = GEMINI_RETRY_BASE_DELAY * (2**attempt)
-                logger.warning(
-                    "Gemini transient error (attempt %d): %s. Retrying in %.1fs.",
-                    attempt + 1, exc, delay,
-                )
-                time.sleep(delay)
-            else:
-                raise
 
-    raise RuntimeError("generate_text: exhausted all retries")
+        except Exception as exc:
+            if _is_rate_limit(exc):
+                logger.warning("[%s] Key %s hit rate limit — rotating.", stage, key_suffix)
+                manager.mark_rate_limited(current_key, reason="RESOURCE_EXHAUSTED")
+                cost_tracker.record_key_failure(key_suffix)
+                new_key = manager.get_available_key_or_wait()
+                new_suffix = f"****{new_key[-3:]}"
+                cost_tracker.record_rotation(key_suffix, new_suffix, "RESOURCE_EXHAUSTED")
+                transient_backoff = GEMINI_RETRY_BASE_DELAY
+                continue
+
+            if _is_transient(exc):
+                manager.record_request(current_key, success=False)
+                cost_tracker.record_key_failure(key_suffix)
+                if attempt < GEMINI_MAX_RETRIES - 1:
+                    logger.warning(
+                        "[%s] Transient error (attempt %d): %s. Retrying in %.1fs.",
+                        stage, attempt + 1, exc, transient_backoff,
+                    )
+                    time.sleep(transient_backoff)
+                    transient_backoff = min(transient_backoff * 2, 60.0)
+                    continue
+
+            manager.record_request(current_key, success=False)
+            cost_tracker.record_key_failure(key_suffix)
+            raise
+
+    raise RuntimeError(f"generate_text: failed after {GEMINI_MAX_RETRIES} attempts")
 
 
 def ocr_pdf(
@@ -90,7 +132,12 @@ def ocr_pdf(
     law_id: str,
     model_name: str = PRIMARY_MODEL,
 ) -> str:
-    client = _client()
+    manager = _km.get_manager()
+    transient_backoff = GEMINI_RETRY_BASE_DELAY
+
+    current_key = manager.get_available_key_or_wait()
+    key_suffix = f"****{current_key[-3:]}"
+    client = _make_client(current_key)
 
     logger.info("Uploading PDF to Gemini File API: %s", pdf_path.name)
     uploaded = client.files.upload(
@@ -114,6 +161,10 @@ def ocr_pdf(
         )
 
     for attempt in range(GEMINI_MAX_RETRIES):
+        current_key = manager.get_available_key_or_wait()
+        key_suffix = f"****{current_key[-3:]}"
+        client = _make_client(current_key)
+
         try:
             response = client.models.generate_content(
                 model=model_name,
@@ -124,6 +175,7 @@ def ocr_pdf(
                 ),
             )
             usage = response.usage_metadata
+            manager.record_request(current_key, success=True)
 
             try:
                 client.files.delete(name=uploaded.name)
@@ -138,18 +190,35 @@ def ocr_pdf(
                 output_tokens=usage.candidates_token_count or 0,
                 input_cost_per_1m=GEMINI_FLASH_INPUT_COST_PER_1M,
                 output_cost_per_1m=GEMINI_FLASH_OUTPUT_COST_PER_1M,
+                api_key_suffix=key_suffix,
             )
             return response.text
 
         except Exception as exc:
-            if _is_retryable(exc) and attempt < GEMINI_MAX_RETRIES - 1:
-                delay = GEMINI_RETRY_BASE_DELAY * (2**attempt)
-                logger.warning(
-                    "Gemini OCR retry %d for %s: %s. Waiting %.1fs.",
-                    attempt + 1, pdf_path.name, exc, delay,
-                )
-                time.sleep(delay)
-            else:
-                raise
+            if _is_rate_limit(exc):
+                logger.warning("[%s] Key %s hit rate limit during OCR — rotating.", stage, key_suffix)
+                manager.mark_rate_limited(current_key, reason="RESOURCE_EXHAUSTED")
+                cost_tracker.record_key_failure(key_suffix)
+                new_key = manager.get_available_key_or_wait()
+                new_suffix = f"****{new_key[-3:]}"
+                cost_tracker.record_rotation(key_suffix, new_suffix, "RESOURCE_EXHAUSTED")
+                transient_backoff = GEMINI_RETRY_BASE_DELAY
+                continue
 
-    raise RuntimeError("ocr_pdf: exhausted all retries")
+            if _is_transient(exc):
+                manager.record_request(current_key, success=False)
+                cost_tracker.record_key_failure(key_suffix)
+                if attempt < GEMINI_MAX_RETRIES - 1:
+                    logger.warning(
+                        "[%s] Transient OCR error (attempt %d): %s. Retrying in %.1fs.",
+                        stage, attempt + 1, exc, transient_backoff,
+                    )
+                    time.sleep(transient_backoff)
+                    transient_backoff = min(transient_backoff * 2, 60.0)
+                    continue
+
+            manager.record_request(current_key, success=False)
+            cost_tracker.record_key_failure(key_suffix)
+            raise
+
+    raise RuntimeError(f"ocr_pdf: failed after {GEMINI_MAX_RETRIES} attempts")

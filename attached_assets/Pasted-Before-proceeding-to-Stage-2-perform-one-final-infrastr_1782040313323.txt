@@ -1,0 +1,173 @@
+Before proceeding to Stage 2, perform one final infrastructure enhancement.
+
+Add a production-grade Gemini API Key Rotation System.
+
+Requirements:
+
+### Goal
+
+The pipeline must support multiple Gemini API keys and automatically rotate between them whenever:
+
+* HTTP 429 (RESOURCE_EXHAUSTED)
+* Rate limit reached
+* RPM limit exceeded
+* TPM limit exceeded
+* Temporary quota exhaustion
+
+The pipeline must continue processing automatically without requiring manual restart.
+
+---
+
+### Configuration
+
+Replace:
+
+GEMINI_API_KEY
+
+with:
+
+GEMINI_API_KEYS=key1,key2,key3,key4
+
+inside .env
+
+Example:
+
+GEMINI_API_KEYS=AIza....1,AIza....2,AIza....3
+
+Load all keys at startup.
+
+---
+
+### Key Manager
+
+Create:
+
+utils/key_manager.py
+
+Responsibilities:
+
+* Maintain pool of available keys
+* Track current active key
+* Track cooldown state per key
+* Rotate keys automatically
+* Thread-safe design
+* Support future parallel execution
+
+Methods:
+
+get_current_key()
+
+mark_rate_limited(key)
+
+rotate_key()
+
+get_available_key()
+
+all_keys_exhausted()
+
+---
+
+### Cooldown Logic
+
+When a key receives:
+
+429
+RESOURCE_EXHAUSTED
+
+mark it unavailable for:
+
+60 minutes
+
+Store:
+
+key
+cooldown_start
+cooldown_end
+
+After cooldown expires:
+
+automatically return key to pool.
+
+---
+
+### Retry Logic
+
+Inside utils/llm_client.py:
+
+If Gemini call fails with:
+
+429
+RESOURCE_EXHAUSTED
+
+then:
+
+1. Mark current key rate-limited
+2. Rotate to next available key
+3. Retry automatically
+
+No pipeline stage should fail immediately because one key hit quota.
+
+---
+
+### Exhaustion Handling
+
+If all keys are exhausted:
+
+* Pause processing
+* Print clear warning
+* Display remaining cooldown time per key
+* Resume automatically when first key becomes available
+
+Do NOT crash.
+
+---
+
+### Logging
+
+Create:
+
+logs/key_rotation.log
+
+Log:
+
+timestamp
+old key suffix
+new key suffix
+reason
+
+Example:
+
+2026-06-21 18:02:14
+ROTATED
+****A12 -> ****F92
+reason=RESOURCE_EXHAUSTED
+
+---
+
+### Metadata
+
+Record in cost tracker:
+
+total_key_rotations
+per_key_requests
+per_key_failures
+
+for later cost analysis.
+
+---
+
+### Deliverables
+
+1. key_manager.py
+2. Updated llm_client.py
+3. Updated settings.py
+4. Updated .env.example
+5. Unit tests covering:
+
+   * rotation
+   * cooldown expiration
+   * all keys exhausted
+   * automatic recovery
+
+Do not redesign the architecture.
+Only add the key rotation subsystem and integrate it cleanly into V7.

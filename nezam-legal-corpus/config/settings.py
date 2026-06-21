@@ -19,13 +19,24 @@ EXTRACTED_RAW_DIR = DATA_DIR / "extracted_raw"
 EXTRACTED_CLEAN_DIR = DATA_DIR / "extracted_clean"
 CLEANUP_AUDIT_DIR = DATA_DIR / "cleanup_audit_logs"
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+def _load_api_keys() -> list[str]:
+    raw = os.getenv("GEMINI_API_KEYS", "")
+    keys = [k.strip() for k in raw.split(",") if k.strip()]
+    if not keys:
+        single = os.getenv("GEMINI_API_KEY", "").strip()
+        if single:
+            keys = [single]
+    return keys
+
+
+GEMINI_API_KEYS: list[str] = _load_api_keys()
 
 GEMINI_FLASH_INPUT_COST_PER_1M = 0.10
 GEMINI_FLASH_OUTPUT_COST_PER_1M = 0.40
 GEMINI_FLASH_IMAGE_COST_PER_PAGE = 0.00258
 
-GEMINI_MAX_RETRIES = 5
+GEMINI_MAX_RETRIES = 20
 GEMINI_RETRY_BASE_DELAY = 2.0
 
 OCR_PROMPT = """أنت محرك استخراج نصوص قانونية دقيق. مهمتك استخراج النص العربي الكامل من هذه الوثيقة القانونية المصرية بدقة تامة.

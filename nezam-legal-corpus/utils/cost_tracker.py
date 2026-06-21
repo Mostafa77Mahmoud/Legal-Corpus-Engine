@@ -7,6 +7,7 @@ class CallRecord:
     stage: str
     law_id: str
     model: str
+    api_key_suffix: str
     input_tokens: int
     output_tokens: int
     image_pages: int
@@ -18,8 +19,19 @@ class CallRecord:
 
 
 @dataclass
+class RotationRecord:
+    old_suffix: str
+    new_suffix: str
+    reason: str
+    timestamp: str
+
+
+@dataclass
 class CostTracker:
     _records: list[CallRecord] = field(default_factory=list)
+    _rotations: list[RotationRecord] = field(default_factory=list)
+    _per_key_requests: dict[str, int] = field(default_factory=dict)
+    _per_key_failures: dict[str, int] = field(default_factory=dict)
 
     def record(
         self,
@@ -32,16 +44,18 @@ class CostTracker:
         input_cost_per_1m: float = 0.10,
         output_cost_per_1m: float = 0.40,
         image_cost_per_page: float = 0.00258,
+        api_key_suffix: str = "****???",
     ) -> CallRecord:
         input_cost = (input_tokens / 1_000_000) * input_cost_per_1m
         output_cost = (output_tokens / 1_000_000) * output_cost_per_1m
         image_cost = image_pages * image_cost_per_page
         total_cost = input_cost + output_cost + image_cost
 
-        record = CallRecord(
+        rec = CallRecord(
             stage=stage,
             law_id=law_id,
             model=model,
+            api_key_suffix=api_key_suffix,
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             image_pages=image_pages,
@@ -51,8 +65,26 @@ class CostTracker:
             total_cost_usd=total_cost,
             timestamp=datetime.utcnow().isoformat() + "Z",
         )
-        self._records.append(record)
-        return record
+        self._records.append(rec)
+        self._per_key_requests[api_key_suffix] = (
+            self._per_key_requests.get(api_key_suffix, 0) + 1
+        )
+        return rec
+
+    def record_key_failure(self, api_key_suffix: str) -> None:
+        self._per_key_failures[api_key_suffix] = (
+            self._per_key_failures.get(api_key_suffix, 0) + 1
+        )
+
+    def record_rotation(self, old_suffix: str, new_suffix: str, reason: str) -> None:
+        self._rotations.append(
+            RotationRecord(
+                old_suffix=old_suffix,
+                new_suffix=new_suffix,
+                reason=reason,
+                timestamp=datetime.utcnow().isoformat() + "Z",
+            )
+        )
 
     @property
     def total_input_tokens(self) -> int:
@@ -97,5 +129,8 @@ class CostTracker:
             "total_output_tokens": self.total_output_tokens,
             "total_image_pages": self.total_image_pages,
             "total_cost_usd": round(self.total_cost_usd, 6),
+            "total_key_rotations": len(self._rotations),
+            "per_key_requests": dict(self._per_key_requests),
+            "per_key_failures": dict(self._per_key_failures),
             "by_stage": by_stage,
         }
