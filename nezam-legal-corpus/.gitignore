@@ -1,0 +1,39 @@
+# Environment
+.env
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Data — raw inputs and extracted outputs are gitignored
+data/raw_pdfs/
+data/extracted_raw/
+data/extracted_clean/
+data/cleanup_audit_logs/
+data/human_review/
+data/export/
+
+# Keep directory markers
+!data/raw_pdfs/.gitkeep
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
