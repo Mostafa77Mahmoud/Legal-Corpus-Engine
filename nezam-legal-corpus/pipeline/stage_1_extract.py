@@ -1,11 +1,16 @@
 """
-Stage 1: PDF Extraction
+Stage 1: Extraction (PDF or plain-text)
 
-Strategy:
+Strategy for PDF input:
   1. Attempt PyMuPDF native text extraction.
   2. Score extraction confidence (Stage 1.5 inline pre-check).
   3. If confidence >= threshold → save with source "pymupdf", skip Gemini.
   4. If confidence < threshold → fall back to Gemini OCR via File API.
+
+Strategy for TXT input (when law_entry.txt_filename is set):
+  1. Read the file directly — no PyMuPDF, no Gemini call.
+  2. Strip website navigation boilerplate (masaar.net / aggregator headers).
+  3. Save with source "plaintext".
 
 Output written to: data/extracted_raw/{law_id}.txt
 Metadata written to: data/extracted_raw/{law_id}_meta.json
@@ -26,12 +31,14 @@ from config.settings import (
     OCR_PROMPT,
     PRIMARY_MODEL,
     PYMUPDF_MIN_CHARS,
+    RAW_TXTS_DIR,
 )
 from utils.arabic_text import (
     arabic_char_density,
     count_article_markers,
     count_structural_headings,
     replacement_char_density,
+    strip_txt_boilerplate,
 )
 from utils.cost_tracker import CostTracker
 from utils.llm_client import ocr_pdf
@@ -106,12 +113,6 @@ def run(
     out_txt = EXTRACTED_RAW_DIR / f"{law_entry.law_id}.txt"
     out_meta = EXTRACTED_RAW_DIR / f"{law_entry.law_id}_meta.json"
 
-    if not pdf_path.exists():
-        raise FileNotFoundError(
-            f"PDF not found: {pdf_path}\n"
-            f"Place the PDF at: data/raw_pdfs/{law_entry.pdf_filename}"
-        )
-
     page_count = 0
     extraction_source = "unknown"
     extraction_model: str | None = None
@@ -119,42 +120,63 @@ def run(
     error: str | None = None
 
     try:
-        if force_ocr:
-            logger.info("[%s] Force OCR mode — skipping PyMuPDF.", law_entry.law_id)
-            pymupdf_confidence = 0.0
-        else:
-            logger.info("[%s] Attempting PyMuPDF extraction…", law_entry.law_id)
-            pymupdf_text, page_count = _extract_pymupdf(pdf_path)
-            pymupdf_confidence = _quick_confidence(pymupdf_text, law_entry)
-            logger.info(
-                "[%s] PyMuPDF confidence: %.4f (threshold: %.2f)",
-                law_entry.law_id, pymupdf_confidence, CONFIDENCE_THRESHOLD,
-            )
+        # ── TXT shortcut: read directly, no PyMuPDF, no Gemini ──────────────
+        if law_entry.txt_filename:
+            txt_source = RAW_TXTS_DIR / law_entry.txt_filename
+            if not txt_source.exists():
+                raise FileNotFoundError(
+                    f"TXT file not found: {txt_source}\n"
+                    f"Place the file at: data/raw_txts/{law_entry.txt_filename}"
+                )
+            logger.info("[%s] Reading plain-text source: %s", law_entry.law_id, txt_source.name)
+            raw_text = strip_txt_boilerplate(txt_source.read_text(encoding="utf-8"))
+            extraction_source = "plaintext"
+            logger.info("[%s] Boilerplate stripped — %d chars of law text", law_entry.law_id, len(raw_text))
 
-        if not force_ocr and pymupdf_confidence >= CONFIDENCE_THRESHOLD:
-            logger.info("[%s] ✓ PyMuPDF meets threshold — no Gemini call needed.", law_entry.law_id)
-            raw_text = pymupdf_text
-            extraction_source = "pymupdf"
+        # ── PDF path ─────────────────────────────────────────────────────────
         else:
-            reason = "force_ocr" if force_ocr else f"low confidence ({pymupdf_confidence:.4f})"
-            logger.info("[%s] Falling back to Gemini OCR (%s)…", law_entry.law_id, reason)
-            raw_text = ocr_pdf(
-                pdf_path=pdf_path,
-                prompt=OCR_PROMPT,
-                cost_tracker=cost_tracker,
-                stage="stage_1",
-                law_id=law_entry.law_id,
-                model_name=PRIMARY_MODEL,
-            )
-            extraction_source = "gemini_ocr"
-            extraction_model = PRIMARY_MODEL
-            if page_count == 0:
-                try:
-                    doc = fitz.open(str(pdf_path))
-                    page_count = len(doc)
-                    doc.close()
-                except Exception:
-                    page_count = 0
+            if not pdf_path.exists():
+                raise FileNotFoundError(
+                    f"PDF not found: {pdf_path}\n"
+                    f"Place the PDF at: data/raw_pdfs/{law_entry.pdf_filename}"
+                )
+
+            if force_ocr:
+                logger.info("[%s] Force OCR mode — skipping PyMuPDF.", law_entry.law_id)
+                pymupdf_confidence = 0.0
+            else:
+                logger.info("[%s] Attempting PyMuPDF extraction…", law_entry.law_id)
+                pymupdf_text, page_count = _extract_pymupdf(pdf_path)
+                pymupdf_confidence = _quick_confidence(pymupdf_text, law_entry)
+                logger.info(
+                    "[%s] PyMuPDF confidence: %.4f (threshold: %.2f)",
+                    law_entry.law_id, pymupdf_confidence, CONFIDENCE_THRESHOLD,
+                )
+
+            if not force_ocr and pymupdf_confidence >= CONFIDENCE_THRESHOLD:
+                logger.info("[%s] ✓ PyMuPDF meets threshold — no Gemini call needed.", law_entry.law_id)
+                raw_text = pymupdf_text
+                extraction_source = "pymupdf"
+            else:
+                reason = "force_ocr" if force_ocr else f"low confidence ({pymupdf_confidence:.4f})"
+                logger.info("[%s] Falling back to Gemini OCR (%s)…", law_entry.law_id, reason)
+                raw_text = ocr_pdf(
+                    pdf_path=pdf_path,
+                    prompt=OCR_PROMPT,
+                    cost_tracker=cost_tracker,
+                    stage="stage_1",
+                    law_id=law_entry.law_id,
+                    model_name=PRIMARY_MODEL,
+                )
+                extraction_source = "gemini_ocr"
+                extraction_model = PRIMARY_MODEL
+                if page_count == 0:
+                    try:
+                        doc = fitz.open(str(pdf_path))
+                        page_count = len(doc)
+                        doc.close()
+                    except Exception:
+                        page_count = 0
 
         out_txt.write_text(raw_text, encoding="utf-8")
         logger.info("[%s] Raw text saved → %s (%d chars)", law_entry.law_id, out_txt.name, len(raw_text))

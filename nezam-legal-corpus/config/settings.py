@@ -14,6 +14,7 @@ PYMUPDF_MIN_CHARS = 200
 
 DATA_DIR = BASE_DIR / "data"
 RAW_PDFS_DIR = DATA_DIR / "raw_pdfs"
+RAW_TXTS_DIR = DATA_DIR / "raw_txts"
 EXTRACTED_RAW_DIR = DATA_DIR / "extracted_raw"
 EXTRACTED_CLEAN_DIR = DATA_DIR / "extracted_clean"
 CLEANUP_AUDIT_DIR = DATA_DIR / "cleanup_audit_logs"

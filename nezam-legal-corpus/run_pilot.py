@@ -27,7 +27,7 @@ from rich.table import Table
 from rich import box
 
 from config.law_registry import get_law
-from config.settings import RAW_PDFS_DIR
+from config.settings import RAW_PDFS_DIR, RAW_TXTS_DIR
 from pipeline import stage_1_extract, stage_1_5_val_extract
 from utils.cost_tracker import CostTracker
 
@@ -49,23 +49,31 @@ def main() -> None:
         console.print(f"[bold red]Error:[/] {exc}")
         sys.exit(1)
 
-    pdf_path = RAW_PDFS_DIR / law_entry.pdf_filename
+    # TXT source takes priority over PDF when txt_filename is registered
+    if law_entry.txt_filename:
+        source_path = RAW_TXTS_DIR / law_entry.txt_filename
+        source_label = "TXT"
+    else:
+        source_path = RAW_PDFS_DIR / law_entry.pdf_filename
+        source_label = "PDF"
+
+    pdf_path = RAW_PDFS_DIR / law_entry.pdf_filename  # still passed to stage_1.run()
 
     console.print(Panel.fit(
         f"[bold]Nezam Legal Corpus — Stage 1 Pilot[/]\n"
-        f"Law:  [cyan]{law_entry.law_name_ar}[/]\n"
-        f"ID:   [cyan]{law_entry.law_id}[/]\n"
-        f"PDF:  [cyan]{pdf_path}[/]",
+        f"Law:    [cyan]{law_entry.law_name_ar}[/]\n"
+        f"ID:     [cyan]{law_entry.law_id}[/]\n"
+        f"Source: [cyan]{source_label} → {source_path}[/]",
         border_style="blue",
     ))
 
-    if not pdf_path.exists():
+    if not source_path.exists():
         console.print(Panel(
-            f"[bold red]PDF not found.[/]\n\n"
-            f"Expected location:\n  [yellow]{pdf_path}[/]\n\n"
-            f"Place the PDF file there and re-run:\n"
+            f"[bold red]Source file not found.[/]\n\n"
+            f"Expected location:\n  [yellow]{source_path}[/]\n\n"
+            f"Place the file there and re-run:\n"
             f"  [green]python run_pilot.py {law_id}[/]",
-            title="Missing PDF",
+            title=f"Missing {source_label}",
             border_style="red",
         ))
         sys.exit(1)

@@ -11,6 +11,7 @@ class LawEntry:
     expected_article_count: int
     repealed_articles: list[int] = field(default_factory=list)
     expected_chapter_headings: int = 0
+    txt_filename: str | None = None   # plain-text source takes priority over PDF
     notes: str = ""
 
 
@@ -21,10 +22,12 @@ LAW_REGISTRY: dict[str, LawEntry] = {
         law_number="151 لسنة 2020",
         year=2020,
         pdf_filename="EG_PDPL.pdf",
-        expected_article_count=43,
+        txt_filename="EG_PDPL.txt",
+        expected_article_count=56,    # 7 issuance (ordinal) + 49 main law articles
         repealed_articles=[],
-        expected_chapter_headings=6,
-        notes="قانون حديث، PDF رقمي، من المتوقع استخراجه بنجاح عبر PyMuPDF",
+        expected_chapter_headings=14, # الفصل الأول through الفصل الرابع عشر
+        notes="Source: masaar.net (Gazette issue 28 مكرر هـ, 15 Jul 2020, updated to 2023). "
+              "TXT format uses مادة (١) paren-digit and (المادة الأولى) ordinal forms.",
     ),
     "EG_EVIDENCE": LawEntry(
         law_id="EG_EVIDENCE",

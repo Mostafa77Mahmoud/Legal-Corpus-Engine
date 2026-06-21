@@ -17,6 +17,40 @@ _MULTI_NEWLINE = re.compile(r"\n{3,}")
 _REPLACEMENT_CHAR = re.compile(r"\ufffd")
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
+# Arabic ordinal words (masculine and feminine)
+_ORDINALS = (
+    r"الأول[ىة]?|الثاني[ة]?|الثالث[ة]?|الرابع[ة]?|الخامس[ة]?"
+    r"|السادس[ة]?|السابع[ة]?|الثامن[ة]?|التاسع[ة]?|العاشر[ة]?"
+    r"|الحادي\s+عشر[ة]?|الثاني\s+عشر[ة]?|الثالث\s+عشر[ة]?|الرابع\s+عشر[ة]?"
+    r"|الخامس\s+عشر[ة]?|السادس\s+عشر[ة]?|السابع\s+عشر[ة]?|الثامن\s+عشر[ة]?"
+    r"|التاسع\s+عشر[ة]?|العشرون|الحادي\s+والعشرون"
+)
+
+# Article marker patterns (all supported formats)
+_ART_PRIMARY     = re.compile(r"(?:مادة|المادة)\s+(?:\d+|[٠-٩]+)", re.MULTILINE)
+_ART_ABBREV      = re.compile(r"(?<!\w)ما\s{0,3}(?=\d)(?:\d+|[٠-٩]+)", re.MULTILINE)
+_ART_PAREN_DIGIT = re.compile(r"مادة\s*\(\s*(?:\d+|[٠-٩]+)\s*\)", re.MULTILINE)
+_ART_ORDINAL     = re.compile(rf"\(المادة\s+(?:{_ORDINALS})\)", re.MULTILINE)
+
+# Structural heading patterns (all supported formats)
+_HEAD_PLAIN = re.compile(
+    rf"(?:الباب|الفصل|القسم|الكتاب|الفرع)\s+(?:{_ORDINALS}|\d+|[٠-٩]+)",
+    re.MULTILINE,
+)
+_HEAD_PAREN = re.compile(
+    rf"\((?:الباب|الفصل|القسم|الكتاب|الفرع)\s+(?:{_ORDINALS}|\d+|[٠-٩]+)\)",
+    re.MULTILINE,
+)
+
+# Website boilerplate markers used by Egyptian legal aggregators (e.g. Masaar)
+_TXT_CONTENT_START_MARKERS = ["نص التشريع", "نص القانون", "نص اللائحة"]
+_TXT_FOOTER_MARKERS = [
+    "Creative Commons",
+    "← قانون",
+    "سياسة الخصوصية",
+    "\nIcons and photos",
+]
+
 
 def normalize(text: str, remove_diacritics: bool = True) -> str:
     text = unicodedata.normalize("NFC", text)
@@ -46,19 +80,53 @@ def replacement_char_density(text: str) -> float:
 
 
 def count_article_markers(text: str) -> int:
-    # Primary form: مادة 5 / المادة 5
-    primary = re.compile(r"(?:مادة|المادة)\s+(?:\d+|[٠-٩]+)", re.MULTILINE)
-    # Abbreviated form: ما5 / ما 6  — found in garbled/encoding-broken PDFs
-    # Negative lookahead prevents matching inside words like مال، ماء، ماهر
-    abbreviated = re.compile(r"(?<!\w)ما\s{0,3}(?=\d)(?:\d+|[٠-٩]+)", re.MULTILINE)
-    hits = set(primary.findall(text)) | set(abbreviated.findall(text))
+    """
+    Count distinct article markers supporting all known Egyptian law PDF/TXT formats:
+
+    - Standard:       مادة 5 / المادة 5
+    - Abbreviated:    ما5 / ما 6          (garbled/encoding-broken PDFs)
+    - Paren-digit:    مادة (١) / مادة ( ٢ )  (Masaar TXT and some PDFs)
+    - Ordinal-paren:  (المادة الأولى) ... (المادة السابعة)  (issuance articles)
+    """
+    hits: set[str] = set()
+    hits.update(_ART_PRIMARY.findall(text))
+    hits.update(_ART_ABBREV.findall(text))
+    hits.update(_ART_PAREN_DIGIT.findall(text))
+    hits.update(_ART_ORDINAL.findall(text))
     return len(hits)
 
 
 def count_structural_headings(text: str) -> int:
-    pattern = re.compile(
-        r"(?:الباب|الفصل|القسم|الكتاب|الفرع)\s+(?:الأول|الثاني|الثالث|الرابع|الخامس"
-        r"|السادس|السابع|الثامن|التاسع|العاشر|\d+|[٠-٩]+)",
-        re.MULTILINE,
-    )
-    return len(pattern.findall(text))
+    """
+    Count chapter/section headings in plain or parenthesised form:
+      - Plain:  الفصل الأول / الباب الثاني
+      - Paren:  (الفصل الأول) / (الباب الحادي عشر)
+    """
+    hits: set[str] = set()
+    hits.update(_HEAD_PLAIN.findall(text))
+    hits.update(_HEAD_PAREN.findall(text))
+    return len(hits)
+
+
+def strip_txt_boilerplate(text: str) -> str:
+    """
+    Remove website navigation headers and Creative-Commons footers injected by
+    Egyptian legal aggregator sites (e.g. masaar.net) when the page is saved as TXT.
+
+    Crops to the first recognised content-start marker through the first
+    recognised footer marker. If no markers are found, returns text unchanged.
+    """
+    start_pos = 0
+    for marker in _TXT_CONTENT_START_MARKERS:
+        idx = text.find(marker)
+        if idx != -1:
+            start_pos = idx + len(marker)
+            break
+
+    end_pos = len(text)
+    for marker in _TXT_FOOTER_MARKERS:
+        idx = text.find(marker, start_pos)
+        if idx != -1:
+            end_pos = min(end_pos, idx)
+
+    return text[start_pos:end_pos].strip()
