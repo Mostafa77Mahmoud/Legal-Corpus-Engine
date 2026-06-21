@@ -9,7 +9,7 @@
 | Stage | Name | Status | File |
 |-------|------|--------|------|
 | **1** | Raw Extraction | ✅ **DONE** | `pipeline/stage_1_extract.py` |
-| **1.3** | Arabic Cleanup | ❌ Not built | `pipeline/stage_1_3_cleanup.py` |
+| **1.3** | Arabic Cleanup | ✅ **DONE** | `pipeline/stage_1_3_cleanup.py` |
 | **1.5** | Confidence Scoring | ✅ **DONE** | `pipeline/stage_1_5_val_extract.py` |
 | **2** | Article Splitting | ❌ Not built | `pipeline/stage_2_split.py` |
 | **2.5** | Split Validation | ❌ Not built | `pipeline/stage_2_5_val_split.py` |

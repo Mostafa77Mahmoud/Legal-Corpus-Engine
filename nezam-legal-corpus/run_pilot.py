@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Pilot runner — Stage 1 only.
+Pilot runner — Stages 1 → 1.3 → 1.5
 
 Usage:
     python run_pilot.py [LAW_ID]
@@ -11,9 +11,11 @@ Place the PDF at:  data/raw_pdfs/<pdf_filename>
 The filename for each law is listed in config/law_registry.py.
 
 Outputs:
-    data/extracted_raw/<LAW_ID>.txt           — raw extracted text
-    data/extracted_raw/<LAW_ID>_meta.json     — extraction metadata
-    data/extracted_raw/<LAW_ID>_confidence.json — confidence report
+    data/extracted_raw/<LAW_ID>.txt                    — raw extracted text
+    data/extracted_raw/<LAW_ID>_meta.json              — extraction metadata
+    data/extracted_clean/<LAW_ID>.txt                  — cleaned text
+    data/cleanup_audit_logs/<LAW_ID>_cleanup_audit.json — cleanup diff log
+    data/extracted_raw/<LAW_ID>_confidence.json        — confidence report
 """
 
 import json
@@ -28,7 +30,7 @@ from rich import box
 
 from config.law_registry import get_law
 from config.settings import RAW_PDFS_DIR, RAW_TXTS_DIR
-from pipeline import stage_1_extract, stage_1_5_val_extract
+from pipeline import stage_1_extract, stage_1_3_cleanup, stage_1_5_val_extract
 from utils.cost_tracker import CostTracker
 
 logging.basicConfig(
@@ -57,10 +59,10 @@ def main() -> None:
         source_path = RAW_PDFS_DIR / law_entry.pdf_filename
         source_label = "PDF"
 
-    pdf_path = RAW_PDFS_DIR / law_entry.pdf_filename  # still passed to stage_1.run()
+    pdf_path = RAW_PDFS_DIR / law_entry.pdf_filename
 
     console.print(Panel.fit(
-        f"[bold]Nezam Legal Corpus — Stage 1 Pilot[/]\n"
+        f"[bold]Nezam Legal Corpus — Pilot Runner[/]\n"
         f"Law:    [cyan]{law_entry.law_name_ar}[/]\n"
         f"ID:     [cyan]{law_entry.law_id}[/]\n"
         f"Source: [cyan]{source_label} → {source_path}[/]",
@@ -80,6 +82,7 @@ def main() -> None:
 
     cost_tracker = CostTracker()
 
+    # ── Stage 1: Extraction ───────────────────────────────────────────────────
     console.rule("[bold blue]Stage 1: Extraction")
     extraction_result = stage_1_extract.run(
         pdf_path=pdf_path,
@@ -91,26 +94,51 @@ def main() -> None:
         console.print(f"[bold red]Extraction failed:[/] {extraction_result.error}")
         sys.exit(1)
 
+    _print_extraction_report(extraction_result)
+
+    # ── Stage 1.3: Arabic Cleanup ─────────────────────────────────────────────
+    console.rule("[bold blue]Stage 1.3: Arabic Cleanup")
+    cleanup_audit = stage_1_3_cleanup.run(
+        law_entry=law_entry,
+        extraction_source=extraction_result.extraction_source,
+    )
+    _print_cleanup_report(cleanup_audit)
+
+    # ── Stage 1.5: Confidence Scoring ─────────────────────────────────────────
     console.rule("[bold blue]Stage 1.5: Confidence Scoring")
     confidence_report = stage_1_5_val_extract.run(
         law_entry=law_entry,
         extraction_source=extraction_result.extraction_source,
     )
 
-    _print_extraction_report(extraction_result)
     _print_confidence_report(confidence_report)
     _print_cost_report(cost_tracker)
+
+    if not confidence_report.passed:
+        console.print(Panel(
+            f"[bold red]Confidence {confidence_report.confidence_score:.4f} is below "
+            f"threshold {confidence_report.threshold}.[/]\n"
+            f"This law is flagged for [bold]human review[/] before proceeding to Stage 2.",
+            title="⚠ Quality Gate Failed",
+            border_style="red",
+        ))
+        sys.exit(2)
+
+    console.print(Panel.fit(
+        f"[bold green]✓ All stages passed.[/]\n"
+        f"Confidence: [bold]{confidence_report.confidence_score:.4f}[/]  |  "
+        f"Ready for Stage 2 (Article Splitting)",
+        border_style="green",
+    ))
 
 
 def _print_extraction_report(result) -> None:
     console.print()
-    console.print(Panel.fit("[bold]Extraction Report", border_style="green"))
-
     table = Table(box=box.SIMPLE, show_header=False)
     table.add_column("Field", style="dim", width=30)
     table.add_column("Value")
 
-    source_color = "green" if result.extraction_source == "pymupdf" else "yellow"
+    source_color = "green" if result.extraction_source in ("pymupdf", "plaintext") else "yellow"
     table.add_row("Extraction source", f"[{source_color}]{result.extraction_source}[/]")
     table.add_row("Characters extracted", f"{result.char_count:,}")
     table.add_row("PDF pages", str(result.page_count))
@@ -120,7 +148,33 @@ def _print_extraction_report(result) -> None:
     table.add_row("Replacement char density", f"{result.replacement_density:.6f}")
     if result.extraction_model:
         table.add_row("OCR model", result.extraction_model)
-    table.add_row("Output file", str(Path(result.raw_text_path).name))
+    table.add_row("Output", str(Path(result.raw_text_path).name))
+
+    console.print(table)
+
+
+def _print_cleanup_report(audit) -> None:
+    console.print()
+    table = Table(box=box.SIMPLE, show_header=False)
+    table.add_column("Transform", style="dim", width=30)
+    table.add_column("Count", justify="right")
+
+    pct = round((audit.chars_removed / audit.chars_before * 100), 2) if audit.chars_before else 0
+    table.add_row("Characters before", f"{audit.chars_before:,}")
+    table.add_row("Characters after", f"{audit.chars_after:,}")
+    table.add_row(
+        "Characters removed",
+        f"[{'yellow' if audit.chars_removed > 0 else 'green'}]{audit.chars_removed:,} ({pct}%)[/]",
+    )
+    table.add_row("", "")
+    table.add_row("NFC changed",         str(audit.nfc_changed))
+    table.add_row("Tatweel removed",     str(audit.tatweel_removed))
+    table.add_row("Diacritics removed",  str(audit.diacritics_removed))
+    table.add_row("Hamza normalised",    str(audit.hamza_normalised))
+    table.add_row("Yeh normalised",      str(audit.yeh_normalised))
+    table.add_row("Control chars removed", str(audit.control_removed))
+    table.add_row("Space runs collapsed", str(audit.spaces_collapsed))
+    table.add_row("Newline runs collapsed", str(audit.newlines_collapsed))
 
     console.print(table)
 
@@ -130,8 +184,6 @@ def _print_confidence_report(report) -> None:
     passed_label = "[bold green]PASS ✓[/]" if report.passed else "[bold red]FAIL ✗[/]"
     review_label = "[bold red]Yes — flagged for human review[/]" if report.manual_review else "[green]No[/]"
 
-    console.print(Panel.fit("[bold]Confidence Report", border_style="green"))
-
     table = Table(box=box.SIMPLE, show_header=True)
     table.add_column("Factor", style="cyan")
     table.add_column("Raw", justify="right")
@@ -139,8 +191,7 @@ def _print_confidence_report(report) -> None:
     table.add_column("Weight", justify="right")
     table.add_column("Contribution", justify="right")
 
-    breakdown = report.factor_breakdown
-    for factor, vals in breakdown.items():
+    for factor, vals in report.factor_breakdown.items():
         table.add_row(
             factor,
             f"{vals['raw']:.4f}",
@@ -163,11 +214,11 @@ def _print_confidence_report(report) -> None:
 
 def _print_cost_report(tracker: CostTracker) -> None:
     console.print()
-    console.print(Panel.fit("[bold]Cost Report", border_style="green"))
+    console.print(Panel.fit("[bold]Cost Report", border_style="dim"))
     summary = tracker.summary()
 
     if summary["total_api_calls"] == 0:
-        console.print("  [green]$0.00[/] — no Gemini API calls made (PyMuPDF extraction succeeded).")
+        console.print("  [green]$0.00[/] — no Gemini API calls made.")
         return
 
     table = Table(box=box.SIMPLE, show_header=False)

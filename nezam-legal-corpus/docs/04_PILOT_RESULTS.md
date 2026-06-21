@@ -112,6 +112,21 @@ data/extracted_raw/EG_ESIGN_confidence.json
 
 ---
 
+## Stage 1.3 Cleanup Results
+
+Stage 1.3 now runs between Stage 1 and Stage 1.5. Confidence scores are calculated on the **cleaned** text.
+
+| Law | Chars Before | Chars After | Removed | Tatweel | Diacritics | Hamza | Yeh |
+|-----|-------------|------------|---------|---------|-----------|-------|-----|
+| EG_PDPL | 37,003 | 36,283 | 720 (1.95%) | 621 | 99 | 969 | 272 |
+| EG_ESIGN | 13,590 | 13,580 | 10 (0.07%) | 9 | 1 | 303 | 179 |
+
+**EG_PDPL note:** 621 tatweel characters removed (decorative stretches in the masaar.net TXT source). Confidence dropped from 0.9528 (raw) → 0.9206 (clean). The AMD factor changed from 1.0000 to 1.1250 (63 markers detected instead of 56) — normalization slightly altered character sequences adjacent to article markers. Still PASS at 0.9206.
+
+**EG_ESIGN note:** Very clean OCR output, minimal cleanup needed. Confidence remains ~0.93.
+
+---
+
 ## Infrastructure Issues Discovered During Pilot
 
 | Issue | Root Cause | Resolution Applied |

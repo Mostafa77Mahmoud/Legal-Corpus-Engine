@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 
 from config.law_registry import LawEntry
-from config.settings import CONFIDENCE_THRESHOLD, EXTRACTED_RAW_DIR
+from config.settings import CONFIDENCE_THRESHOLD, EXTRACTED_CLEAN_DIR, EXTRACTED_RAW_DIR
 from utils.arabic_text import (
     arabic_char_density,
     count_article_markers,
@@ -67,9 +67,15 @@ class ConfidenceReport:
 
 
 def run(law_entry: LawEntry, extraction_source: str = "unknown") -> ConfidenceReport:
-    txt_path = EXTRACTED_RAW_DIR / f"{law_entry.law_id}.txt"
+    # Prefer cleaned text (Stage 1.3 output); fall back to raw if cleanup hasn't run yet
+    txt_path = EXTRACTED_CLEAN_DIR / f"{law_entry.law_id}.txt"
     if not txt_path.exists():
-        raise FileNotFoundError(f"Raw text not found at {txt_path}. Run Stage 1 first.")
+        txt_path = EXTRACTED_RAW_DIR / f"{law_entry.law_id}.txt"
+    if not txt_path.exists():
+        raise FileNotFoundError(
+            f"No text found at {EXTRACTED_CLEAN_DIR / law_entry.law_id}.txt "
+            f"or {EXTRACTED_RAW_DIR / law_entry.law_id}.txt. Run Stage 1 first."
+        )
 
     text = txt_path.read_text(encoding="utf-8")
 
