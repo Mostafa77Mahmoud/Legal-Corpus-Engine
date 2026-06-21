@@ -1,0 +1,761 @@
+Egyptian Legal Corpus Preparation Engine
+Implementation Plan — nezam-legal-corpus (Version 6)
+Role: Principal Data Engineer & Legal AI Systems Architect Objective: Transform raw Egyptian law PDFs into a production-grade, validated, article-level legal corpus for the Nezam AI contract analysis platform. Version: 6.0 (Revised to include amendment-aware version registries, chunking layers, prompt versioning, structured error taxonomy, prioritized human reviews, embedding pipelines, and corpus freeze gates) Date: 2026-06-21
+
+1. Project Goals & Scope (Revised)
+Primary Goal
+Build a standalone, offline data pipeline that converts raw Egyptian law PDFs into structured, enriched, and validated article objects stored in MongoDB — ready for high-fidelity routing and article-level retrieval by the Nezam AI contract analysis platform.
+
+Scope Updates (V6)
+Primary Model Choice: The entire pipeline utilizes Gemini 3.5 Flash (configured via config/settings.py -> PRIMARY_MODEL) for all LLM stages (OCR, cleanup, enrichment, semantic relationship validation, and quality auditing).
+Amendment-Aware Versioning: Incorporates a separate amendment registry to track temporal states of articles, permitting historical corpus reconstructions.
+Dual-Layer Retrieval Chunking: Automatically segments long articles into retrieval chunks while keeping the parent article as the canonical unit. Search queries target chunks; LLM reasoning receives the full articles.
+Prompt Version Registry: Manages prompts in a dedicated schema mapping prompt versions, SHA-256 hashes, and creations. Every generated article records the prompt version.
+Structured Error Taxonomy: Classifies validation errors into standardized types (e.g. ERROR_MERGED_ARTICLE, ERROR_TAXONOMY_DRIFT) for easier automated cleanup.
+Prioritized Human Reviews: Implements a weighted priority score sorting flagged articles by risk severity, confidence penalty, and cross-reference failure risk.
+Stage 3.7 Embedding Generation: Introduces a dedicated embedding stage generating vector representations for articles, chunks, and law metadata objects.
+Corpus Freeze Release Gate: Implements a release gate blocking export until validation, benchmarking, and receipt signature conditions are satisfied.
+2. Repository Structure
+
+nezam-legal-corpus/
+│
+├── README.md
+├── requirements.txt
+├── .env.example
+├── .gitignore
+│
+├── config/
+│   ├── __init__.py
+│   ├── settings.py              # Dynamic model configurations, paths, cost thresholds
+│   ├── law_registry.py          # Law metadata registry (IDs, file names, expected counts)
+│   ├── taxonomy.py              # Controlled Legal Concepts Taxonomy (~100 concepts)
+│   ├── prompts_registry.json    # NEW: Prompt version registry (SemVer, SHA256)
+│   └── amendment_registry.json  # NEW: Linage registry mapping law amendments
+│
+├── data/
+│   ├── raw_pdfs/                # Raw PDF inputs (gitignored)
+│   ├── extracted_raw/           # Stage 1: IMMUTABLE raw Gemini output files
+│   ├── extracted_clean/         # Stage 1.3: Cleaned and normalized text files
+│   ├── cleanup_audit_logs/      # Forensic audit logs for all regex cleanups
+│   ├── split_articles/          # Stage 2: Segmented articles/sections JSON per law
+│   ├── enriched_articles/       # Stage 3: Enriched JSON per law (article-level metadata)
+│   ├── corpus_intelligence/     # Stage 3.5: Corpus-wide relations & semantic cross-refs
+│   ├── validated_articles/      # Stage 5: Validated JSON per law
+│   ├── golden_validation_set/   # 50 verified articles benchmark JSON
+│   ├── retrieval_evaluation_set/# 100-200 search queries & ground-truth mappings
+│   ├── human_review/            # Stage 4: Review queue directories
+│   │   ├── pending/
+│   │   └── reviewed/
+│   └── export/                  # Stage 7: Production export files
+│       ├── mongodb/             # BSON/JSON for mongoimport
+│       └── json_laws/           # Monolithic JSON laws for backward compatibility
+│
+├── pipeline/
+│   ├── __init__.py
+│   ├── orchestrator.py          # Main pipeline runner coordinating all stages
+│   ├── stage_1_extract.py       # Primary Gemini PDF/Vision raw text extractor
+│   ├── stage_1_3_cleanup.py     # Normalization and clean script with audit log recording
+│   ├── stage_1_5_val_extract.py # Extraction quality confidence scoring & validation
+│   ├── stage_2_split.py         # Clean text → article/section JSON
+│   ├── stage_2_5_val_split.py   # Article split and continuity validation
+│   ├── stage_3_enrich.py        # Article enrichment (Keywords, concepts, explicit refs)
+│   ├── stage_3_5_corpus_intel.py# Semantic candidate retrieval & Gemini validation
+│   ├── stage_3_7_embeddings.py  # NEW: Vector generation stage for articles, chunks & metadata
+│   ├── stage_4_review.py        # Human review queue coordinator (Priority queue scoring)
+│   ├── stage_5_validate.py      # Rule-based + LLM validation using Error Taxonomy
+│   ├── stage_6_assemble.py      # Final resolution, version mapping, and deduplication
+│   └── stage_7_export.py        # Production export (MongoDB / JSON files)
+│
+├── review_dashboard/
+│   ├── app.py                   # Streamlit human review dashboard app
+│   └── README.md                # Dashboard configuration & usage guide
+│
+├── prompts/
+│   ├── extraction_cleanup.txt   # PDF OCR cleanup prompt (Legal rules)
+│   ├── article_enrichment.txt   # Keywords, concepts, and explicit ref prompt
+│   ├── law_summarization.txt    # Law-level metadata summary prompt
+│   ├── semantic_ref_validator.txt# Semantic candidate relationship validation prompt
+│   └── llm_validation.txt       # Re-validation prompt for rule failures
+│
+├── utils/
+│   ├── __init__.py
+│   ├── arabic_text.py           # Arabic character normalization and cleanup
+│   ├── debug_extractors.py      # Optional fallback/debugging extractors (PyMuPDF/pdfplumber)
+│   ├── article_parser.py        # Regex patterns for Arabic articles
+│   ├── llm_client.py            # Gemini API client with rate limiting & backoff
+│   ├── cost_tracker.py          # Real-time token and pricing cost tracker
+│   ├── candidate_retriever.py   # BM25/Concept-overlap candidate generator (Weighted Ranker)
+│   └── validation_helpers.py    # Continuity and sequence verification helpers
+│
+└── tests/
+    ├── test_extraction_validation.py
+    ├── test_article_splitter.py
+    ├── test_arabic_normalizer.py
+    ├── test_sequence_validator.py
+    ├── test_semantic_validator.py
+    ├── test_golden_benchmark.py # Test gate for the golden dataset
+    └── test_retrieval_benchmark.py# Automated retrieval evaluation test suite
+3. End-to-End Pipeline Design
+The workflow incorporates separated raw extraction, deterministic cleaning, validation scoring, chunking layers, embedding vectorization, and a corpus freeze gate.
+
+
+                                 ┌─────────────────────────┐
+                                 │      Raw Law PDFs       │
+                                 └────────────┬────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │ Stage 1: Gemini PDF Raw Extraction                │
+                    │ - Writes raw outputs to data/extracted_raw/       │
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │ Stage 1.3: Clean & Normalization Stage            │
+                    │ - Writes removal traces to cleanup_audit_logs/    │
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │ Stage 1.5: Normalized Confidence Scoring          │
+                    │ - If confidence < 0.85 -> manual_review = True    │
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │ Stage 2 & 2.5: Splitting & Continuity validation  │
+                    │ - Verifies sequence using Structured Error Taxonomy│
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │ Stage 3: Metadata Enrichment                      │
+                    │ - Tags prompt hashes, law versioning registry links│
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │ Stage 3.5: Corpus Intel & Semantic Ref Generation │
+                    │ - Validates candidates; maps amendment lineages   │
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │ Stage 3.7: Embedding Generation                   │
+                    │ - Vectorizes articles, chunks, and law metadata   │
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │ Stage 4 & 5: Validation & Human Review            │
+                    │ - Dashboard audits sorted by risk priority score  │
+                    │ - Runs Golden Benchmark validation checks         │
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │ Stage 6 & 7: Corpus Freeze & Export               │
+                    │ - Freezes database; signs export receipt payload  │
+                    │ - Runs retrieval evaluation test gate             │
+                    └───────────────────────────────────────────────────┘
+4. PDF Ingestion & Normalization
+Raw Extraction (Stage 1): Gemini extracts raw text exactly as it appears in the PDF. The text is saved in data/extracted_raw/{law_id}.txt and is flagged read-only.
+Text Cleanup (Stage 1.3): Deterministic regex scripts normalize characters and remove watermarks, writing cleanup steps to data/cleanup_audit_logs/{law_id}_cleanup_audit.json.
+5. Normalized Quality & Confidence Scoring Framework (Stage 1.5)
+To protect the downstream parser, Stage 1.5 calculates a normalized confidence score of the cleaned text.
+
+Normalization Layer Functions
+Normalized Article Marker Density (
+AMD
+n
+o
+r
+m
+AMD 
+norm
+​
+ ): 
+AMD
+n
+o
+r
+m
+=
+max
+⁡
+(
+0.0
+,
+1.0
+−
+abs
+(
+1.0
+−
+AMD
+)
+)
+AMD 
+norm
+​
+ =max(0.0,1.0−abs(1.0−AMD))
+Normalized Arabic Character Density (
+ACD
+n
+o
+r
+m
+ACD 
+norm
+​
+ ): 
+ACD
+n
+o
+r
+m
+=
+ACD
+(
+since ACD
+∈
+[
+0
+,
+1
+]
+)
+ACD 
+norm
+​
+ =ACD(since ACD∈[0,1])
+Normalized Expected Article Count Coverage (
+EACC
+n
+o
+r
+m
+EACC 
+norm
+​
+ ): 
+EACC
+n
+o
+r
+m
+=
+EACC
+(
+since EACC
+∈
+[
+0
+,
+1
+]
+)
+EACC 
+norm
+​
+ =EACC(since EACC∈[0,1])
+Normalized Structural Heading Coverage (
+SHC
+n
+o
+r
+m
+SHC 
+norm
+​
+ ): 
+SHC
+n
+o
+r
+m
+=
+SHC
+(
+since SHC
+∈
+[
+0
+,
+1
+]
+)
+SHC 
+norm
+​
+ =SHC(since SHC∈[0,1])
+Normalized Corruption Score (
+CS
+n
+o
+r
+m
+CS 
+norm
+​
+ ): 
+CS
+n
+o
+r
+m
+=
+max
+⁡
+(
+0.0
+,
+1.0
+−
+(
+CS
+/
+0.05
+)
+)
+CS 
+norm
+​
+ =max(0.0,1.0−(CS/0.05))
+Aggregate Normalized Confidence Score Formula
+Confidence
+=
+(
+AMD
+n
+o
+r
+m
+×
+0.25
+)
++
+(
+ACD
+n
+o
+r
+m
+×
+0.25
+)
++
+(
+EACC
+n
+o
+r
+m
+×
+0.25
+)
++
+(
+SHC
+n
+o
+r
+m
+×
+0.15
+)
++
+(
+CS
+n
+o
+r
+m
+×
+0.10
+)
+Confidence=(AMD 
+norm
+​
+ ×0.25)+(ACD 
+norm
+​
+ ×0.25)+(EACC 
+norm
+​
+ ×0.25)+(SHC 
+norm
+​
+ ×0.15)+(CS 
+norm
+​
+ ×0.10)
+If 
+Confidence
+<
+0.85
+Confidence<0.85, the engine sets manual_review = True and tags the document for Streamlit review.
+
+6. Article Splitting & Split Validation (Stage 2.5)
+Stage 2.5 executes a verification process comparing the split list against a known baseline.
+
+python
+
+def validate_splitting_results(law_id: str, split_articles: list[dict], expected_count: int, repealed_list: list[int]) -> dict:
+    """
+    Performs continuity and sequence checks on split articles.
+    """
+    errors = []
+    warnings = []
+    
+    # Sort articles numerically
+    sorted_arts = sorted(split_articles, key=lambda x: x['article_number'])
+    
+    # 1. Verify total count
+    actual_count = len(sorted_arts)
+    if expected_count and actual_count != expected_count:
+        msg = f"Count mismatch. Expected: {expected_count}, Got: {actual_count}."
+        if actual_count < expected_count:
+            errors.append(msg)
+        else:
+            warnings.append(msg)
+            
+    # 2. Check for sequence gaps & duplicates
+    seen_numbers = {}
+    for art in sorted_arts:
+        num = art['article_number']
+        seen_numbers[num] = seen_numbers.get(num, 0) + 1
+        
+    # Check duplicates
+    for num, count in seen_numbers.items():
+        if count > 1:
+            errors.append(f"Duplicate article number detected: {num} (appears {count} times).")
+            
+    # Check gaps
+    max_num = max(seen_numbers.keys()) if seen_numbers else 0
+    for num in range(1, max_num + 1):
+        if num not in seen_numbers:
+            # Check if this article was legally repealed
+            if num in repealed_list:
+                continue
+            errors.append(f"Missing article number in sequence: {num}")
+            
+    # 3. Size Anomaly Check (Merged/Split Detection)
+    for art in sorted_arts:
+        text_len = len(art['text'].strip())
+        
+        # Merge Anomaly: Article too large (contains embedded article markers in body)
+        if text_len > 15000:
+            lines = art['text'].split('\n')[1:]
+            body_text = "\n".join(lines)
+            if re.search(r'(?:مادة|المادة)\s+\d+', body_text):
+                errors.append(f"Potential merged article: Art {art['article_number_display']} is unusually large ({text_len} chars) and contains internal article markers.")
+                
+        # Split Anomaly: Article too small (incomplete or split)
+        if text_len < 15:
+            if "ملغاة" not in art['text'] and "مُلغاة" not in art['text']:
+                errors.append(f"Potential broken split: Art {art['article_number_display']} has only {text_len} characters.")
+                
+    return {
+        "status": "passed" if not errors else "failed",
+        "errors": errors,
+        "warnings": warnings
+    }
+7. Amendment-Aware Law Versioning (New)
+Egyptian statutes are amended frequently, changing individual articles without replacing the base law. Rather than storing flat versions of the entire law, versioning lineage is stored separately in config/amendment_registry.json.
+
+Schema (config/amendment_registry.json)
+json
+
+{
+  "law_id": "EG_CIVIL_CODE",
+  "amendments": [
+    {
+      "amendment_id": "EG_CIVIL_CODE_AMEND_1997_قانون_3",
+      "law_number": "قانون رقم 3 لسنة 1997",
+      "effective_date": "1997-03-01",
+      "affected_articles": [147, 148],
+      "description": "تعديل أحكام القوة الملزمة لبعض عقود المعاملات العقارية"
+    }
+  ]
+}
+Lineage Resolution & Temporal Retrieval
+Audit Lineage: Every article document tracks its validity date range (valid_from and valid_to).
+Temporal Query Reconstruction: To reconstruct the corpus state at any date (e.g. 2005-01-01), the query loads articles where: 
+valid_from
+≤
+2005-01-01
+<
+valid_to
+valid_from≤2005-01-01<valid_to
+Version Linkages: If Article 147 is updated by a 1997 amendment, the older version sets valid_to = "1997-03-01" and is_current_version = false, linking to the successor via superseded_by: "EG_CIVIL_CODE_1997_ART_147".
+8. Retrieval-Oriented Chunking Layer (New)
+While some Egyptian legal articles contain hundreds of words (e.g., listing multiple conditions or administrative paths), retrieval engines perform best with smaller, cohesive text blocks. We split articles into retrieval chunks while maintaining the parent article as the canonical document.
+
+
+                  ┌────────────────────────────────────────┐
+                  │   Parent Article Document (Canonical)   │
+                  │   - Stores explicit_cross_refs         │
+                  │   - Passed to LLM for final reasoning  │
+                  └───────────────────┬────────────────────┘
+                                      │
+              ┌───────────────────────┼───────────────────────┐
+              ▼                       ▼                       ▼
+      ┌───────────────┐       ┌───────────────┐       ┌───────────────┐
+      │ Chunk 0       │       │ Chunk 1       │       │ Chunk 2       │
+      │ - Text: ...   │       │ - Text: ...   │       │ - Text: ...   │
+      │ - Tokens: 420 │       │ - Tokens: 450 │       │ - Tokens: 380 │
+      └───────────────┘       └───────────────┘       └───────────────┘
+Schema
+json
+
+{
+  "_id": "EG_CIVIL_CODE_ART_147_CHK_0",
+  "article_id": "EG_CIVIL_CODE_ART_147",
+  "chunk_id": "EG_CIVIL_CODE_ART_147_CHK_0",
+  "chunk_index": 0,
+  "text": "العقد شريعة المتعاقدين، فلا يجوز نقضه ولا تعديله إلا باتفاق الطرفين أو للأسباب التي يقررها القانون...",
+  "token_count": 420,
+  "embedding": null
+}
+Chunking Rules
+Automatic Generation: Generated automatically inside Stage 3.7 using a split strategy (splitting on paragraph boundaries \n\n with a maximum target size of 500 tokens and 100-token overlaps).
+Linkage Retention: References and metadata are maintained at the article level; chunks inherit concepts and applicable_to parameters from the parent article to support filtering.
+Execution Routing: Semantic search runs against the chunk index. The system then resolves retrieved chunk IDs back to parent article IDs, feeding the complete article text to the contract analysis LLM to prevent loss of context.
+9. Prompt Version Registry (New)
+To ensure long-term pipeline reproducibility and trace behavioral changes in the model's enrichment output, prompts are managed in a structured registry.
+
+Schema (config/prompts_registry.json)
+json
+
+{
+  "prompt_id": "article_enrichment",
+  "version": "1.2.0",
+  "sha256": "8f2b7a9c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a",
+  "created_at": "2026-06-21T13:42:00Z",
+  "notes": "Stricter Arabic taxonomy definition mapping in prompt body to reduce hallucinated tags",
+  "parameters": {
+    "temperature": 0.0,
+    "max_output_tokens": 4096
+  }
+}
+The system verifies the prompt file's SHA-256 hash at run-time against the registry. If it matches, the prompt version string (e.g. "1.2.0") is attached to the article metadata schema under metadata.prompt_version.
+
+10. Structured Error Taxonomy (New)
+Generic text failures make automated cleanup difficult. We replace generic validation failures with a standardized taxonomy of legal data errors.
+
+Error Code	Definition / Detection Rule
+ERROR_MISSING_ARTICLE	An expected article number in the sequential range is absent.
+ERROR_DUPLICATE_ARTICLE	The same article ID appears multiple times in the database.
+ERROR_MERGED_ARTICLE	Article text contains internal article markers (e.g., "مادة 148" inside Article 147 text).
+ERROR_SPLIT_ARTICLE	Article body is shorter than 15 characters and contains incomplete sentences.
+ERROR_CORRUPTED_TEXT	Document contains invalid control characters or high density of replacement symbols (\ufffd).
+ERROR_INVALID_REFERENCE	An explicit reference points to a non-existent law or article ID.
+ERROR_TAXONOMY_DRIFT	Article is tagged with concepts that do not exist in the active taxonomy.py schema.
+These error keys are saved inside the validation arrays of failed articles to automate remediation steps.
+
+11. Human Review Prioritization (New)
+Flagged articles are routed to the Streamlit dashboard using a prioritized risk scoring model. Reviewers focus on high-risk errors first.
+
+Priority Score Formula
+The engine calculates a priority score for every flagged article: 
+Priority Score
+=
+Severity Weight
++
+Confidence Penalty
++
+Reference Risk
+Priority Score=Severity Weight+Confidence Penalty+Reference Risk
+
+Where:
+
+Severity Weight: Mapped directly from the Structured Error Taxonomy:
+ERROR_MERGED_ARTICLE, ERROR_SPLIT_ARTICLE, ERROR_CORRUPTED_TEXT 
+→
+0.50
+→0.50
+ERROR_MISSING_ARTICLE, ERROR_DUPLICATE_ARTICLE, ERROR_INVALID_REFERENCE 
+→
+0.35
+→0.35
+ERROR_TAXONOMY_DRIFT 
+→
+0.15
+→0.15
+Confidence Penalty: Mapped from the normalized confidence score: 
+Confidence Penalty
+=
+1.0
+−
+Confidence
+Confidence Penalty=1.0−Confidence
+Reference Risk: Unresolved cross-references penalty: 
+Reference Risk
+=
+min
+⁡
+(
+0.30
+,
+Count of ambiguous references
+×
+0.10
+)
+Reference Risk=min(0.30,Count of ambiguous references×0.10)
+The Streamlit Human Review Dashboard displays the pending review queue sorted by Priority Score descending.
+
+12. Explicit Embedding Pipeline (Stage 3.7) (New)
+Vector generation is handled by a dedicated stage to prevent uncoordinated reprocessing runs.
+
+Model Parameters
+The pipeline queries config/settings.py for parameters:
+
+Embedding Model: text-embedding-004 (dimensions = 768)
+Processing Specifications
+pipeline/stage_3_7_embeddings.py generates embeddings for:
+
+Article Vectors: Generated using the cleaned article text and stored in MongoDB under embedding.
+Chunk Vectors: Generated using the segmented text block inside the chunk layer, stored in the retrieval index database.
+Law Metadata Vectors: Generated using the aggregated law summary and keywords, stored in the routing index.
+All embedding schemas store the model version and dimension size in their local metadata:
+
+json
+
+"embedding_metadata": {
+  "model": "text-embedding-004",
+  "dimensions": 768,
+  "generated_at": "2026-06-21T13:42:24Z"
+}
+13. Corpus Freeze & Release Gate (New)
+To prevent unverified changes from corrupting the production database, exports require passing a corpus freeze gate.
+
+
+[Corpus Ingestion Complete]
+            │
+            ▼
+┌───────────────────────┐
+│     Corpus Freeze     │
+└───────────┬───────────┘
+            │ (Prevents modification of draft collections)
+            ▼
+┌───────────────────────┐
+│   Golden Benchmark    │ ── (Re-evaluates F1 targets: Split >= 0.98, Refs >= 0.98)
+└───────────┬───────────┘
+            │ (Must Pass)
+            ▼
+┌───────────────────────┐
+│ Retrieval Evaluation  │ ── (Checks Recall@5 >= 0.85, MRR >= 0.80)
+└───────────┬───────────┘
+            │ (Must Pass)
+            ▼
+┌───────────────────────┐
+│ Export & Receipt Sign │ ── (Writes data/export/release_receipt.json)
+└───────────────────────┘
+Release Receipt Schema (data/export/release_receipt.json)
+json
+
+{
+  "corpus_version": "6.0.0",
+  "release_date": "2026-06-21T13:42:24Z",
+  "git_commit": "d4e2a18f6c382e71...",
+  "checksum": "e2c3d4...", // SHA-256 hash of the entire export payload
+  "benchmark_results": {
+    "golden_split_f1": 0.99,
+    "golden_ref_f1": 0.98,
+    "retrieval_recall_at_5": 0.87,
+    "retrieval_mrr": 0.82
+  }
+}
+14. MongoDB Schema Design (Revised)
+Collection: egyptian_law_articles
+json
+
+{
+  "_id": "EG_CIVIL_CODE_ART_147",
+  "law_id": "EG_CIVIL_CODE",
+  "law_name": "القانون المدني المصري",
+  "law_number": "131 لسنة 1948",
+  
+  "article_number": 147,
+  "article_number_display": "147",
+  "title": "القوة الملزمة للعقد",
+  
+  "book": "الكتاب الأول: مصادر الالتزام",
+  "chapter": "الباب الثالث: آثار العقد",
+  "section": null,
+  
+  "text": "العقد شريعة المتعاقدين، فلا يجوز نقضه ولا تعديله إلا باتفاق الطرفين أو للأسباب التي يقررها القانون...",
+  
+  "keywords": ["تعديل العقد", "إلغاء العقد", "اتفاق الطرفين", "نقض العقد", "شريعة المتعاقدين"],
+  "synonyms": ["تغيير الاتفاقية", "مراجعة البنود", "تعديل الالتزامات"],
+  "concepts": ["binding_force", "contract_modification", "hardship"],
+  
+  "applicable_to": ["civil", "commercial", "employment", "lease"],
+  "article_type": "substantive",
+  
+  "explicit_cross_refs": [
+    {"law_id": "EG_CIVIL_CODE", "article_number": 148, "target_id": "EG_CIVIL_CODE_ART_148"},
+    {"law_id": "EG_CIVIL_CODE", "article_number": 158, "target_id": "EG_CIVIL_CODE_ART_158"}
+  ],
+  
+  "semantic_cross_refs": [
+    {
+      "target_id": "EG_RENT_LAW_ART_18", 
+      "relationship": "restriction", 
+      "description": "تقيد قوانين إيجار الأماكن الاستثنائية سلطة إنهاء العقود المنصوص عليها في القواعد العامة للمدني"
+    }
+  ],
+  
+  "valid_from": "1948-10-15",
+  "valid_to": "2999-12-31",
+  "is_current_version": true,
+  "law_version": "2024",
+  "supersedes": null,
+  "superseded_by": null,
+  "is_repealed": false,
+  
+  "embedding": [0.0125, -0.0456, 0.1287], // text-embedding-004, 768 dimensions
+  
+  "metadata": {
+    "corpus_version": "6.0.0",
+    "extraction_engine": "gemini-3.5-flash",
+    "extraction_confidence": 0.94,
+    "extraction_date": "2026-06-21",
+    "enrichment_model": "gemini-3.5-flash",
+    "validation_status": "passed",
+    "human_reviewed": false,
+    "source_pdf_hash": "a8f3b6...c28f7d",
+    "pipeline_version": "1.4.2",
+    "prompt_version": "1.2.0",
+    "taxonomy_version": "1.0.3",
+    "model_version": "gemini-3.5-flash-001",
+    "extraction_run_id": "8fc8d2-4b2a...",
+    "git_commit_hash": "d4e2a18f..."
+  }
+}
+Collection: egyptian_law_chunks
+json
+
+{
+  "_id": "EG_CIVIL_CODE_ART_147_CHK_0",
+  "article_id": "EG_CIVIL_CODE_ART_147",
+  "chunk_id": "EG_CIVIL_CODE_ART_147_CHK_0",
+  "chunk_index": 0,
+  "text": "العقد شريعة المتعاقدين، فلا يجوز نقضه ولا تعديله إلا باتفاق الطرفين أو للأسباب التي يقررها القانون...",
+  "token_count": 420,
+  "embedding": [0.0094, -0.0381, 0.1102],
+  "metadata": {
+    "law_id": "EG_CIVIL_CODE",
+    "concepts": ["binding_force", "contract_modification"],
+    "applicable_to": ["civil", "commercial"]
+  }
+}
+15. Architectural Quality Review (New)
+Scalability Analysis
+MongoDB Indexing: Compound indexes target (law_id, is_current_version, concepts) and (applicable_to, article_type) to keep query speeds consistent as new laws are indexed.
+Token Constraints: Splitting long documents into parent-linked chunks prevents context limit violations during retrieval and downstream LLM inference.
+Local Candidate Prefiltering: Ranking candidate matches using local BM25 and concept overlaps before running validation minimizes API scaling bottlenecks.
+Reproducibility Audit
+Prompt Hash Checks: Prompts are matched against SHA-256 hashes in config/prompts_registry.json before execution, ensuring identical inputs.
+Git State Verification: All metadata arrays include the active git commit hash, linking outputs to exact source code states.
+Retrieval Quality Checks
+Retrieval Test Bench: Measures search quality metrics (Recall@5, Precision@5, MRR) against 150 target queries, preventing quality regression.
+Dual-Layer Retrieval: Combines semantic chunk-level matching with full parent-article retrieval to balance precise retrieval with complete context for downstream reasoning.
+Legal Traceability
+Cleanup Audit Trails: Regex actions write match records to data/cleanup_audit_logs/, providing accountability for text modifications.
+Validation Error Taxonomy: Normalizes errors into structured codes, streamlining manual review and automated fixes.
+Future Law Amendment Support
+Temporal Validity Mapping: Attaches valid_from and valid_to date stamps to article versions, supporting historical reconstructions.
+Linage Registries: Manages amendment history in a separate registry config to support structural updates.
