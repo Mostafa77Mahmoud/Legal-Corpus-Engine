@@ -1,0 +1,87 @@
+Before implementation begins, perform one final production-readiness review of the V7 architecture.
+
+Do NOT add new subsystems.
+
+Do NOT reintroduce any V6 components that were intentionally removed.
+
+Your task is only to identify implementation risks that could negatively affect extraction quality, article splitting accuracy, retrieval quality, cost efficiency, or maintainability.
+
+Specifically review the following areas:
+
+1. PDF Extraction Strategy
+
+Evaluate whether Gemini should be used for every PDF by default.
+
+Consider the following alternative workflow:
+
+* Attempt native extraction first using PyMuPDF
+* Calculate extraction confidence
+* Only fallback to Gemini OCR when confidence falls below threshold
+
+Determine whether this hybrid approach improves:
+
+* Cost
+* Speed
+* Accuracy
+* Operational reliability
+
+If approved, update the extraction architecture accordingly.
+
+---
+
+2. Chunking Strategy
+
+Review the current fixed-size chunking approach.
+
+Determine whether chunking should:
+
+* Respect article paragraph boundaries
+* Prefer semantic paragraph grouping
+* Use maximum token limits only as a secondary constraint
+
+The goal is maximizing retrieval quality while minimizing implementation complexity.
+
+Provide the simplest production-ready chunking strategy.
+
+---
+
+3. Golden Benchmark Construction
+
+Review whether the Golden Benchmark should be created before implementation or after the first successful pilot law.
+
+Recommend the lowest-risk sequence of execution.
+
+---
+
+4. Pilot Law Selection
+
+Review all available source laws:
+
+* Egyptian Civil Code
+* Commercial Law
+* Labor Law
+* Evidence Law
+* Civil Procedure Law
+* Penal Code
+* Personal Data Protection Law
+* Electronic Signature Law
+* Rent Law
+* Intellectual Property Law
+
+Recommend the optimal implementation order.
+
+The objective is to discover extraction and splitting failures as early as possible.
+
+---
+
+Output:
+
+A. Critical Changes Required Before Coding Starts
+
+B. Optional Improvements
+
+C. Approved Final V7 Architecture
+
+D. Recommended Pilot Execution Order
+
+Keep recommendations practical and implementation-focused.
