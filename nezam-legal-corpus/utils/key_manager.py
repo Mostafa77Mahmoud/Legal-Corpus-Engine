@@ -14,6 +14,7 @@ Singleton access via get_manager().
 """
 
 import logging
+import os
 import threading
 import time
 from dataclasses import dataclass, field
@@ -22,7 +23,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-COOLDOWN_SECONDS = 60 * 60  # 60 minutes
+COOLDOWN_SECONDS = int(os.environ.get("KEY_COOLDOWN_SECONDS", str(60 * 60)))  # default 60 min
 _POLL_INTERVAL = 30          # seconds between exhaustion-wait checks
 
 _LOG_DIR = Path(__file__).parent.parent / "logs"

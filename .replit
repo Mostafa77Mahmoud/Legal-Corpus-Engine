@@ -30,3 +30,8 @@ externalPort = 80
 [nix]
 channel = "stable-25_05"
 packages = ["freetype", "gumbo", "harfbuzz", "jbig2dec", "libjpeg_turbo", "mupdf", "openjpeg", "swig", "xcbuild"]
+
+[userenv]
+
+[userenv.shared]
+GEMINI_API_KEYS = "AIzaSyDJm9k5CgLHufTqHMAzkg_UOw6PRjIHVe4,AIzaSyAKQhrOR-VsKjFvg2X1B2A4uz8W4Jc5NAk,AIzaSyAnQG2_QLbdHoTbGQYpMIMpCnzeX8rzTQQ,AIzaSyCMqz15Ykz4Lxxx6-E190NP_HLT3i7ftCY,AIzaSyD51-rYgMitjeQYW-Y8mgt-L1jq-y1PiaE,AIzaSyDRHyJR0k-_7Y5WGFfpAgNOgvAcBKBrwhM"

@@ -46,8 +46,13 @@ def replacement_char_density(text: str) -> float:
 
 
 def count_article_markers(text: str) -> int:
-    pattern = re.compile(r"(?:مادة|المادة)\s+(?:\d+|[٠-٩]+)", re.MULTILINE)
-    return len(pattern.findall(text))
+    # Primary form: مادة 5 / المادة 5
+    primary = re.compile(r"(?:مادة|المادة)\s+(?:\d+|[٠-٩]+)", re.MULTILINE)
+    # Abbreviated form: ما5 / ما 6  — found in garbled/encoding-broken PDFs
+    # Negative lookahead prevents matching inside words like مال، ماء، ماهر
+    abbreviated = re.compile(r"(?<!\w)ما\s{0,3}(?=\d)(?:\d+|[٠-٩]+)", re.MULTILINE)
+    hits = set(primary.findall(text)) | set(abbreviated.findall(text))
+    return len(hits)
 
 
 def count_structural_headings(text: str) -> int:

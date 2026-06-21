@@ -61,9 +61,10 @@ def _extract_pymupdf(pdf_path: Path) -> tuple[str, int]:
     pages: list[str] = []
     for page in doc:
         pages.append(page.get_text("text"))
+    page_count = len(doc)
     doc.close()
     text = "\n\n".join(p.strip() for p in pages if p.strip())
-    return text, len(doc)
+    return text, page_count
 
 
 def _quick_confidence(text: str, law_entry: LawEntry) -> float:

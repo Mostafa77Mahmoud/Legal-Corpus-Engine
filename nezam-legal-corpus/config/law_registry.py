@@ -44,7 +44,8 @@ LAW_REGISTRY: dict[str, LawEntry] = {
         pdf_filename="EG_ESIGN.pdf",
         expected_article_count=32,
         repealed_articles=[],
-        expected_chapter_headings=4,
+        expected_chapter_headings=0,
+        notes="PDF has Arabic ligature encoding defect — garbled text, Gemini OCR required",
     ),
     "EG_LABOR": LawEntry(
         law_id="EG_LABOR",
