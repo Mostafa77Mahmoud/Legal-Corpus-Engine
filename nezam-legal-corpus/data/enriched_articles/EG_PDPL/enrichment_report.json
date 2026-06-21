@@ -1,0 +1,10 @@
+{
+  "law_id": "EG_PDPL",
+  "total_articles": 56,
+  "enriched": 0,
+  "skipped_cache": 56,
+  "failed": 0,
+  "total_cost_usd": 0.0,
+  "enriched_at": "2026-06-21T15:32:10.775087+00:00",
+  "model": "gemini-3.5-flash"
+}

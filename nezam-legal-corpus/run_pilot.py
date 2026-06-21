@@ -30,7 +30,14 @@ from rich import box
 
 from config.law_registry import get_law
 from config.settings import RAW_PDFS_DIR, RAW_TXTS_DIR
-from pipeline import stage_1_extract, stage_1_3_cleanup, stage_1_5_val_extract
+from pipeline import (
+    stage_1_extract,
+    stage_1_3_cleanup,
+    stage_1_5_val_extract,
+    stage_2_split,
+    stage_2_5_val_split,
+    stage_3_enrich,
+)
 from utils.cost_tracker import CostTracker
 
 logging.basicConfig(
@@ -124,12 +131,97 @@ def main() -> None:
         ))
         sys.exit(2)
 
+    # ── Stage 2: Article Splitting ────────────────────────────────────────────
+    console.rule("[bold blue]Stage 2: Article Splitting")
+    articles, split_report = stage_2_split.run(law_entry=law_entry)
+    _print_split_report(split_report)
+
+    # ── Stage 2.5: Split Validation ───────────────────────────────────────────
+    console.rule("[bold blue]Stage 2.5: Split Validation")
+    val_report = stage_2_5_val_split.run(
+        law_entry=law_entry,
+        articles=articles,
+        split_report=split_report,
+    )
+    _print_validation_report(val_report)
+
+    if not val_report.passed:
+        console.print(Panel(
+            f"[bold red]{val_report.error_count} error(s) found in split output.[/]\n"
+            f"Review [yellow]data/split_articles/{law_entry.law_id}/validation_report.json[/] "
+            f"before proceeding.",
+            title="⚠ Split Validation Failed",
+            border_style="red",
+        ))
+        sys.exit(3)
+
+    # ── Stage 3: Metadata Enrichment ─────────────────────────────────────────
+    console.rule("[bold blue]Stage 3: Metadata Enrichment")
+    enrich_report = stage_3_enrich.run(
+        law_entry=law_entry,
+        cost_tracker=cost_tracker,
+    )
+    _print_enrich_report(enrich_report)
+    _print_cost_report(cost_tracker)
+
+    # ── Final summary ─────────────────────────────────────────────────────────
+    status_color = "green" if enrich_report.failed == 0 else "yellow"
     console.print(Panel.fit(
         f"[bold green]✓ All stages passed.[/]\n"
         f"Confidence: [bold]{confidence_report.confidence_score:.4f}[/]  |  "
-        f"Ready for Stage 2 (Article Splitting)",
+        f"Articles: [bold]{split_report.articles_found}[/]  |  "
+        f"Enriched: [bold {status_color}]{enrich_report.enriched + enrich_report.skipped_cache}[/]  |  "
+        f"Cost: [bold yellow]${cost_tracker.summary()['total_cost_usd']:.4f}[/]",
         border_style="green",
     ))
+
+
+def _print_split_report(report) -> None:
+    console.print()
+    table = Table(box=box.SIMPLE, show_header=False)
+    table.add_column("Field", style="dim", width=30)
+    table.add_column("Value")
+
+    match_color = "green" if report.articles_found == report.expected_article_count else "yellow"
+    table.add_row("Articles found", f"[{match_color}]{report.articles_found}[/]")
+    table.add_row("Expected", str(report.expected_article_count))
+    table.add_row("  Issuance articles", str(report.issuance_count))
+    table.add_row("  Main articles", str(report.main_count))
+    table.add_row("Orphan text (chars)", str(report.orphan_text_chars))
+    table.add_row("Marker types found", str(report.marker_kinds))
+    table.add_row("Split source", report.split_source)
+    console.print(table)
+
+
+def _print_validation_report(report) -> None:
+    console.print()
+    passed_label = "[bold green]PASS ✓[/]" if report.passed else "[bold red]FAIL ✗[/]"
+
+    summary = Table(box=box.SIMPLE, show_header=False)
+    summary.add_column("", style="dim", width=30)
+    summary.add_column("")
+    summary.add_row("Articles checked", str(report.articles_checked))
+    summary.add_row("Errors", f"[{'red' if report.error_count else 'green'}]{report.error_count}[/]")
+    summary.add_row("Warnings", f"[{'yellow' if report.warning_count else 'green'}]{report.warning_count}[/]")
+    summary.add_row("Result", passed_label)
+    console.print(summary)
+
+    if report.issues:
+        console.print()
+        issue_table = Table(box=box.SIMPLE, show_header=True)
+        issue_table.add_column("Code", style="dim", width=6)
+        issue_table.add_column("Severity", width=8)
+        issue_table.add_column("Name", width=22)
+        issue_table.add_column("Description")
+        for issue in report.issues:
+            sev_color = "red" if issue.severity == "error" else "yellow"
+            issue_table.add_row(
+                issue.code,
+                f"[{sev_color}]{issue.severity}[/]",
+                issue.name,
+                issue.description,
+            )
+        console.print(issue_table)
 
 
 def _print_extraction_report(result) -> None:
@@ -210,6 +302,24 @@ def _print_confidence_report(report) -> None:
     summary.add_row("Result", passed_label)
     summary.add_row("Manual review required", review_label)
     console.print(summary)
+
+
+def _print_enrich_report(report) -> None:
+    console.print()
+    table = Table(box=box.SIMPLE, show_header=False)
+    table.add_column("Field", style="dim", width=30)
+    table.add_column("Value")
+
+    enriched_ok = report.enriched + report.skipped_cache
+    fail_color = "red" if report.failed else "green"
+    table.add_row("Total articles", str(report.total_articles))
+    table.add_row("  Newly enriched", str(report.enriched))
+    table.add_row("  Loaded from cache", str(report.skipped_cache))
+    table.add_row("  Failed", f"[{fail_color}]{report.failed}[/]")
+    table.add_row("Coverage", f"[bold]{enriched_ok}/{report.total_articles}[/]")
+    table.add_row("Model", report.model)
+    table.add_row("Stage 3 cost (USD)", f"${report.total_cost_usd:.6f}")
+    console.print(table)
 
 
 def _print_cost_report(tracker: CostTracker) -> None:

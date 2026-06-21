@@ -1,0 +1,4 @@
+- [Stage-2 regex patterns](stage2-regex.md) — _MD prefix, [ \t]* not \s*, markdown-aware matching
+- [Stage-2.5 thresholds](stage25-thresholds.md) — E005/E006 downgraded to warnings; W003 ≥50 articles
+- [Stage-1 cache](stage1-cache.md) — PDF extraction cache hit skips Gemini OCR; uses out_txt + out_meta
+- [EG_ESIGN OCR gap](esign-ocr-gap.md) — Gemini OCR misses 2 issuance articles; expected_article_count=30 not 32

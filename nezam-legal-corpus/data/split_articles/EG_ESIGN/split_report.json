@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_ESIGN",
+  "articles_found": 30,
+  "expected_article_count": 30,
+  "issuance_count": 0,
+  "main_count": 30,
+  "orphan_text_chars": 201,
+  "marker_kinds": {
+    "primary": 30
+  },
+  "split_source": "regex",
+  "split_at": "2026-06-21T15:15:34.429908+00:00"
+}

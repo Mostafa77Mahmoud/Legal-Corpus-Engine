@@ -1,0 +1,14 @@
+{
+  "law_id": "EG_PDPL",
+  "articles_found": 56,
+  "expected_article_count": 56,
+  "issuance_count": 7,
+  "main_count": 49,
+  "orphan_text_chars": 239,
+  "marker_kinds": {
+    "ordinal": 7,
+    "paren_digit": 49
+  },
+  "split_source": "regex",
+  "split_at": "2026-06-21T15:32:10.736126+00:00"
+}

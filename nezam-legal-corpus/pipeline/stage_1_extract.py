@@ -141,42 +141,56 @@ def run(
                     f"Place the PDF at: data/raw_pdfs/{law_entry.pdf_filename}"
                 )
 
-            if force_ocr:
-                logger.info("[%s] Force OCR mode — skipping PyMuPDF.", law_entry.law_id)
-                pymupdf_confidence = 0.0
-            else:
-                logger.info("[%s] Attempting PyMuPDF extraction…", law_entry.law_id)
-                pymupdf_text, page_count = _extract_pymupdf(pdf_path)
-                pymupdf_confidence = _quick_confidence(pymupdf_text, law_entry)
+            # ── Cache hit: skip extraction if raw output already exists ───────
+            if not force_ocr and out_txt.exists() and out_meta.exists():
+                meta = json.loads(out_meta.read_text(encoding="utf-8"))
+                raw_text = out_txt.read_text(encoding="utf-8")
+                extraction_source = meta.get("extraction_source", "cached")
+                extraction_model = meta.get("extraction_model")
+                page_count = meta.get("page_count", 0)
                 logger.info(
-                    "[%s] PyMuPDF confidence: %.4f (threshold: %.2f)",
-                    law_entry.law_id, pymupdf_confidence, CONFIDENCE_THRESHOLD,
+                    "[%s] Cache hit — reusing %s extraction (%d chars). "
+                    "Pass force_ocr=True to re-extract.",
+                    law_entry.law_id, extraction_source, len(raw_text),
                 )
-
-            if not force_ocr and pymupdf_confidence >= CONFIDENCE_THRESHOLD:
-                logger.info("[%s] ✓ PyMuPDF meets threshold — no Gemini call needed.", law_entry.law_id)
-                raw_text = pymupdf_text
-                extraction_source = "pymupdf"
             else:
-                reason = "force_ocr" if force_ocr else f"low confidence ({pymupdf_confidence:.4f})"
-                logger.info("[%s] Falling back to Gemini OCR (%s)…", law_entry.law_id, reason)
-                raw_text = ocr_pdf(
-                    pdf_path=pdf_path,
-                    prompt=OCR_PROMPT,
-                    cost_tracker=cost_tracker,
-                    stage="stage_1",
-                    law_id=law_entry.law_id,
-                    model_name=PRIMARY_MODEL,
-                )
-                extraction_source = "gemini_ocr"
-                extraction_model = PRIMARY_MODEL
-                if page_count == 0:
-                    try:
-                        doc = fitz.open(str(pdf_path))
-                        page_count = len(doc)
-                        doc.close()
-                    except Exception:
-                        page_count = 0
+                # No cache — run PyMuPDF then fall back to Gemini if needed
+                pymupdf_confidence = 0.0
+                if force_ocr:
+                    logger.info("[%s] Force OCR mode — skipping PyMuPDF.", law_entry.law_id)
+                else:
+                    logger.info("[%s] Attempting PyMuPDF extraction…", law_entry.law_id)
+                    pymupdf_text, page_count = _extract_pymupdf(pdf_path)
+                    pymupdf_confidence = _quick_confidence(pymupdf_text, law_entry)
+                    logger.info(
+                        "[%s] PyMuPDF confidence: %.4f (threshold: %.2f)",
+                        law_entry.law_id, pymupdf_confidence, CONFIDENCE_THRESHOLD,
+                    )
+
+                if not force_ocr and pymupdf_confidence >= CONFIDENCE_THRESHOLD:
+                    logger.info("[%s] ✓ PyMuPDF meets threshold — no Gemini call needed.", law_entry.law_id)
+                    raw_text = pymupdf_text
+                    extraction_source = "pymupdf"
+                else:
+                    reason = "force_ocr" if force_ocr else f"low confidence ({pymupdf_confidence:.4f})"
+                    logger.info("[%s] Falling back to Gemini OCR (%s)…", law_entry.law_id, reason)
+                    raw_text = ocr_pdf(
+                        pdf_path=pdf_path,
+                        prompt=OCR_PROMPT,
+                        cost_tracker=cost_tracker,
+                        stage="stage_1",
+                        law_id=law_entry.law_id,
+                        model_name=PRIMARY_MODEL,
+                    )
+                    extraction_source = "gemini_ocr"
+                    extraction_model = PRIMARY_MODEL
+                    if page_count == 0:
+                        try:
+                            doc = fitz.open(str(pdf_path))
+                            page_count = len(doc)
+                            doc.close()
+                        except Exception:
+                            page_count = 0
 
         out_txt.write_text(raw_text, encoding="utf-8")
         logger.info("[%s] Raw text saved → %s (%d chars)", law_entry.law_id, out_txt.name, len(raw_text))

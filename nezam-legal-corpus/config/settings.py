@@ -22,6 +22,8 @@ RAW_TXTS_DIR = DATA_DIR / "raw_txts"
 EXTRACTED_RAW_DIR = DATA_DIR / "extracted_raw"
 EXTRACTED_CLEAN_DIR = DATA_DIR / "extracted_clean"
 CLEANUP_AUDIT_DIR = DATA_DIR / "cleanup_audit_logs"
+SPLIT_ARTICLES_DIR    = DATA_DIR / "split_articles"
+ENRICHED_ARTICLES_DIR = DATA_DIR / "enriched_articles"
 
 
 def _load_api_keys() -> list[str]:

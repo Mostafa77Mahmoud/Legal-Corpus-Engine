@@ -1,0 +1,18 @@
+{
+  "law_id": "EG_PDPL",
+  "articles_checked": 56,
+  "passed": true,
+  "error_count": 0,
+  "warning_count": 1,
+  "issues": [
+    {
+      "code": "E005",
+      "severity": "warning",
+      "name": "OVERSIZED_ARTICLE",
+      "description": "Article 1 has 660 words (median=70, ceiling=500) — review manually: may be a merged split or a genuine long article",
+      "article_number": 1,
+      "article_id": "EG_PDPL_008"
+    }
+  ],
+  "validated_at": "2026-06-21T15:32:10.751747+00:00"
+}
