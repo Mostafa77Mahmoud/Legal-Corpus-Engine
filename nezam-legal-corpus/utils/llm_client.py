@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 _RATE_LIMIT_CODES = {429}
 _TRANSIENT_CODES = {500, 503, 504}
+_INVALID_KEY_CODES = {403}
 
 
 def _is_rate_limit(exc: Exception) -> bool:
@@ -48,6 +49,14 @@ def _is_rate_limit(exc: Exception) -> bool:
         return exc.code in _RATE_LIMIT_CODES
     msg = str(exc).upper()
     return "RESOURCE_EXHAUSTED" in msg or "429" in msg
+
+
+def _is_invalid_key(exc: Exception) -> bool:
+    """Leaked, revoked, or permission-denied keys — rotate and permanently disable."""
+    if isinstance(exc, genai_errors.APIError):
+        return exc.code in _INVALID_KEY_CODES
+    msg = str(exc).upper()
+    return "403" in msg or "PERMISSION_DENIED" in msg or "API_KEY_INVALID" in msg
 
 
 def _is_transient(exc: Exception) -> bool:
@@ -109,6 +118,16 @@ def generate_text(
                 new_key = manager.get_available_key_or_wait()
                 new_suffix = f"****{new_key[-3:]}"
                 cost_tracker.record_rotation(key_suffix, new_suffix, "RESOURCE_EXHAUSTED")
+                transient_backoff = GEMINI_RETRY_BASE_DELAY
+                continue
+
+            if _is_invalid_key(exc):
+                logger.warning("[%s] Key %s is invalid/leaked — disabling permanently.", stage, key_suffix)
+                manager.mark_permanently_disabled(current_key, reason=str(exc)[:120])
+                cost_tracker.record_key_failure(key_suffix)
+                new_key = manager.get_available_key_or_wait()
+                new_suffix = f"****{new_key[-3:]}"
+                cost_tracker.record_rotation(key_suffix, new_suffix, "INVALID_KEY")
                 transient_backoff = GEMINI_RETRY_BASE_DELAY
                 continue
 
@@ -187,6 +206,13 @@ def ocr_pdf(
                 manager.mark_rate_limited(pinned_key, reason="RESOURCE_EXHAUSTED on upload")
                 cost_tracker.record_key_failure(key_suffix)
                 continue
+            if _is_invalid_key(exc):
+                logger.warning(
+                    "[%s] Key %s is invalid/leaked during upload — disabling permanently.", stage, key_suffix
+                )
+                manager.mark_permanently_disabled(pinned_key, reason=str(exc)[:120])
+                cost_tracker.record_key_failure(key_suffix)
+                continue
             raise
 
         transient_backoff = GEMINI_RETRY_BASE_DELAY
@@ -232,6 +258,23 @@ def ocr_pdf(
                     new_key = manager.get_available_key_or_wait()
                     new_suffix = f"****{new_key[-3:]}"
                     cost_tracker.record_rotation(key_suffix, new_suffix, "RESOURCE_EXHAUSTED")
+                    try:
+                        client.files.delete(name=uploaded.name)
+                    except Exception:
+                        pass
+                    break  # exit inner loop → restart outer loop with new key
+
+                if _is_invalid_key(exc):
+                    logger.warning(
+                        "[%s] Key %s is invalid/leaked during generation — "
+                        "disabling permanently and re-uploading with new key.",
+                        stage, key_suffix,
+                    )
+                    manager.mark_permanently_disabled(pinned_key, reason=str(exc)[:120])
+                    cost_tracker.record_key_failure(key_suffix)
+                    new_key = manager.get_available_key_or_wait()
+                    new_suffix = f"****{new_key[-3:]}"
+                    cost_tracker.record_rotation(key_suffix, new_suffix, "INVALID_KEY")
                     try:
                         client.files.delete(name=uploaded.name)
                     except Exception:

@@ -57,8 +57,11 @@ class _KeyRecord:
     def is_available(self) -> bool:
         if not self._rate_limited:
             return True
+        # _cooldown_end=None with _rate_limited=True → permanently disabled
+        if self._cooldown_end is None:
+            return False
         now = time.time()
-        if self._cooldown_end is not None and now >= self._cooldown_end:
+        if now >= self._cooldown_end:
             self._rate_limited = False
             self._cooldown_end = None
             logger.info("Key %s cooldown expired — returned to pool.", self.suffix)
@@ -111,6 +114,24 @@ class KeyManager:
             logger.warning(
                 "Key %s rate-limited (%s). Cooldown for %d min.",
                 old_suffix, reason, COOLDOWN_SECONDS // 60,
+            )
+
+    def mark_permanently_disabled(self, key: str, reason: str = "INVALID_KEY") -> None:
+        """Permanently remove a key from the pool (leaked / revoked keys)."""
+        with self._lock:
+            record = self._record_for(key)
+            if record is None:
+                return
+            record._rate_limited = True
+            record._cooldown_end = None   # None + _rate_limited=True → never recovers
+            record.total_failures += 1
+            self._rotation_log.info(
+                "DISABLED  %s  reason=%s",
+                record.suffix, reason,
+            )
+            logger.warning(
+                "Key %s permanently disabled: %s.",
+                record.suffix, reason,
             )
 
     def rotate_key(self) -> str | None:
