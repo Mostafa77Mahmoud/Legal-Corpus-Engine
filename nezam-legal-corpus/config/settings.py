@@ -6,11 +6,15 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).parent.parent
 
-PRIMARY_MODEL = os.getenv("PRIMARY_MODEL", "gemini-2.0-flash")
+PRIMARY_MODEL = os.getenv("PRIMARY_MODEL", "gemini-3.5-flash")
 EMBEDDING_MODEL = "text-embedding-004"
 
 CONFIDENCE_THRESHOLD = 0.85
 PYMUPDF_MIN_CHARS = 200
+
+# Rate-limit cooldown durations
+KEY_RPM_COOLDOWN_SECONDS = int(os.getenv("KEY_RPM_COOLDOWN_SECONDS", "65"))    # per-minute quota: wait ~1 min
+KEY_RPD_COOLDOWN_SECONDS = int(os.getenv("KEY_RPD_COOLDOWN_SECONDS", "86400")) # per-day quota: wait 24 h
 
 DATA_DIR = BASE_DIR / "data"
 RAW_PDFS_DIR = DATA_DIR / "raw_pdfs"
@@ -32,9 +36,9 @@ def _load_api_keys() -> list[str]:
 
 GEMINI_API_KEYS: list[str] = _load_api_keys()
 
-# gemini-2.5-flash pricing (as of 2025)
-GEMINI_FLASH_INPUT_COST_PER_1M = 0.15    # USD per 1M input tokens
-GEMINI_FLASH_OUTPUT_COST_PER_1M = 0.60   # USD per 1M output tokens
+# gemini-3.5-flash pricing (as of 2025) — https://ai.google.dev/gemini-api/docs/models
+GEMINI_FLASH_INPUT_COST_PER_1M = 0.25    # USD per 1M input tokens (non-thinking)
+GEMINI_FLASH_OUTPUT_COST_PER_1M = 1.00   # USD per 1M output tokens (non-thinking)
 GEMINI_FLASH_IMAGE_COST_PER_PAGE = 0.00258
 
 GEMINI_MAX_RETRIES = 20

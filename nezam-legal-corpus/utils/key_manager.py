@@ -116,21 +116,52 @@ class KeyManager:
                 old_suffix, reason, COOLDOWN_SECONDS // 60,
             )
 
-    def mark_rpm_limited(self, key: str, cooldown_seconds: int = 90) -> None:
+    def mark_rpm_limited(self, key: str, cooldown_seconds: int | None = None) -> None:
         """Short cooldown for per-minute quota hits (RPM limit, not daily quota)."""
+        from config.settings import KEY_RPM_COOLDOWN_SECONDS
+        secs = cooldown_seconds if cooldown_seconds is not None else KEY_RPM_COOLDOWN_SECONDS
         with self._lock:
             record = self._record_for(key)
             if record is None or record._rate_limited:
                 return
             record._rate_limited = True
-            record._cooldown_end = time.time() + cooldown_seconds
+            record._cooldown_end = time.time() + secs
             record.total_failures += 1
             self._rotation_log.info(
-                "RPM_LIMITED  %s  cooldown=%ds", record.suffix, cooldown_seconds,
+                "RPM_LIMITED  %s  cooldown=%ds", record.suffix, secs,
             )
             logger.warning(
                 "Key %s RPM-limited. Cooldown for %ds.",
-                record.suffix, cooldown_seconds,
+                record.suffix, secs,
+            )
+
+    def mark_daily_quota_exhausted(self, key: str) -> None:
+        """Long cooldown for per-day quota hits (RPD limit) — waits until UTC midnight."""
+        from config.settings import KEY_RPD_COOLDOWN_SECONDS
+        import datetime as _dt
+        now = time.time()
+        # Try to align with UTC midnight; fallback to KEY_RPD_COOLDOWN_SECONDS
+        try:
+            utc_now = _dt.datetime.utcnow()
+            next_midnight = (_dt.datetime(utc_now.year, utc_now.month, utc_now.day)
+                            + _dt.timedelta(days=1))
+            secs = max(int((next_midnight - utc_now).total_seconds()) + 60, KEY_RPD_COOLDOWN_SECONDS)
+        except Exception:
+            secs = KEY_RPD_COOLDOWN_SECONDS
+        with self._lock:
+            record = self._record_for(key)
+            if record is None or record._rate_limited:
+                return
+            record._rate_limited = True
+            record._cooldown_end = now + secs
+            record.total_failures += 1
+            self._rotation_log.info(
+                "RPD_EXHAUSTED  %s  cooldown=%ds (~%.1fh)",
+                record.suffix, secs, secs / 3600,
+            )
+            logger.warning(
+                "Key %s daily quota exhausted. Cooldown for %.1f h (until UTC midnight).",
+                record.suffix, secs / 3600,
             )
 
     def mark_permanently_disabled(self, key: str, reason: str = "INVALID_KEY") -> None:

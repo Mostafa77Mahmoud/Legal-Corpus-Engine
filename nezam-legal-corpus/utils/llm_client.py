@@ -51,6 +51,16 @@ def _is_rate_limit(exc: Exception) -> bool:
     return "RESOURCE_EXHAUSTED" in msg or "429" in msg
 
 
+def _is_daily_quota(exc: Exception) -> bool:
+    """True when the 429 is a per-day RPD exhaustion (not a per-minute RPM burst)."""
+    msg = str(exc).upper()
+    rpm_keywords = ("PER MINUTE", "PER-MINUTE", "MINUTE", "RPM", "REQUESTS_PER_MINUTE")
+    if any(k in msg for k in rpm_keywords):
+        return False          # it's an RPM hit → short cooldown
+    rpd_keywords = ("QUOTA", "BILLING", "PLAN", "PER DAY", "DAILY", "RPD")
+    return any(k in msg for k in rpd_keywords)
+
+
 def _is_invalid_key(exc: Exception) -> bool:
     """Leaked, revoked, or permission-denied keys — rotate and permanently disable."""
     if isinstance(exc, genai_errors.APIError):
@@ -112,12 +122,16 @@ def generate_text(
 
         except Exception as exc:
             if _is_rate_limit(exc):
-                logger.warning("[%s] Key %s hit rate limit — rotating.", stage, key_suffix)
-                manager.mark_rate_limited(current_key, reason="RESOURCE_EXHAUSTED")
+                if _is_daily_quota(exc):
+                    logger.warning("[%s] Key %s daily quota exhausted — rotating.", stage, key_suffix)
+                    manager.mark_daily_quota_exhausted(current_key)
+                else:
+                    logger.warning("[%s] Key %s hit RPM limit — rotating.", stage, key_suffix)
+                    manager.mark_rpm_limited(current_key)
                 cost_tracker.record_key_failure(key_suffix)
                 new_key = manager.get_available_key_or_wait()
                 new_suffix = f"****{new_key[-3:]}"
-                cost_tracker.record_rotation(key_suffix, new_suffix, "RESOURCE_EXHAUSTED")
+                cost_tracker.record_rotation(key_suffix, new_suffix, "RATE_LIMIT")
                 transient_backoff = GEMINI_RETRY_BASE_DELAY
                 continue
 
@@ -248,7 +262,23 @@ def ocr_pdf(
 
             except Exception as exc:
                 if _is_rate_limit(exc):
-                    # First 2 attempts: short wait, retry same key (RPM limit)
+                    if _is_daily_quota(exc):
+                        # Daily quota (RPD) — rotate immediately, long cooldown
+                        logger.warning(
+                            "[%s] Key %s daily quota exhausted during generation — rotating key.",
+                            stage, key_suffix,
+                        )
+                        manager.mark_daily_quota_exhausted(pinned_key)
+                        cost_tracker.record_key_failure(key_suffix)
+                        new_key = manager.get_available_key_or_wait()
+                        new_suffix = f"****{new_key[-3:]}"
+                        cost_tracker.record_rotation(key_suffix, new_suffix, "RPD_EXHAUSTED")
+                        try:
+                            client.files.delete(name=uploaded.name)
+                        except Exception:
+                            pass
+                        break  # exit inner loop → restart outer loop with new key
+                    # RPM burst — retry same key up to 2 times with short wait
                     if gen_attempt < 2:
                         wait_secs = 30 * (gen_attempt + 1)
                         logger.warning(
@@ -257,12 +287,12 @@ def ocr_pdf(
                         )
                         time.sleep(wait_secs)
                         continue
-                    # After 2 retries: mark RPM-limited (90s) and rotate key
+                    # Exhausted RPM retries → mark & rotate
                     logger.warning(
                         "[%s] Key %s exhausted RPM retries — rotating key.",
                         stage, key_suffix,
                     )
-                    manager.mark_rpm_limited(pinned_key, cooldown_seconds=90)
+                    manager.mark_rpm_limited(pinned_key)
                     cost_tracker.record_key_failure(key_suffix)
                     new_key = manager.get_available_key_or_wait()
                     new_suffix = f"****{new_key[-3:]}"
