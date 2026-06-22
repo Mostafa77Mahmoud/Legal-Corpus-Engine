@@ -25,6 +25,7 @@ CLEANUP_AUDIT_DIR = DATA_DIR / "cleanup_audit_logs"
 SPLIT_ARTICLES_DIR    = DATA_DIR / "split_articles"
 ENRICHED_ARTICLES_DIR = DATA_DIR / "enriched_articles"
 CHUNKS_DIR            = DATA_DIR / "chunks"
+HUMAN_REVIEW_DIR      = DATA_DIR / "human_review"
 
 
 def _load_api_keys() -> list[str]:

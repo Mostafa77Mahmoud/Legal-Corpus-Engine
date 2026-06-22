@@ -38,6 +38,7 @@ from pipeline import (
     stage_2_5_val_split,
     stage_3_enrich,
     stage_3_7_chunk,
+    stage_4_human_review,
 )
 from utils.cost_tracker import CostTracker
 
@@ -170,6 +171,11 @@ def main() -> None:
     chunk_report = stage_3_7_chunk.run(law_entry=law_entry)
     _print_chunk_report(chunk_report)
 
+    # ── Stage 4: Human Review Export ─────────────────────────────────────────
+    console.rule("[bold blue]Stage 4: Human Review Export")
+    review_report = stage_4_human_review.run(law_entry=law_entry)
+    _print_review_report(review_report)
+
     # ── Final summary ─────────────────────────────────────────────────────────
     enrich_status = "green" if enrich_report.failed == 0 else "yellow"
     console.print(Panel.fit(
@@ -178,7 +184,8 @@ def main() -> None:
         f"Articles: [bold]{split_report.articles_found}[/]  |  "
         f"Enriched: [bold {enrich_status}]{enrich_report.enriched + enrich_report.skipped_cache}[/]  |  "
         f"Chunks: [bold]{chunk_report.total_chunks}[/]  |  "
-        f"Cost: [bold yellow]${cost_tracker.summary()['total_cost_usd']:.4f}[/]",
+        f"Cost: [bold yellow]${cost_tracker.summary()['total_cost_usd']:.4f}[/]\n"
+        f"Review files: [bold cyan]{review_report.output_dir}[/]",
         border_style="green",
     ))
 
@@ -325,6 +332,35 @@ def _print_chunk_report(report) -> None:
     table.add_row("Max words / chunk", str(report.max_chunk_words))
     table.add_row("Min words / chunk", str(report.min_chunk_words))
     console.print(table)
+
+
+def _print_review_report(report) -> None:
+    console.print()
+    table = Table(box=box.SIMPLE, show_header=False)
+    table.add_column("Field", style="dim", width=30)
+    table.add_column("Value")
+
+    err_color = "red" if report.enrichment_errors else "green"
+    table.add_row("Law",                  report.law_name_ar)
+    table.add_row("Total articles",       str(report.total_articles))
+    table.add_row("  Issuance articles",  str(report.issuance_articles))
+    table.add_row("  Main articles",      str(report.main_articles))
+    table.add_row("Enrichment errors",    f"[{err_color}]{report.enrichment_errors}[/]")
+    table.add_row("Total chunks",         str(report.total_chunks))
+    table.add_row("  Multi-chunk arts.",  str(report.multi_chunk_articles))
+    table.add_row("Output dir",           f"[cyan]{report.output_dir}[/]")
+    console.print(table)
+
+    console.print(Panel.fit(
+        "[bold]Review files ready:[/]\n"
+        "  articles_review.json / .csv   — مراجعة المواد والـ metadata\n"
+        "  chunks_review.json / .csv     — مراجعة الـ chunks\n"
+        "  review_manifest.json          — ملخص وتعليمات المراجعة\n\n"
+        "املأ [bold cyan]review_status[/] (approved / needs_edit / rejected) "
+        "و [bold cyan]review_notes[/] لكل سجل.",
+        border_style="cyan",
+        title="Stage 4 ✓",
+    ))
 
 
 def _print_enrich_report(report) -> None:
