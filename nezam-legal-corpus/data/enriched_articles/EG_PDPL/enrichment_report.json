@@ -5,6 +5,8 @@
   "skipped_cache": 56,
   "failed": 0,
   "total_cost_usd": 0.0,
-  "enriched_at": "2026-06-22T13:28:43.613544+00:00",
-  "model": "gemini-3.5-flash"
+  "enriched_at": "2026-06-22T14:55:36.577380+00:00",
+  "model": "gemini-3.5-flash",
+  "batch_size": 10,
+  "total_api_calls": 0
 }

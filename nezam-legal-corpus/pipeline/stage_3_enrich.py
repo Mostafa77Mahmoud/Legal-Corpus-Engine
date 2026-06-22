@@ -1,29 +1,45 @@
 """
-Stage 3 — Metadata Enrichment  (Batch Mode)
-=============================================
+Stage 3 — Metadata Enrichment  (Batch Mode + Structured Output)
+================================================================
 Input:  data/split_articles/{LAW_ID}/articles.json
 Output: data/enriched_articles/{LAW_ID}/articles.json
         data/enriched_articles/{LAW_ID}/enrichment_report.json
 
-بدلاً من إرسال مادة واحدة لكل Gemini call، يُرسل هذا الـ stage
-ENRICH_BATCH_SIZE مادة في طلب واحد (افتراضي: 10).
+التحسينات المطبّقة (بناءً على Google AI documentation):
+══════════════════════════════════════════════════════════
+1. Structured Output عبر response_schema:
+   - API يضمن JSON صالحاً دائماً — لا parsing هش ولا regex
+   - Schema يعرّف enum لـ article_category → لا تصنيفات خاطئة
+   - propertyOrdering لضمان ترتيب ثابت في الـ output
 
-فوائد الـ batch:
-- تخفيض API calls بنسبة ~85% لـ 56 مادة (56 → 6 calls)
-- تخفيض التكلفة: system prompt يُرسل مرة واحدة لكل batch
-- سرعة أعلى: أقل delays وأقل تعاملات مع rate limits
-- سياق مشترك: Gemini يرى مجموعة مواد فيكون أكثر اتساقاً في التصنيف
+2. System Instruction محسّن:
+   - دور المحلل القانوني المصري (منفصل عن مهمة التحليل)
+   - شرح مفصّل لكل تصنيف من article_category مع أمثلة
+   - يمنع الـ model من الخلط بين التصنيفات المتشابهة
+
+3. Batch Prompt محسّن:
+   - XML tags لتحديد حدود كل مادة (أفضل من Markdown)
+   - مختصر — الـ role والقواعد في system_instruction
+   - استخدام article_id كـ key في الـ prompt
+
+4. max_output_tokens = 16384 للـ batch:
+   - 10 مواد × ~400 token output = ~4000 token
+   - 16384 يوفر هامش أمان كافياً
+
+5. temperature = 0.0:
+   - مهام extraction و classification = لا إبداع مطلوب
+   - greedy decoding → أقصى دقة في الـ output
+   - مؤكّد من Google docs: "0 or less than 1 for JSON extraction"
 
 آلية الـ fallback:
-- إذا فشل الـ batch → إعادة المحاولة مادة مادة للمواد الفاشلة فقط
-- الـ cache يعمل على مستوى المادة الفردية (article_id)
-- حفظ تلقائي بعد كل batch (crash-safe)
+- batch فشل → single call لكل مادة منفردة
+- single call فشل → ArticleMetadata فارغة مع رسالة خطأ
+- حفظ بعد كل batch (crash-safe)
 """
 
 from __future__ import annotations
 
 import json
-import re
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -31,6 +47,7 @@ from typing import Any
 
 from config.law_registry import LawEntry
 from config.settings import (
+    ENRICH_BATCH_MAX_TOKENS,
     ENRICH_BATCH_SIZE,
     ENRICHED_ARTICLES_DIR,
     PRIMARY_MODEL,
@@ -43,82 +60,129 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# ── Valid values ───────────────────────────────────────────────────────────────
+# ── Valid category values (mirrors schema enum) ───────────────────────────────
 
-_VALID_CATEGORIES = {
+_VALID_CATEGORIES = frozenset({
     "تعريف", "حق", "التزام", "إجراء", "عقوبة",
     "تنظيمية", "انتقالية", "إصدار", "أخرى",
+})
+
+
+# ── Structured Output Schemas ─────────────────────────────────────────────────
+# مصدر: https://ai.google.dev/gemini-api/docs/structured-output
+
+_ARTICLE_METADATA_PROPERTIES: dict = {
+    "topic": {
+        "type": "string",
+        "description": "الموضوع الرئيسي للمادة في 2-5 كلمات عربية",
+    },
+    "keywords": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "3-8 مصطلحات قانونية جوهرية مذكورة في نص المادة",
+    },
+    "article_summary": {
+        "type": "string",
+        "description": "ملخص موضوعي للمادة في جملة أو جملتين بالعربية",
+    },
+    "article_category": {
+        "type": "string",
+        "enum": ["تعريف", "حق", "التزام", "إجراء", "عقوبة", "تنظيمية", "انتقالية", "إصدار", "أخرى"],
+        "description": "تصنيف المادة وفق وظيفتها القانونية الرئيسية",
+    },
+    "legal_entities": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "الجهات والهيئات والأشخاص الاعتباريين المذكورون صراحةً",
+    },
 }
+
+_METADATA_REQUIRED = ["topic", "keywords", "article_summary", "article_category", "legal_entities"]
+_METADATA_ORDER    = ["topic", "keywords", "article_summary", "article_category", "legal_entities"]
+
+# Schema للـ batch: مصفوفة كل عنصر فيها {article_id + metadata}
+_BATCH_SCHEMA: dict = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "article_id": {
+                "type": "string",
+                "description": "معرّف المادة كما ورد في الطلب",
+            },
+            **_ARTICLE_METADATA_PROPERTIES,
+        },
+        "required": ["article_id"] + _METADATA_REQUIRED,
+        "propertyOrdering": ["article_id"] + _METADATA_ORDER,
+    },
+    "description": "تحليل كل مادة قانونية بنفس ترتيب ورودها",
+}
+
+# Schema للـ single: object واحد بدون article_id
+_SINGLE_SCHEMA: dict = {
+    "type": "object",
+    "properties": _ARTICLE_METADATA_PROPERTIES,
+    "required": _METADATA_REQUIRED,
+    "propertyOrdering": _METADATA_ORDER,
+}
+
+
+# ── System Instruction ─────────────────────────────────────────────────────────
+# منفصل عن المهمة — يعرّف الدور ومنهجية التصنيف
+# مصدر best practice: Google AI prompting strategies doc
+
+_SYSTEM_INSTRUCTION = """\
+أنت محلل قانوني متخصص في التشريعات المصرية وعلوم الفقه والقانون.
+
+## دورك
+تحليل وتصنيف نصوص القانون المصري بدقة عالية لبناء قاعدة بيانات قانونية آلية.
+
+## معايير التصنيف (article_category)
+
+اختر التصنيف الأدق لوظيفة المادة القانونية الرئيسية:
+
+| التصنيف | الوظيفة | مثال |
+|---------|---------|------|
+| **تعريف** | تعرّف مصطلحاً أو تحدد نطاق التطبيق | "يُقصد بالبيانات الشخصية..." |
+| **حق** | يمنح حقاً أو يحمي مصلحة للأفراد | "للمواطن الحق في الاطلاع على..." |
+| **التزام** | يفرض واجباً أو حظراً على جهة | "يلتزم المتحكم بالإخطار خلال..." |
+| **إجراء** | يصف خطوات عملية أو وقائع إدارية | "تتولى الهيئة إصدار التراخيص..." |
+| **عقوبة** | جزاءات ومخالفات وغرامات | "يعاقب بالغرامة من..." |
+| **تنظيمية** | هياكل تنظيمية واختصاصات الجهات | "تُنشأ هيئة مستقلة تتبع..." |
+| **انتقالية** | أحكام مؤقتة أو خاصة بالتطبيق | "تستمر الأوضاع القائمة لمدة..." |
+| **إصدار** | ديباجة القانون أو صيغة الإصدار | "رئيس الجمهورية، بعد الاطلاع..." |
+| **أخرى** | لا ينطبق عليها أي مما سبق | — |
+
+## قواعد الجودة
+- **keywords**: مصطلحات من داخل النص فقط، لا تضف مصطلحات خارجية
+- **legal_entities**: الجهات المذكورة صراحةً في نص المادة فقط
+- **article_summary**: موضوعي ومحايد، بصيغة المضارع المبني للمعلوم\
+"""
 
 
 # ── Prompts ────────────────────────────────────────────────────────────────────
 
-# Prompt للـ batch (يرسل أكثر من مادة في طلب واحد)
-_BATCH_PROMPT_HEADER = """\
-أنت نظام ذكاء اصطناعي متخصص في تحليل النصوص القانونية المصرية.
+_BATCH_PROMPT = """\
+حلّل المواد القانونية التالية من قانون {law_name}.
+أعد مصفوفة JSON تحتوي تحليل كل مادة بنفس ترتيبها.
 
-حلل المواد القانونية التالية من {law_name} وأعد إجابتك بتنسيق JSON فقط.
-
-قواعد صارمة:
-- article_category: اختر واحدة بالضبط من: تعريف | حق | التزام | إجراء | عقوبة | تنظيمية | انتقالية | إصدار | أخرى
-- keywords: 3-8 مصطلحات قانونية جوهرية من نص المادة (لا أقل من 3)
-- legal_entities: الجهات والهيئات والأشخاص الاعتباريين المذكورون فقط (قائمة فارغة [] إذا لا يوجد)
-- article_summary: جملة أو جملتان بالعربية تلخص المادة
-- topic: 2-5 كلمات عربية تصف موضوع المادة الرئيسي
-- أعد JSON فقط — لا تكتب أي نص خارج الـ JSON
-
-## المواد ({count} مادة):
-
+<articles law="{law_id}" count="{count}">
 {articles_block}
-
-## المطلوب:
-أعد JSON object مفتاحه article_id يحتوي تحليل كل مادة:
-
-{{
-  "ARTICLE_ID_1": {{
-    "topic": "...",
-    "keywords": ["...", "..."],
-    "article_summary": "...",
-    "article_category": "...",
-    "legal_entities": ["..."]
-  }},
-  "ARTICLE_ID_2": {{ ... }}
-}}
+</articles>\
 """
 
-_ARTICLE_BLOCK_TEMPLATE = """\
-### [{article_id}] — نوع: {article_type}
+_ARTICLE_BLOCK = """\
+  <article id="{article_id}" type="{article_type}" words="{word_count}">
 {text}
+  </article>\
 """
 
-# Prompt الاحتياطي للمادة الواحدة (fallback)
 _SINGLE_PROMPT = """\
-أنت نظام ذكاء اصطناعي متخصص في تحليل النصوص القانونية المصرية.
+حلّل المادة القانونية التالية من قانون {law_name}.
 
-حلل المادة القانونية التالية وأعد إجابتك بتنسيق JSON فقط.
-
-معلومات القانون:
-- اسم القانون: {law_name}
-- معرّف المادة: {article_id}
-- نوع المادة: {article_type}
-
-نص المادة:
+<article id="{article_id}" type="{article_type}" law="{law_id}">
 {text}
-
-أعد JSON بالتنسيق التالي بالضبط (بدون أي نص إضافي قبله أو بعده):
-{{
-  "topic": "الموضوع الرئيسي للمادة في 2-5 كلمات عربية",
-  "keywords": ["مصطلح1", "مصطلح2", "مصطلح3"],
-  "article_summary": "ملخص المادة في جملة أو جملتين.",
-  "article_category": "تعريف",
-  "legal_entities": ["كيان1", "كيان2"]
-}}
-
-قواعد صارمة:
-- article_category: اختر واحدة بالضبط من: تعريف | حق | التزام | إجراء | عقوبة | تنظيمية | انتقالية | إصدار | أخرى
-- keywords: 3-8 مصطلحات قانونية جوهرية من نص المادة
-- legal_entities: الجهات والهيئات والأشخاص الاعتباريين المذكورون (قائمة فارغة [] إذا لا يوجد)
-- أعد JSON فقط — لا تكتب أي شيء خارج الـ JSON
+</article>\
 """
 
 
@@ -149,34 +213,17 @@ class EnrichmentReport:
     total_api_calls: int
 
 
-# ── JSON parsing helpers ───────────────────────────────────────────────────────
+# ── Metadata parsing ───────────────────────────────────────────────────────────
 
-def _strip_fences(raw: str) -> str:
-    """Remove markdown code fences from Gemini response."""
-    raw = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.MULTILINE)
-    raw = re.sub(r"\s*```\s*$", "", raw, flags=re.MULTILINE)
-    return raw.strip()
-
-
-def _extract_json_object(raw: str) -> dict[str, Any]:
-    """Extract the outermost JSON object from a string."""
-    raw = _strip_fences(raw)
-    start = raw.find("{")
-    end = raw.rfind("}") + 1
-    if start == -1 or end == 0:
-        raise ValueError("No JSON object found in response")
-    return json.loads(raw[start:end])
-
-
-def _parse_single_metadata(data: dict[str, Any], model: str) -> ArticleMetadata:
-    """Convert a parsed JSON dict into ArticleMetadata."""
+def _parse_metadata(data: dict[str, Any], model: str) -> ArticleMetadata:
+    """Convert a JSON dict from structured output into ArticleMetadata."""
     category = data.get("article_category", "أخرى")
     if category not in _VALID_CATEGORIES:
         category = "أخرى"
     return ArticleMetadata(
         topic=str(data.get("topic", ""))[:100],
         keywords=[str(k)[:80] for k in data.get("keywords", [])[:10]],
-        article_summary=str(data.get("article_summary", ""))[:500],
+        article_summary=str(data.get("article_summary", ""))[:600],
         article_category=category,
         legal_entities=[str(e)[:80] for e in data.get("legal_entities", [])[:15]],
         enrichment_model=model,
@@ -185,20 +232,20 @@ def _parse_single_metadata(data: dict[str, Any], model: str) -> ArticleMetadata:
 
 # ── Batch enrichment ──────────────────────────────────────────────────────────
 
-def _build_batch_prompt(
-    articles: list[dict[str, Any]],
-    law_name: str,
-) -> str:
-    """Build a single prompt that asks Gemini to enrich multiple articles at once."""
+def _build_batch_prompt(articles: list[dict[str, Any]], law_entry: LawEntry) -> str:
     blocks = []
     for art in articles:
-        blocks.append(_ARTICLE_BLOCK_TEMPLATE.format(
+        text = art.get("text", "").strip()
+        wc = len(text.split())
+        blocks.append(_ARTICLE_BLOCK.format(
             article_id=art["article_id"],
             article_type=art.get("article_type", "main"),
-            text=art.get("text", "").strip(),
+            word_count=wc,
+            text=text,
         ))
-    return _BATCH_PROMPT_HEADER.format(
-        law_name=law_name,
+    return _BATCH_PROMPT.format(
+        law_name=law_entry.law_name_ar,
+        law_id=law_entry.law_id,
         count=len(articles),
         articles_block="\n".join(blocks),
     )
@@ -211,36 +258,36 @@ def _enrich_batch(
     model: str,
 ) -> dict[str, ArticleMetadata]:
     """
-    Send a batch of articles to Gemini in one call.
+    Send a batch of articles in ONE Gemini call using structured output.
 
-    Returns a dict mapping article_id → ArticleMetadata.
-    Articles missing from the response are NOT included in the returned dict
-    (caller should fall back to single enrichment for those).
+    Returns dict[article_id → ArticleMetadata].
+    Missing article_ids in the response are excluded (caller will fallback).
     """
-    prompt = _build_batch_prompt(articles, law_entry.law_name_ar)
+    prompt = _build_batch_prompt(articles, law_entry)
     raw = generate_text(
         prompt=prompt,
         cost_tracker=cost_tracker,
         stage="stage_3",
         law_id=law_entry.law_id,
         model_name=model,
+        temperature=0.0,
+        max_output_tokens=ENRICH_BATCH_MAX_TOKENS,
+        response_schema=_BATCH_SCHEMA,
+        system_instruction=_SYSTEM_INSTRUCTION,
     )
 
-    try:
-        parsed = _extract_json_object(raw)
-    except Exception as exc:
-        raise ValueError(f"Batch JSON parse failed: {exc}\nRaw response snippet: {raw[:300]}")
-
+    # Structured output → guaranteed valid JSON array
+    parsed_list: list[dict[str, Any]] = json.loads(raw)
     results: dict[str, ArticleMetadata] = {}
-    for art in articles:
-        aid = art["article_id"]
-        if aid not in parsed:
-            logger.warning("[%s] Batch response missing article %s — will fallback", law_entry.law_id, aid)
+
+    for item in parsed_list:
+        aid = item.get("article_id", "")
+        if not aid:
             continue
         try:
-            results[aid] = _parse_single_metadata(parsed[aid], model)
+            results[aid] = _parse_metadata(item, model)
         except Exception as exc:
-            logger.warning("[%s] Failed to parse batch result for %s: %s", law_entry.law_id, aid, exc)
+            logger.warning("[%s] Failed to parse batch item for %s: %s", law_entry.law_id, aid, exc)
 
     return results
 
@@ -251,12 +298,13 @@ def _enrich_single(
     cost_tracker: CostTracker,
     model: str,
 ) -> ArticleMetadata:
-    """Fallback: enrich a single article with its own Gemini call."""
+    """Fallback: enrich a single article in its own Gemini call."""
     prompt = _SINGLE_PROMPT.format(
         law_name=law_entry.law_name_ar,
         article_id=article["article_id"],
         article_type=article.get("article_type", "main"),
-        text=article.get("text", ""),
+        law_id=law_entry.law_id,
+        text=article.get("text", "").strip(),
     )
     raw = generate_text(
         prompt=prompt,
@@ -264,12 +312,39 @@ def _enrich_single(
         stage="stage_3",
         law_id=law_entry.law_id,
         model_name=model,
+        temperature=0.0,
+        max_output_tokens=2048,
+        response_schema=_SINGLE_SCHEMA,
+        system_instruction=_SYSTEM_INSTRUCTION,
     )
     try:
-        data = _extract_json_object(raw)
-        return _parse_single_metadata(data, model)
+        data = json.loads(raw)
+        return _parse_metadata(data, model)
     except Exception as exc:
         return ArticleMetadata(enrichment_model=model, enrichment_error=str(exc))
+
+
+# ── Output assembly ───────────────────────────────────────────────────────────
+
+def _assemble_output(
+    articles: list[dict[str, Any]],
+    cached_by_id: dict[str, dict[str, Any]],
+    enriched_meta: dict[str, ArticleMetadata],
+    model: str,
+) -> list[dict[str, Any]]:
+    result = []
+    for art in articles:
+        aid = art["article_id"]
+        if aid in enriched_meta:
+            result.append({**art, **asdict(enriched_meta[aid])})
+        elif aid in cached_by_id:
+            result.append(cached_by_id[aid])
+        else:
+            result.append({
+                **art,
+                **asdict(ArticleMetadata(enrichment_model=model, enrichment_error="not_reached")),
+            })
+    return result
 
 
 # ── Public run function ───────────────────────────────────────────────────────
@@ -282,16 +357,16 @@ def run(
     delay_seconds: float = 1.0,
 ) -> EnrichmentReport:
     """
-    Enrich all articles for *law_entry* with Gemini-generated metadata.
+    Enrich all articles for *law_entry* with AI-generated metadata.
 
     Parameters
     ----------
     force_reenrich : bool
-        If True, re-enrich even articles that have cached metadata.
+        If True, ignore cache and re-enrich all articles.
     batch_size : int
-        Number of articles per Gemini call (default: ENRICH_BATCH_SIZE from settings).
+        Articles per Gemini call (default: ENRICH_BATCH_SIZE=10).
     delay_seconds : float
-        Sleep between batch calls to respect rate limits.
+        Sleep between batch calls for rate-limit courtesy.
     """
     model = PRIMARY_MODEL
 
@@ -317,33 +392,26 @@ def run(
         except Exception:
             pass
 
-    # ── Separate cached vs. need-enrichment ──────────────────────────────────
-    to_enrich: list[dict[str, Any]] = []
-    for art in articles:
-        if art["article_id"] in cached_by_id and not force_reenrich:
-            pass   # will be filled from cache when assembling output
-        else:
-            to_enrich.append(art)
+    to_enrich = [a for a in articles if a["article_id"] not in cached_by_id or force_reenrich]
 
     logger.info(
-        "[%s] Stage 3: %d articles total — %d cached, %d to enrich (batch_size=%d)",
+        "[%s] Stage 3: %d total | %d cached | %d to enrich | batch=%d",
         law_entry.law_id, len(articles), len(cached_by_id), len(to_enrich), batch_size,
     )
 
-    # ── Batch enrichment ──────────────────────────────────────────────────────
-    enriched_meta: dict[str, ArticleMetadata] = {}   # article_id → metadata
+    # ── Batch enrichment loop ─────────────────────────────────────────────────
+    enriched_meta: dict[str, ArticleMetadata] = {}
     total_api_calls = 0
+    total_batches = (len(to_enrich) + batch_size - 1) // batch_size
 
-    # Process in batches
     for batch_start in range(0, len(to_enrich), batch_size):
         batch = to_enrich[batch_start: batch_start + batch_size]
-        batch_ids = [a["article_id"] for a in batch]
         batch_num = batch_start // batch_size + 1
-        total_batches = (len(to_enrich) + batch_size - 1) // batch_size
 
         logger.info(
-            "[%s] Batch %d/%d — articles %s … %s",
-            law_entry.law_id, batch_num, total_batches, batch_ids[0], batch_ids[-1],
+            "[%s] Batch %d/%d: %s → %s",
+            law_entry.law_id, batch_num, total_batches,
+            batch[0]["article_id"], batch[-1]["article_id"],
         )
 
         # ── Try batch call ────────────────────────────────────────────────────
@@ -351,55 +419,51 @@ def run(
         try:
             batch_results = _enrich_batch(batch, law_entry, cost_tracker, model)
             total_api_calls += 1
+            logger.info(
+                "[%s] Batch %d OK: %d/%d articles returned",
+                law_entry.law_id, batch_num, len(batch_results), len(batch),
+            )
         except Exception as exc:
             logger.warning(
-                "[%s] Batch %d failed (%s) — falling back to single-article mode for %d articles",
-                law_entry.law_id, batch_num, exc, len(batch),
+                "[%s] Batch %d failed (%s) — falling back to single-article mode",
+                law_entry.law_id, batch_num, exc,
             )
 
-        # ── Fallback: single call for any article missing from batch result ───
+        # ── Fallback for missing articles ─────────────────────────────────────
         for art in batch:
             aid = art["article_id"]
             if aid in batch_results:
                 enriched_meta[aid] = batch_results[aid]
-            else:
-                logger.info("[%s] Single fallback for %s", law_entry.law_id, aid)
-                try:
-                    meta = _enrich_single(art, law_entry, cost_tracker, model)
-                    total_api_calls += 1
-                except Exception as exc:
-                    logger.error("[%s] Single enrichment failed for %s: %s", law_entry.law_id, aid, exc)
-                    meta = ArticleMetadata(enrichment_model=model, enrichment_error=str(exc))
-                enriched_meta[aid] = meta
-                time.sleep(0.5)   # small delay between single calls
+                continue
 
-        # ── Save after each batch (crash-safe) ───────────────────────────────
+            logger.info("[%s] Single fallback for %s", law_entry.law_id, aid)
+            try:
+                meta = _enrich_single(art, law_entry, cost_tracker, model)
+                total_api_calls += 1
+            except Exception as exc:
+                logger.error("[%s] Single failed for %s: %s", law_entry.law_id, aid, exc)
+                meta = ArticleMetadata(enrichment_model=model, enrichment_error=str(exc))
+            enriched_meta[aid] = meta
+            time.sleep(0.5)
+
+        # ── Crash-safe save after each batch ──────────────────────────────────
         assembled = _assemble_output(articles, cached_by_id, enriched_meta, model)
         out_path.write_text(json.dumps(assembled, ensure_ascii=False, indent=2), encoding="utf-8")
 
-        # Rate-limit courtesy delay between batches
         if batch_start + batch_size < len(to_enrich):
             time.sleep(delay_seconds)
 
-    # ── Final assembly ────────────────────────────────────────────────────────
-    enriched_articles = _assemble_output(articles, cached_by_id, enriched_meta, model)
-    out_path.write_text(json.dumps(enriched_articles, ensure_ascii=False, indent=2), encoding="utf-8")
-
-    # ── Stats ─────────────────────────────────────────────────────────────────
-    enriched_count = sum(
-        1 for aid, m in enriched_meta.items() if not m.enrichment_error
-    )
-    failed_count = sum(
-        1 for aid, m in enriched_meta.items() if m.enrichment_error
-    )
-    skipped_count = len(articles) - len(to_enrich)
+    # ── Final stats ───────────────────────────────────────────────────────────
+    enriched_ok  = sum(1 for m in enriched_meta.values() if not m.enrichment_error)
+    failed_count = sum(1 for m in enriched_meta.values() if m.enrichment_error)
+    skipped      = len(articles) - len(to_enrich)
 
     stage_cost = cost_tracker.summary().get("by_stage", {}).get("stage_3", {}).get("cost_usd", 0.0)
     report = EnrichmentReport(
         law_id=law_entry.law_id,
         total_articles=len(articles),
-        enriched=enriched_count,
-        skipped_cache=skipped_count,
+        enriched=enriched_ok,
+        skipped_cache=skipped,
         failed=failed_count,
         total_cost_usd=stage_cost,
         enriched_at=datetime.now(timezone.utc).isoformat(),
@@ -407,35 +471,12 @@ def run(
         batch_size=batch_size,
         total_api_calls=total_api_calls,
     )
-
-    report_path = out_dir / "enrichment_report.json"
-    report_path.write_text(json.dumps(asdict(report), ensure_ascii=False, indent=2), encoding="utf-8")
+    (out_dir / "enrichment_report.json").write_text(
+        json.dumps(asdict(report), ensure_ascii=False, indent=2), encoding="utf-8",
+    )
 
     logger.info(
-        "[%s] Stage 3 done — %d enriched, %d cached, %d failed | %d API calls | cost $%.4f",
-        law_entry.law_id, enriched_count, skipped_count, failed_count, total_api_calls, stage_cost,
+        "[%s] Stage 3 done — enriched=%d cached=%d failed=%d | %d API calls | $%.4f",
+        law_entry.law_id, enriched_ok, skipped, failed_count, total_api_calls, stage_cost,
     )
     return report
-
-
-def _assemble_output(
-    articles: list[dict[str, Any]],
-    cached_by_id: dict[str, dict[str, Any]],
-    enriched_meta: dict[str, ArticleMetadata],
-    model: str,
-) -> list[dict[str, Any]]:
-    """Merge original article data with enrichment metadata, preserving order."""
-    result = []
-    for art in articles:
-        aid = art["article_id"]
-        if aid in enriched_meta:
-            result.append({**art, **asdict(enriched_meta[aid])})
-        elif aid in cached_by_id:
-            result.append(cached_by_id[aid])
-        else:
-            # Article not enriched and not cached — write with empty metadata
-            result.append({
-                **art,
-                **asdict(ArticleMetadata(enrichment_model=model, enrichment_error="not_reached")),
-            })
-    return result

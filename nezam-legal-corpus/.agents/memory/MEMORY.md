@@ -2,3 +2,8 @@
 - [Stage-2.5 thresholds](stage25-thresholds.md) — E005/E006 downgraded to warnings; W003 ≥50 articles
 - [Stage-1 cache](stage1-cache.md) — PDF extraction cache hit skips Gemini OCR; uses out_txt + out_meta
 - [EG_ESIGN OCR gap](esign-ocr-gap.md) — Gemini OCR misses 2 issuance articles; expected_article_count=30 not 32
+- [Pipeline architecture](pipeline-architecture.md) — 9-stage Python pipeline, Stages 1→4 built+tested on EG_PDPL (56 articles, 61 chunks)
+- [LLM client design](llm-client-design.md) — key rotation, rate-limit handling, response_schema + system_instruction params added in generate_text()
+- [Stage 3 batch enrichment](stage3-batch.md) — 10 articles/call, structured output array schema, ~89% API call reduction, XML-tagged prompt
+- [Gemini params for legal Arabic](gemini-params.md) — temperature=0.0 extraction/classification, 0.1 semantic chunking; response_schema eliminates JSON parsing
+- [Stage 3.7 chunking modes](chunking-modes.md) — rule-based (default, free) vs semantic (SEMANTIC_CHUNKING=true, Gemini), 250-word limit

@@ -87,12 +87,35 @@ def generate_text(
     model_name: str = PRIMARY_MODEL,
     temperature: float = 0.0,
     max_output_tokens: int = 8192,
+    response_schema: dict | None = None,
+    system_instruction: str | None = None,
 ) -> str:
+    """
+    Generate text from Gemini.
+
+    Parameters
+    ----------
+    response_schema : dict | None
+        JSON Schema dict for structured output.
+        When provided, the API guarantees a valid JSON response matching the
+        schema — no regex parsing needed. Sets response_mime_type automatically.
+    system_instruction : str | None
+        System instruction (role/persona). Kept separate from the user prompt
+        per Google best practices for clarity and model performance.
+    """
     manager = _km.get_manager()
-    config = types.GenerateContentConfig(
-        temperature=temperature,
-        max_output_tokens=max_output_tokens,
-    )
+
+    config_kwargs: dict = {
+        "temperature": temperature,
+        "max_output_tokens": max_output_tokens,
+    }
+    if response_schema is not None:
+        config_kwargs["response_mime_type"] = "application/json"
+        config_kwargs["response_schema"] = response_schema
+    if system_instruction is not None:
+        config_kwargs["system_instruction"] = system_instruction
+
+    config = types.GenerateContentConfig(**config_kwargs)
     transient_backoff = GEMINI_RETRY_BASE_DELAY
 
     for attempt in range(GEMINI_MAX_RETRIES):

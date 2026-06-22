@@ -6,7 +6,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).parent.parent
 
-PRIMARY_MODEL = os.getenv("PRIMARY_MODEL", "gemini-3.5-flash")
+PRIMARY_MODEL = os.getenv("PRIMARY_MODEL", "gemini-2.5-flash")
 EMBEDDING_MODEL = "text-embedding-004"
 
 CONFIDENCE_THRESHOLD = 0.85
@@ -51,6 +51,9 @@ GEMINI_RETRY_BASE_DELAY = 2.0
 # Stage 3 — Batch enrichment
 # عدد المواد المُرسَلة في طلب Gemini واحد (يقلل الـ API calls بنسبة ~85%)
 ENRICH_BATCH_SIZE: int = int(os.getenv("ENRICH_BATCH_SIZE", "10"))
+
+# max_output_tokens لـ Stage 3 batch (10 مواد × ~400 token + overhead JSON)
+ENRICH_BATCH_MAX_TOKENS: int = int(os.getenv("ENRICH_BATCH_MAX_TOKENS", "16384"))
 
 # Stage 3.7 — Semantic chunking
 # عندما True يستخدم Gemini لتقسيم المواد الطويلة بدلاً من الـ regex
