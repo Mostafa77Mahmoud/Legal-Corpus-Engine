@@ -168,7 +168,10 @@ def main() -> None:
 
     # ── Stage 3.7: Chunking ───────────────────────────────────────────────────
     console.rule("[bold blue]Stage 3.7: Chunking")
-    chunk_report = stage_3_7_chunk.run(law_entry=law_entry)
+    chunk_report = stage_3_7_chunk.run(
+        law_entry=law_entry,
+        cost_tracker=cost_tracker,   # مطلوب عند تفعيل SEMANTIC_CHUNKING
+    )
     _print_chunk_report(chunk_report)
 
     # ── Stage 4: Human Review Export ─────────────────────────────────────────
@@ -324,13 +327,16 @@ def _print_chunk_report(report) -> None:
     table.add_column("Field", style="dim", width=30)
     table.add_column("Value")
 
-    table.add_row("Total articles", str(report.total_articles))
-    table.add_row("Total chunks", f"[bold]{report.total_chunks}[/]")
+    table.add_row("Total articles",         str(report.total_articles))
+    table.add_row("Total chunks",           f"[bold]{report.total_chunks}[/]")
     table.add_row("  Single-chunk articles", str(report.single_chunk_articles))
     table.add_row("  Multi-chunk articles",  str(report.multi_chunk_articles))
-    table.add_row("Avg words / chunk", str(report.avg_chunk_words))
-    table.add_row("Max words / chunk", str(report.max_chunk_words))
-    table.add_row("Min words / chunk", str(report.min_chunk_words))
+    table.add_row("Avg words / chunk",      str(report.avg_chunk_words))
+    table.add_row("Max words / chunk",      str(report.max_chunk_words))
+    table.add_row("Min words / chunk",      str(report.min_chunk_words))
+    sem_color = "cyan" if report.semantic_chunks > 0 else "dim"
+    table.add_row("  Rule-based chunks",    str(report.rule_based_chunks))
+    table.add_row("  Semantic chunks",      f"[{sem_color}]{report.semantic_chunks}[/]")
     console.print(table)
 
 
@@ -371,13 +377,15 @@ def _print_enrich_report(report) -> None:
 
     enriched_ok = report.enriched + report.skipped_cache
     fail_color = "red" if report.failed else "green"
-    table.add_row("Total articles", str(report.total_articles))
-    table.add_row("  Newly enriched", str(report.enriched))
+    table.add_row("Total articles",      str(report.total_articles))
+    table.add_row("  Newly enriched",    str(report.enriched))
     table.add_row("  Loaded from cache", str(report.skipped_cache))
-    table.add_row("  Failed", f"[{fail_color}]{report.failed}[/]")
-    table.add_row("Coverage", f"[bold]{enriched_ok}/{report.total_articles}[/]")
-    table.add_row("Model", report.model)
-    table.add_row("Stage 3 cost (USD)", f"${report.total_cost_usd:.6f}")
+    table.add_row("  Failed",            f"[{fail_color}]{report.failed}[/]")
+    table.add_row("Coverage",            f"[bold]{enriched_ok}/{report.total_articles}[/]")
+    table.add_row("Batch size",          f"[cyan]{report.batch_size} مواد/طلب[/]")
+    table.add_row("Total API calls",     f"[cyan]{report.total_api_calls}[/]  (كان سيكون {report.enriched} بدون batch)")
+    table.add_row("Model",               report.model)
+    table.add_row("Stage 3 cost (USD)",  f"${report.total_cost_usd:.6f}")
     console.print(table)
 
 

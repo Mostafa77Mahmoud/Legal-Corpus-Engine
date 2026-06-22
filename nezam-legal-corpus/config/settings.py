@@ -48,6 +48,15 @@ GEMINI_FLASH_IMAGE_COST_PER_PAGE = 0.00258
 GEMINI_MAX_RETRIES = 20
 GEMINI_RETRY_BASE_DELAY = 2.0
 
+# Stage 3 — Batch enrichment
+# عدد المواد المُرسَلة في طلب Gemini واحد (يقلل الـ API calls بنسبة ~85%)
+ENRICH_BATCH_SIZE: int = int(os.getenv("ENRICH_BATCH_SIZE", "10"))
+
+# Stage 3.7 — Semantic chunking
+# عندما True يستخدم Gemini لتقسيم المواد الطويلة بدلاً من الـ regex
+# يُفعَّل فقط للمواد التي تتجاوز CHUNK_WORD_LIMIT (لا تكلفة إضافية للمواد القصيرة)
+SEMANTIC_CHUNKING: bool = os.getenv("SEMANTIC_CHUNKING", "false").lower() == "true"
+
 OCR_PROMPT = """You are an expert document processing AI specialized in extracting text from PDF and TXT files with maximum accuracy.
 
 ## Your Task

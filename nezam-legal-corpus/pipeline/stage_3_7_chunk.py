@@ -1,21 +1,25 @@
 """
-Stage 3.7 — Article Chunking
-==============================
+Stage 3.7 — Article Chunking  (Rule-based + Optional Semantic Mode)
+=====================================================================
 Input:  data/enriched_articles/{LAW_ID}/articles.json
 Output: data/chunks/{LAW_ID}/chunks.json
         data/chunks/{LAW_ID}/chunking_report.json
 
-Splits each enriched article into semantically coherent chunks suitable
-for vector embeddings.  Chunks respect paragraph and sentence boundaries.
-
-Chunking rules
+وضعان للتقسيم
 --------------
-- Short articles (≤ CHUNK_WORD_LIMIT words)  → single chunk
-- Long articles                               → split by double-newline paragraphs;
-                                                if a paragraph still exceeds the limit,
-                                                split by Arabic sentence boundary (. or ،)
-- Adjacent chunks share an OVERLAP_WORDS overlap window (sliding window)
-- Chunk IDs: {article_id}_C{index:03d}  e.g. EG_PDPL_008_C001
+1. Rule-based (افتراضي، مجاني):
+   - مواد قصيرة (≤ CHUNK_WORD_LIMIT كلمة) → chunk واحد
+   - مواد طويلة → تقسيم على حدود الفقرات، ثم الجمل إذا لزم
+   - نافذة overlap (30 كلمة) بين الـ chunks
+
+2. Semantic (اختياري، يستخدم Gemini):
+   فعّله بـ SEMANTIC_CHUNKING=true أو use_semantic_chunking=True في run()
+   - المواد القصيرة: rule-based بدون تغيير (لا Gemini call)
+   - المواد الطويلة فقط: Gemini يحدد حدود التقسيم الدلالية
+   - المزايا: كل chunk يعالج فكرة قانونية مكتملة، مفهوم بشكل مستقل
+   - التكلفة: call واحد لكل مادة طويلة (عادة 4-10% من المواد)
+
+Chunk IDs: {article_id}_C{index:03d}   مثال: EG_PDPL_008_C001
 """
 
 from __future__ import annotations
@@ -28,18 +32,42 @@ from pathlib import Path
 from typing import Any
 
 from config.law_registry import LawEntry
-from config.settings import CHUNKS_DIR, ENRICHED_ARTICLES_DIR
+from config.settings import CHUNKS_DIR, ENRICHED_ARTICLES_DIR, SEMANTIC_CHUNKING
 
 import logging
 logger = logging.getLogger(__name__)
 
+
 # ── Tuning parameters ─────────────────────────────────────────────────────────
 
-CHUNK_WORD_LIMIT = 250    # target max words per chunk (≈300-400 Arabic tokens)
-OVERLAP_WORDS    = 30     # words of overlap carried into the next chunk
+CHUNK_WORD_LIMIT = 250    # حد الكلمات للـ chunk الواحد (~300-400 token عربي)
+OVERLAP_WORDS    = 30     # كلمات الـ overlap بين الـ chunks المتجاورة
 
-# Sentence boundary pattern — splits on ". " or "، " followed by uppercase/Arabic
 _SENT_RE = re.compile(r"(?<=[.،؟!])\s+")
+
+
+# ── Semantic chunking prompt ──────────────────────────────────────────────────
+
+_SEMANTIC_CHUNK_PROMPT = """\
+أنت متخصص في تحليل النصوص القانونية المصرية.
+
+المادة التالية ({article_id}) من قانون {law_name} تحتاج إلى تقسيم.
+
+نص المادة:
+{text}
+
+مهمتك: قسّم هذا النص إلى أجزاء (chunks) متماسكة دلالياً بحيث:
+- كل chunk يعالج فكرة قانونية واحدة مكتملة
+- كل chunk مفهوم بشكل مستقل دون الحاجة للأجزاء الأخرى
+- لا تحذف أي كلمة من النص — قسّم فقط، لا تعدّل أو تلخص
+- الحد الأقصى: {word_limit} كلمة للـ chunk الواحد
+- الحد الأدنى: 30 كلمة للـ chunk الواحد
+
+أعد JSON array من النصوص فقط — بدون أي كلام خارج الـ JSON:
+["نص الجزء الأول كاملاً...", "نص الجزء الثاني كاملاً...", ...]
+
+تحقق: مجموع كلمات كل الأجزاء يجب أن يساوي تقريباً عدد كلمات النص الأصلي.
+"""
 
 
 # ── Data classes ──────────────────────────────────────────────────────────────
@@ -49,20 +77,20 @@ class Chunk:
     chunk_id: str
     article_id: str
     law_id: str
-    chunk_index: int         # 0-based index within the article
-    chunk_total: int         # total chunks for this article
+    chunk_index: int
+    chunk_total: int
     text: str
     word_count: int
     char_count: int
-    has_overlap: bool        # True if this chunk carries overlap from previous
-    # Inherited article metadata (denormalised for retrieval convenience)
+    has_overlap: bool
+    chunk_method: str           # "rule_based" | "semantic"
     article_number: int
     article_type: str
     article_category: str
     topic: str
-    keywords: list[str]      = field(default_factory=list)
-    legal_entities: list[str] = field(default_factory=list)
-    is_repealed: bool         = False
+    keywords: list[str]        = field(default_factory=list)
+    legal_entities: list[str]  = field(default_factory=list)
+    is_repealed: bool          = False
 
 
 @dataclass
@@ -75,55 +103,43 @@ class ChunkingReport:
     avg_chunk_words: float
     max_chunk_words: int
     min_chunk_words: int
+    semantic_chunks: int        # chunks مُقسَّمة بـ Gemini
+    rule_based_chunks: int      # chunks مُقسَّمة بالـ rule-based
     chunked_at: str
 
 
-# ── Text splitting helpers ────────────────────────────────────────────────────
+# ── Text helpers (rule-based) ─────────────────────────────────────────────────
 
 def _words(text: str) -> list[str]:
     return text.split()
 
 
 def _split_paragraphs(text: str) -> list[str]:
-    """Split on double (or more) newlines; strip each paragraph."""
     parts = re.split(r"\n{2,}", text.strip())
     return [p.strip() for p in parts if p.strip()]
 
 
 def _split_sentences(text: str) -> list[str]:
-    """Split on Arabic sentence boundaries; strip each sentence."""
     parts = _SENT_RE.split(text.strip())
     return [p.strip() for p in parts if p.strip()]
 
 
 def _merge_until_limit(segments: list[str], limit: int) -> list[str]:
-    """
-    Greedily merge consecutive segments into chunks of at most *limit* words.
-    A segment that exceeds *limit* words on its own is kept as one oversized chunk
-    (better than cutting mid-sentence).
-    """
     chunks: list[str] = []
-    current_words: list[str] = []
-
+    current: list[str] = []
     for seg in segments:
         seg_words = _words(seg)
-        if current_words and len(current_words) + len(seg_words) > limit:
-            chunks.append(" ".join(current_words))
-            current_words = seg_words
+        if current and len(current) + len(seg_words) > limit:
+            chunks.append(" ".join(current))
+            current = seg_words
         else:
-            current_words.extend(seg_words)
-
-    if current_words:
-        chunks.append(" ".join(current_words))
-
+            current.extend(seg_words)
+    if current:
+        chunks.append(" ".join(current))
     return chunks
 
 
 def _apply_overlap(raw_chunks: list[str], overlap: int) -> list[tuple[str, bool]]:
-    """
-    Prepend the last *overlap* words of chunk[i-1] to chunk[i].
-    Returns list of (text, has_overlap) tuples.
-    """
     result: list[tuple[str, bool]] = []
     for i, chunk in enumerate(raw_chunks):
         if i == 0 or overlap == 0:
@@ -134,20 +150,15 @@ def _apply_overlap(raw_chunks: list[str], overlap: int) -> list[tuple[str, bool]
     return result
 
 
-def _chunk_article(text: str) -> list[tuple[str, bool]]:
+def _rule_chunk_article(text: str) -> list[tuple[str, bool]]:
     """
-    Return a list of (chunk_text, has_overlap) for one article's text.
+    Rule-based chunking.
+    Returns list of (chunk_text, has_overlap).
     """
-    word_count = len(_words(text))
-
-    # Short article → single chunk, no overlap needed
-    if word_count <= CHUNK_WORD_LIMIT:
+    if len(_words(text)) <= CHUNK_WORD_LIMIT:
         return [(text.strip(), False)]
 
-    # Try paragraph split first
     paragraphs = _split_paragraphs(text)
-
-    # Any paragraph that still exceeds limit → sentence split
     fine_segments: list[str] = []
     for para in paragraphs:
         if len(_words(para)) > CHUNK_WORD_LIMIT:
@@ -155,50 +166,167 @@ def _chunk_article(text: str) -> list[tuple[str, bool]]:
         else:
             fine_segments.append(para)
 
-    # Merge segments into limit-sized chunks
     raw_chunks = _merge_until_limit(fine_segments, CHUNK_WORD_LIMIT)
-
-    # Apply overlap window
     return _apply_overlap(raw_chunks, OVERLAP_WORDS)
+
+
+# ── Semantic chunking (Gemini) ────────────────────────────────────────────────
+
+def _semantic_chunk_article(
+    text: str,
+    article_id: str,
+    law_name: str,
+    cost_tracker: Any,
+    model: str,
+) -> list[tuple[str, bool]] | None:
+    """
+    Use Gemini to split the article text at semantic boundaries.
+
+    Returns list of (chunk_text, has_overlap=False), or None if Gemini call
+    fails (caller should fall back to rule-based).
+    """
+    try:
+        from utils.llm_client import generate_text
+
+        prompt = _SEMANTIC_CHUNK_PROMPT.format(
+            article_id=article_id,
+            law_name=law_name,
+            text=text.strip(),
+            word_limit=CHUNK_WORD_LIMIT,
+        )
+        raw = generate_text(
+            prompt=prompt,
+            cost_tracker=cost_tracker,
+            stage="stage_3_7_semantic",
+            law_id=article_id.rsplit("_", 1)[0],
+            model_name=model,
+        )
+
+        # Parse JSON array
+        raw = raw.strip()
+        raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.MULTILINE)
+        raw = re.sub(r"\s*```\s*$", "", raw, flags=re.MULTILINE)
+        raw = raw.strip()
+
+        start = raw.find("[")
+        end = raw.rfind("]") + 1
+        if start == -1 or end == 0:
+            raise ValueError("No JSON array found in response")
+
+        chunks_raw: list[str] = json.loads(raw[start:end])
+
+        if not chunks_raw or not all(isinstance(c, str) for c in chunks_raw):
+            raise ValueError("Invalid chunk array format")
+
+        # Validate: total words should be close to original (~10% tolerance)
+        original_wc = len(_words(text))
+        returned_wc = sum(len(_words(c)) for c in chunks_raw)
+        if returned_wc < original_wc * 0.85:
+            logger.warning(
+                "[%s] Semantic chunk word count mismatch: original=%d returned=%d — falling back",
+                article_id, original_wc, returned_wc,
+            )
+            return None
+
+        # Semantic chunks have no overlap (boundaries are semantically natural)
+        return [(c.strip(), False) for c in chunks_raw if c.strip()]
+
+    except Exception as exc:
+        logger.warning(
+            "[%s] Semantic chunking failed (%s) — falling back to rule-based",
+            article_id, exc,
+        )
+        return None
 
 
 # ── Public run function ───────────────────────────────────────────────────────
 
-def run(law_entry: LawEntry) -> ChunkingReport:
+def run(
+    law_entry: LawEntry,
+    use_semantic_chunking: bool = SEMANTIC_CHUNKING,
+    cost_tracker: Any = None,
+    model: str | None = None,
+) -> ChunkingReport:
     """
     Chunk all enriched articles for *law_entry*.
 
-    Returns
-    -------
-    ChunkingReport
+    Parameters
+    ----------
+    use_semantic_chunking : bool
+        If True, long articles are chunked by Gemini (semantic boundaries)
+        instead of the rule-based paragraph/sentence splitter.
+        Short articles (≤ CHUNK_WORD_LIMIT words) always use rule-based.
+    cost_tracker : CostTracker | None
+        Required when use_semantic_chunking=True.
+    model : str | None
+        Gemini model name. Defaults to PRIMARY_MODEL from settings.
     """
+    if use_semantic_chunking and cost_tracker is None:
+        raise ValueError("cost_tracker is required when use_semantic_chunking=True")
+
+    if model is None:
+        from config.settings import PRIMARY_MODEL
+        model = PRIMARY_MODEL
+
     # ── Load enriched articles ────────────────────────────────────────────────
     in_path = ENRICHED_ARTICLES_DIR / law_entry.law_id / "articles.json"
     if not in_path.exists():
         raise FileNotFoundError(
-            f"Enriched articles not found: {in_path}\n"
-            f"Run Stage 3 first."
+            f"Enriched articles not found: {in_path}\nRun Stage 3 first."
         )
     articles: list[dict[str, Any]] = json.loads(in_path.read_text(encoding="utf-8"))
 
-    # ── Chunk each article ────────────────────────────────────────────────────
     out_dir = CHUNKS_DIR / law_entry.law_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
     all_chunks: list[dict[str, Any]] = []
     single_chunk_count = 0
     multi_chunk_count  = 0
+    semantic_chunk_count = 0
+    rule_based_chunk_count = 0
     all_word_counts: list[int] = []
+
+    mode_label = "semantic+rule-based" if use_semantic_chunking else "rule-based"
+    logger.info("[%s] Stage 3.7 chunking mode: %s", law_entry.law_id, mode_label)
 
     for article in articles:
         text = article.get("text", "").strip()
         if not text:
-            logger.warning("[%s] Article %s has empty text — skipping", law_entry.law_id, article.get("article_id"))
+            logger.warning(
+                "[%s] Article %s has empty text — skipping",
+                law_entry.law_id, article.get("article_id"),
+            )
             continue
 
-        chunk_texts = _chunk_article(text)
-        chunk_total = len(chunk_texts)
+        article_id = article["article_id"]
+        word_count = len(_words(text))
+        chunk_method = "rule_based"
+        chunk_texts: list[tuple[str, bool]] = []
 
+        # ── Short article: always rule-based (no Gemini call needed) ─────────
+        if word_count <= CHUNK_WORD_LIMIT:
+            chunk_texts = [(text.strip(), False)]
+
+        # ── Long article: try semantic if enabled ─────────────────────────────
+        elif use_semantic_chunking:
+            semantic_result = _semantic_chunk_article(
+                text=text,
+                article_id=article_id,
+                law_name=law_entry.law_name_ar,
+                cost_tracker=cost_tracker,
+                model=model,
+            )
+            if semantic_result is not None:
+                chunk_texts = semantic_result
+                chunk_method = "semantic"
+            else:
+                chunk_texts = _rule_chunk_article(text)
+
+        # ── Long article: rule-based only ─────────────────────────────────────
+        else:
+            chunk_texts = _rule_chunk_article(text)
+
+        chunk_total = len(chunk_texts)
         if chunk_total == 1:
             single_chunk_count += 1
         else:
@@ -207,11 +335,15 @@ def run(law_entry: LawEntry) -> ChunkingReport:
         for idx, (chunk_text, has_overlap) in enumerate(chunk_texts):
             wc = len(_words(chunk_text))
             all_word_counts.append(wc)
-            chunk_id = f"{article['article_id']}_C{idx + 1:03d}"
+
+            if chunk_method == "semantic":
+                semantic_chunk_count += 1
+            else:
+                rule_based_chunk_count += 1
 
             chunk = Chunk(
-                chunk_id=chunk_id,
-                article_id=article["article_id"],
+                chunk_id=f"{article_id}_C{idx + 1:03d}",
+                article_id=article_id,
                 law_id=law_entry.law_id,
                 chunk_index=idx,
                 chunk_total=chunk_total,
@@ -219,6 +351,7 @@ def run(law_entry: LawEntry) -> ChunkingReport:
                 word_count=wc,
                 char_count=len(chunk_text),
                 has_overlap=has_overlap,
+                chunk_method=chunk_method,
                 article_number=article.get("article_number", 0),
                 article_type=article.get("article_type", ""),
                 article_category=article.get("article_category", ""),
@@ -230,23 +363,18 @@ def run(law_entry: LawEntry) -> ChunkingReport:
             all_chunks.append(asdict(chunk))
 
         logger.debug(
-            "[%s] %s → %d chunk(s)",
-            law_entry.law_id, article["article_id"], chunk_total,
+            "[%s] %s → %d chunk(s) [%s]",
+            law_entry.law_id, article_id, chunk_total, chunk_method,
         )
 
-    # ── Write output ──────────────────────────────────────────────────────────
-    out_path = out_dir / "chunks.json"
-    out_path.write_text(
+    # ── Write chunks ──────────────────────────────────────────────────────────
+    (out_dir / "chunks.json").write_text(
         json.dumps(all_chunks, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
 
-    # ── Build report ──────────────────────────────────────────────────────────
     total_chunks = len(all_chunks)
-    avg_wc   = round(sum(all_word_counts) / total_chunks, 1) if total_chunks else 0.0
-    max_wc   = max(all_word_counts) if all_word_counts else 0
-    min_wc   = min(all_word_counts) if all_word_counts else 0
-
+    avg_wc = round(sum(all_word_counts) / total_chunks, 1) if total_chunks else 0.0
     report = ChunkingReport(
         law_id=law_entry.law_id,
         total_articles=len(articles),
@@ -254,19 +382,20 @@ def run(law_entry: LawEntry) -> ChunkingReport:
         single_chunk_articles=single_chunk_count,
         multi_chunk_articles=multi_chunk_count,
         avg_chunk_words=avg_wc,
-        max_chunk_words=max_wc,
-        min_chunk_words=min_wc,
+        max_chunk_words=max(all_word_counts) if all_word_counts else 0,
+        min_chunk_words=min(all_word_counts) if all_word_counts else 0,
+        semantic_chunks=semantic_chunk_count,
+        rule_based_chunks=rule_based_chunk_count,
         chunked_at=datetime.now(timezone.utc).isoformat(),
     )
-    report_path = out_dir / "chunking_report.json"
-    report_path.write_text(
+    (out_dir / "chunking_report.json").write_text(
         json.dumps(asdict(report), ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
 
     logger.info(
-        "[%s] Stage 3.7 done — %d articles → %d chunks (single=%d multi=%d) avg_words=%.1f",
+        "[%s] Stage 3.7 done — %d articles → %d chunks | rule-based=%d semantic=%d | avg=%.1f words",
         law_entry.law_id, len(articles), total_chunks,
-        single_chunk_count, multi_chunk_count, avg_wc,
+        rule_based_chunk_count, semantic_chunk_count, avg_wc,
     )
     return report

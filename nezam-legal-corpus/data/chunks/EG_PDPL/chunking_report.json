@@ -7,5 +7,7 @@
   "avg_chunk_words": 97.5,
   "max_chunk_words": 267,
   "min_chunk_words": 11,
-  "chunked_at": "2026-06-22T13:28:43.629134+00:00"
+  "semantic_chunks": 0,
+  "rule_based_chunks": 61,
+  "chunked_at": "2026-06-22T14:32:04.408396+00:00"
 }
