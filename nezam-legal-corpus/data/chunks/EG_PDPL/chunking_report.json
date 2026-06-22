@@ -1,0 +1,11 @@
+{
+  "law_id": "EG_PDPL",
+  "total_articles": 56,
+  "total_chunks": 61,
+  "single_chunk_articles": 52,
+  "multi_chunk_articles": 4,
+  "avg_chunk_words": 97.5,
+  "max_chunk_words": 267,
+  "min_chunk_words": 11,
+  "chunked_at": "2026-06-22T13:28:43.629134+00:00"
+}

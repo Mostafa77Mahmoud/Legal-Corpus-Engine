@@ -37,6 +37,7 @@ from pipeline import (
     stage_2_split,
     stage_2_5_val_split,
     stage_3_enrich,
+    stage_3_7_chunk,
 )
 from utils.cost_tracker import CostTracker
 
@@ -164,13 +165,19 @@ def main() -> None:
     _print_enrich_report(enrich_report)
     _print_cost_report(cost_tracker)
 
+    # ── Stage 3.7: Chunking ───────────────────────────────────────────────────
+    console.rule("[bold blue]Stage 3.7: Chunking")
+    chunk_report = stage_3_7_chunk.run(law_entry=law_entry)
+    _print_chunk_report(chunk_report)
+
     # ── Final summary ─────────────────────────────────────────────────────────
-    status_color = "green" if enrich_report.failed == 0 else "yellow"
+    enrich_status = "green" if enrich_report.failed == 0 else "yellow"
     console.print(Panel.fit(
         f"[bold green]✓ All stages passed.[/]\n"
         f"Confidence: [bold]{confidence_report.confidence_score:.4f}[/]  |  "
         f"Articles: [bold]{split_report.articles_found}[/]  |  "
-        f"Enriched: [bold {status_color}]{enrich_report.enriched + enrich_report.skipped_cache}[/]  |  "
+        f"Enriched: [bold {enrich_status}]{enrich_report.enriched + enrich_report.skipped_cache}[/]  |  "
+        f"Chunks: [bold]{chunk_report.total_chunks}[/]  |  "
         f"Cost: [bold yellow]${cost_tracker.summary()['total_cost_usd']:.4f}[/]",
         border_style="green",
     ))
@@ -302,6 +309,22 @@ def _print_confidence_report(report) -> None:
     summary.add_row("Result", passed_label)
     summary.add_row("Manual review required", review_label)
     console.print(summary)
+
+
+def _print_chunk_report(report) -> None:
+    console.print()
+    table = Table(box=box.SIMPLE, show_header=False)
+    table.add_column("Field", style="dim", width=30)
+    table.add_column("Value")
+
+    table.add_row("Total articles", str(report.total_articles))
+    table.add_row("Total chunks", f"[bold]{report.total_chunks}[/]")
+    table.add_row("  Single-chunk articles", str(report.single_chunk_articles))
+    table.add_row("  Multi-chunk articles",  str(report.multi_chunk_articles))
+    table.add_row("Avg words / chunk", str(report.avg_chunk_words))
+    table.add_row("Max words / chunk", str(report.max_chunk_words))
+    table.add_row("Min words / chunk", str(report.min_chunk_words))
+    console.print(table)
 
 
 def _print_enrich_report(report) -> None:
