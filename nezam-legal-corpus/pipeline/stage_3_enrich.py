@@ -22,11 +22,16 @@ Output: data/enriched_articles/{LAW_ID}/articles.json
    - مختصر — الـ role والقواعد في system_instruction
    - استخدام article_id كـ key في الـ prompt
 
-4. max_output_tokens = 16384 للـ batch:
-   - 10 مواد × ~400 token output = ~4000 token
-   - 16384 يوفر هامش أمان كافياً
+4. max_output_tokens = 65536 (أقصى ما يتحمّله النموذج):
+   - يمنح النموذج "أريحية كاملة" في الرد
+   - لا خطر بتر الـ batch مهما كان حجمه
 
-5. temperature = 0.0:
+5. Thinking mode قابل للضبط:
+   - ENRICH_THINKING_LEVEL="LOW" (gemini-3.x) لتحسين التصنيف القانوني
+   - ENRICH_THINKING_BUDGET=1024 (gemini-2.5-x)
+   - افتراضياً: None (model auto-decides)
+
+6. temperature = 0.0:
    - مهام extraction و classification = لا إبداع مطلوب
    - greedy decoding → أقصى دقة في الـ output
    - مؤكّد من Google docs: "0 or less than 1 for JSON extraction"
@@ -47,9 +52,11 @@ from typing import Any
 
 from config.law_registry import LawEntry
 from config.settings import (
-    ENRICH_BATCH_MAX_TOKENS,
     ENRICH_BATCH_SIZE,
+    ENRICH_THINKING_BUDGET,
+    ENRICH_THINKING_LEVEL,
     ENRICHED_ARTICLES_DIR,
+    GEMINI_MAX_OUTPUT_TOKENS,
     PRIMARY_MODEL,
     SPLIT_ARTICLES_DIR,
 )
@@ -161,14 +168,20 @@ _SYSTEM_INSTRUCTION = """\
 
 
 # ── Prompts ────────────────────────────────────────────────────────────────────
+# Long-context best practice: "Question Sandwich" — task stated BEFORE the
+# documents AND repeated AFTER them. Improves model attention on long batches.
+# Source: https://ai.google.dev/gemini-api/docs/long-context
 
 _BATCH_PROMPT = """\
-حلّل المواد القانونية التالية من قانون {law_name}.
-أعد مصفوفة JSON تحتوي تحليل كل مادة بنفس ترتيبها.
+## المهمة
+حلّل {count} مادة قانونية من قانون {law_name} — أعد مصفوفة JSON، عنصر واحد لكل مادة.
 
 <articles law="{law_id}" count="{count}">
 {articles_block}
-</articles>\
+</articles>
+
+## تذكير
+أعد مصفوفة JSON من {count} عنصراً بنفس ترتيب المواد أعلاه.\
 """
 
 _ARTICLE_BLOCK = """\
@@ -178,7 +191,7 @@ _ARTICLE_BLOCK = """\
 """
 
 _SINGLE_PROMPT = """\
-حلّل المادة القانونية التالية من قانون {law_name}.
+حلّل المادة القانونية التالية من قانون {law_name} وأعد JSON واحداً.
 
 <article id="{article_id}" type="{article_type}" law="{law_id}">
 {text}
@@ -271,7 +284,9 @@ def _enrich_batch(
         law_id=law_entry.law_id,
         model_name=model,
         temperature=0.0,
-        max_output_tokens=ENRICH_BATCH_MAX_TOKENS,
+        max_output_tokens=GEMINI_MAX_OUTPUT_TOKENS,   # 65536 — full breathing room
+        thinking_budget=ENRICH_THINKING_BUDGET,        # None = model auto-decides
+        thinking_level=ENRICH_THINKING_LEVEL,          # e.g. "LOW" for gemini-3.x
         response_schema=_BATCH_SCHEMA,
         system_instruction=_SYSTEM_INSTRUCTION,
     )
@@ -313,7 +328,9 @@ def _enrich_single(
         law_id=law_entry.law_id,
         model_name=model,
         temperature=0.0,
-        max_output_tokens=2048,
+        max_output_tokens=GEMINI_MAX_OUTPUT_TOKENS,   # 65536 — full breathing room
+        thinking_budget=ENRICH_THINKING_BUDGET,
+        thinking_level=ENRICH_THINKING_LEVEL,
         response_schema=_SINGLE_SCHEMA,
         system_instruction=_SYSTEM_INSTRUCTION,
     )

@@ -48,7 +48,14 @@ from datetime import datetime, timezone
 from typing import Any
 
 from config.law_registry import LawEntry
-from config.settings import CHUNKS_DIR, ENRICHED_ARTICLES_DIR, SEMANTIC_CHUNKING
+from config.settings import (
+    CHUNK_THINKING_BUDGET,
+    CHUNK_THINKING_LEVEL,
+    CHUNKS_DIR,
+    ENRICHED_ARTICLES_DIR,
+    GEMINI_MAX_OUTPUT_TOKENS,
+    SEMANTIC_CHUNKING,
+)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -251,8 +258,10 @@ def _semantic_chunk_article(
             stage="stage_3_7_semantic",
             law_id=article_id.rsplit("_", 2)[0] if "_" in article_id else article_id,
             model_name=model,
-            temperature=0.1,              # مرونة طفيفة لقرارات الحدود
-            max_output_tokens=32768,       # كافي لإعادة المادة كاملة مع JSON overhead
+            temperature=0.1,                        # مرونة طفيفة لقرارات الحدود
+            max_output_tokens=GEMINI_MAX_OUTPUT_TOKENS,  # 65536 — full breathing room
+            thinking_budget=CHUNK_THINKING_BUDGET,   # None = model auto-decides
+            thinking_level=CHUNK_THINKING_LEVEL,     # e.g. "LOW" for gemini-3.x
             response_schema=_SEMANTIC_CHUNKS_SCHEMA,
             system_instruction=_SEMANTIC_SYSTEM_INSTRUCTION,
         )

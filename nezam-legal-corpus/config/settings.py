@@ -1,3 +1,4 @@
+import json as _json
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -6,22 +7,25 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).parent.parent
 
-PRIMARY_MODEL = os.getenv("PRIMARY_MODEL", "gemini-2.5-flash")
-EMBEDDING_MODEL = "text-embedding-004"
+# ── Model ──────────────────────────────────────────────────────────────────────
+PRIMARY_MODEL    = os.getenv("PRIMARY_MODEL", "gemini-3.5-flash")
+EMBEDDING_MODEL  = "text-embedding-004"
 
+# ── Extraction thresholds ──────────────────────────────────────────────────────
 CONFIDENCE_THRESHOLD = 0.85
-PYMUPDF_MIN_CHARS = 200
+PYMUPDF_MIN_CHARS    = 200
 
-# Rate-limit cooldown durations
-KEY_RPM_COOLDOWN_SECONDS = int(os.getenv("KEY_RPM_COOLDOWN_SECONDS", "65"))    # per-minute quota: wait ~1 min
-KEY_RPD_COOLDOWN_SECONDS = int(os.getenv("KEY_RPD_COOLDOWN_SECONDS", "86400")) # per-day quota: wait 24 h
+# ── Rate-limit cooldowns ───────────────────────────────────────────────────────
+KEY_RPM_COOLDOWN_SECONDS = int(os.getenv("KEY_RPM_COOLDOWN_SECONDS", "65"))
+KEY_RPD_COOLDOWN_SECONDS = int(os.getenv("KEY_RPD_COOLDOWN_SECONDS", "86400"))
 
-DATA_DIR = BASE_DIR / "data"
-RAW_PDFS_DIR = DATA_DIR / "raw_pdfs"
-RAW_TXTS_DIR = DATA_DIR / "raw_txts"
-EXTRACTED_RAW_DIR = DATA_DIR / "extracted_raw"
-EXTRACTED_CLEAN_DIR = DATA_DIR / "extracted_clean"
-CLEANUP_AUDIT_DIR = DATA_DIR / "cleanup_audit_logs"
+# ── Data directories ───────────────────────────────────────────────────────────
+DATA_DIR              = BASE_DIR / "data"
+RAW_PDFS_DIR          = DATA_DIR / "raw_pdfs"
+RAW_TXTS_DIR          = DATA_DIR / "raw_txts"
+EXTRACTED_RAW_DIR     = DATA_DIR / "extracted_raw"
+EXTRACTED_CLEAN_DIR   = DATA_DIR / "extracted_clean"
+CLEANUP_AUDIT_DIR     = DATA_DIR / "cleanup_audit_logs"
 SPLIT_ARTICLES_DIR    = DATA_DIR / "split_articles"
 ENRICHED_ARTICLES_DIR = DATA_DIR / "enriched_articles"
 CHUNKS_DIR            = DATA_DIR / "chunks"
@@ -40,99 +44,98 @@ def _load_api_keys() -> list[str]:
 
 GEMINI_API_KEYS: list[str] = _load_api_keys()
 
-# gemini-3.5-flash pricing (as of 2025) — https://ai.google.dev/gemini-api/docs/models
-GEMINI_FLASH_INPUT_COST_PER_1M = 0.25    # USD per 1M input tokens (non-thinking)
-GEMINI_FLASH_OUTPUT_COST_PER_1M = 1.00   # USD per 1M output tokens (non-thinking)
-GEMINI_FLASH_IMAGE_COST_PER_PAGE = 0.00258
+# ── Pricing ────────────────────────────────────────────────────────────────────
+# gemini-3.5-flash  — update when Google publishes official pricing
+GEMINI_FLASH_INPUT_COST_PER_1M    = float(os.getenv("GEMINI_INPUT_COST",  "0.25"))
+GEMINI_FLASH_OUTPUT_COST_PER_1M   = float(os.getenv("GEMINI_OUTPUT_COST", "1.00"))
+GEMINI_FLASH_IMAGE_COST_PER_PAGE  = 0.00258
 
-GEMINI_MAX_RETRIES = 20
-GEMINI_RETRY_BASE_DELAY = 2.0
+GEMINI_MAX_RETRIES       = 20
+GEMINI_RETRY_BASE_DELAY  = 2.0
 
-# Stage 3 — Batch enrichment
-# عدد المواد المُرسَلة في طلب Gemini واحد (يقلل الـ API calls بنسبة ~85%)
+# ── Output token limit ─────────────────────────────────────────────────────────
+# gemini-3.5-flash supports up to 65,536 output tokens.
+# Setting the maximum gives the model full "breathing room" to respond completely.
+# Override via MAX_OUTPUT_TOKENS env var if a different model with lower limits is used.
+GEMINI_MAX_OUTPUT_TOKENS: int = int(os.getenv("MAX_OUTPUT_TOKENS", "65536"))
+
+# ── Thinking configuration ─────────────────────────────────────────────────────
+# Gemini supports two thinking control mechanisms (use the one matching your model):
+#
+# A) thinking_budget  (int) — for gemini-2.5-x models
+#    0           → thinking disabled
+#    N > 0       → up to N tokens used for internal reasoning
+#    unset/None  → model auto-decides (usually up to 8,192 tokens)
+#
+# B) thinking_level  (str) — for gemini-3.x models (including gemini-3.5-flash)
+#    "OFF"   → thinking disabled
+#    "LOW"   → fast, light reasoning  (~0.3× cost of MEDIUM)
+#    "MEDIUM"→ balanced              (recommended default for legal classification)
+#    "HIGH"  → deep reasoning        (best accuracy, 3-5× more tokens)
+#    unset   → model auto-decides
+#
+# Set ONE of the following per stage. Leave both empty to let the model decide.
+
+def _parse_optional_int(env_key: str) -> int | None:
+    raw = os.getenv(env_key, "").strip()
+    return int(raw) if raw else None
+
+
+# Stage 1 — OCR (pure extraction; thinking adds cost without benefit)
+OCR_THINKING_BUDGET: int | None = _parse_optional_int("OCR_THINKING_BUDGET")
+OCR_THINKING_LEVEL:  str | None = os.getenv("OCR_THINKING_LEVEL")   # e.g. "OFF"
+
+# Stage 3 — Metadata Enrichment (legal categorisation benefits from some reasoning)
+ENRICH_THINKING_BUDGET: int | None = _parse_optional_int("ENRICH_THINKING_BUDGET")
+ENRICH_THINKING_LEVEL:  str | None = os.getenv("ENRICH_THINKING_LEVEL")  # e.g. "LOW"
+
+# Stage 3.7 — Semantic Chunking (boundary decisions benefit from light reasoning)
+CHUNK_THINKING_BUDGET: int | None = _parse_optional_int("CHUNK_THINKING_BUDGET")
+CHUNK_THINKING_LEVEL:  str | None = os.getenv("CHUNK_THINKING_LEVEL")   # e.g. "LOW"
+
+# ── Batch enrichment ───────────────────────────────────────────────────────────
+# Number of articles sent per Gemini call (reduces API calls by ~85%)
 ENRICH_BATCH_SIZE: int = int(os.getenv("ENRICH_BATCH_SIZE", "10"))
 
-# max_output_tokens لـ Stage 3 batch (10 مواد × ~400 token + overhead JSON)
-ENRICH_BATCH_MAX_TOKENS: int = int(os.getenv("ENRICH_BATCH_MAX_TOKENS", "16384"))
-
-# Stage 3.7 — Semantic chunking
-# عندما True يستخدم Gemini لتقسيم المواد الطويلة بدلاً من الـ regex
-# يُفعَّل فقط للمواد التي تتجاوز CHUNK_WORD_LIMIT (لا تكلفة إضافية للمواد القصيرة)
+# ── Semantic chunking ──────────────────────────────────────────────────────────
+# True → Gemini identifies semantic boundaries for long articles
+# False (default) → rule-based splitting (free, no API calls)
 SEMANTIC_CHUNKING: bool = os.getenv("SEMANTIC_CHUNKING", "false").lower() == "true"
 
-OCR_PROMPT = """You are an expert document processing AI specialized in extracting text from PDF and TXT files with maximum accuracy.
+# ── OCR Prompt ─────────────────────────────────────────────────────────────────
+# Best practices applied:
+# • System instruction kept separate (passed via system_instruction param)
+# • Task stated FIRST (before document) + repeated at END (long-context sandwich)
+# • Strict extraction-only mode — no thinking/reasoning needed
+OCR_PROMPT = """\
+Extract the complete text from this document. Follow the rules below exactly.
 
-## Your Task
+## Output Rules
+- Output ONLY the document text in Markdown format
+- Do NOT add any introduction, explanation, comment, or metadata
+- Start directly with the document content
 
-Extract the **complete text** from the provided file with:
-- **High accuracy**: Every word, number, and character must be captured
-- **Proper structure**: Preserve the document's logical structure
-- **Format preservation**: Maintain visual hierarchy and organization
+## Formatting
+- Use `#`, `##`, `###` for headings
+- Use `-` for bullet lists, `1.` for numbered lists
+- Preserve paragraph breaks
 
-## Extraction Rules
-
-### 1. Format Guidelines
-
-Use **Markdown** format to preserve structure:
-- **Headings**: Use `#`, `##`, `###` for different heading levels
-- **Lists**: Use `*` or `-` for bullet points, `1.`, `2.` for numbered lists
-- **Bold/Italic**: Use `**bold**` and `*italic*` where appropriate
-
-### 2. Content Rules
-
-**MUST DO:**
-- Extract ALL text without omission
-- Keep original text exactly as written (no corrections, no changes)
-- Preserve original language (Arabic, English, or mixed)
-- Maintain paragraph breaks and spacing
-- Capture table contents accurately
-
-**MUST NOT DO:**
-- Add comments, explanations, or annotations
-- Translate or modify the text
-- Skip sections or pages
-- Summarize or paraphrase
-- Add your own interpretations
-- Remove or ignore any text elements
-
-### 3. Arabic Legal Documents
-
-- Extract in Arabic with proper RTL consideration
-- Preserve Arabic diacritics if present
-- Maintain Arabic numbering styles (١، ٢، ٣)
-- Preserve legal article numbering exactly: مادة 1, مادة 2, ...
-- Keep chapter and section headings: الباب الأول, الفصل الأول, ...
+## Accuracy Requirements
+- Extract ALL text — zero omissions
+- Keep original language exactly (Arabic, English, or mixed)
+- Preserve Arabic legal article numbers: مادة 1, مادة 2, ...
+- Preserve chapter/section headings: الباب الأول, الفصل الأول, ...
 - Preserve clause sub-numbering: (أ), (ب), (ج) or (1), (2), (3)
-- Keep legal terminology intact — do NOT paraphrase or simplify
+- Keep Arabic diacritics if present
+- Preserve Arabic-Indic numerals: ١، ٢، ٣ as-is
+- Do NOT correct, translate, paraphrase, or interpret
+- Do NOT skip pages, footnotes, tables, or headers
 
-### 4. Special Cases
+Now extract the complete document text:\
+"""
 
-**Legal Documents:**
-- Preserve clause numbering exactly (مادة 1, مادة 1.1, ...)
-- Keep legal terminology intact
-- Maintain contract structure
-
-**Arabic Documents:**
-- Keep Arabic legal terminology exact
-- Maintain Arabic numbering (١، ٢، ٣) if used
-
-## Quality Standards
-
-Your extraction must achieve:
-- **Completeness**: 100% of text captured
-- **Accuracy**: 99%+ character-level accuracy
-- **Structure**: Original document structure preserved
-
-## Output Format
-
-**Output ONLY the extracted Markdown text**
-
-Do NOT include:
-- Explanations before the text
-- Comments like "Here is the extraction:"
-- Notes about extraction quality
-- Summary of the document
-- Metadata or file information
-
-**Start directly with the document content in Markdown format**
+OCR_SYSTEM_INSTRUCTION = """\
+You are a professional document transcription specialist with expertise in Arabic legal documents.
+Your sole task is verbatim text extraction — complete, accurate, and unmodified.
+Never add commentary. Never skip content. Never interpret or summarize.\
 """

@@ -17,6 +17,24 @@ KEY-PINNING RULE for ocr_pdf:
   Therefore ocr_pdf pins one key for the entire upload+generate cycle.
   If the pinned key receives a 429 during generation, the whole operation
   restarts: mark the key rate-limited, get a new key, re-upload, retry.
+
+GenerateContentConfig parameter guide (google-genai SDK):
+──────────────────────────────────────────────────────────
+temperature      float  0.0–2.0   0.0 for extraction/classification, 0.1 for creative boundaries
+                                  Do NOT touch for gemini-3.x (uses its default of 1.0 internally)
+top_p            float  0.0–1.0   Nucleus sampling; default ~0.95. Usually leave as model default.
+top_k            int    1–100+    Hard token candidate limit; default ~40. Usually leave unset.
+seed             int    any       Reproducibility seed. None = random. Useful for debugging.
+max_output_tokens int   1–65536  Set to 65536 (model max) to give full breathing room.
+thinking_budget  int    0–N       gemini-2.5-x: 0=off, N=token budget for reasoning.
+thinking_level   str    enum      gemini-3.x: "OFF"|"LOW"|"MEDIUM"|"HIGH"
+response_schema  dict   OpenAPI   Guarantees valid JSON matching schema — no regex parsing needed.
+system_instruction str  any       Role/persona definition, separate from user prompt.
+
+Long-context best practice (Google docs):
+─────────────────────────────────────────
+Place the task description BEFORE the document AND repeat it AFTER ("question sandwich").
+Model attention is strongest at the beginning and end of long contexts.
 """
 
 import logging
@@ -30,19 +48,23 @@ from google.genai import errors as genai_errors
 from config.settings import (
     PRIMARY_MODEL,
     GEMINI_MAX_RETRIES,
+    GEMINI_MAX_OUTPUT_TOKENS,
     GEMINI_RETRY_BASE_DELAY,
     GEMINI_FLASH_INPUT_COST_PER_1M,
     GEMINI_FLASH_OUTPUT_COST_PER_1M,
+    OCR_SYSTEM_INSTRUCTION,
 )
 from utils.cost_tracker import CostTracker
 from utils import key_manager as _km
 
 logger = logging.getLogger(__name__)
 
-_RATE_LIMIT_CODES = {429}
-_TRANSIENT_CODES = {500, 503, 504}
+_RATE_LIMIT_CODES  = {429}
+_TRANSIENT_CODES   = {500, 503, 504}
 _INVALID_KEY_CODES = {403}
 
+
+# ── Error classifiers ─────────────────────────────────────────────────────────
 
 def _is_rate_limit(exc: Exception) -> bool:
     if isinstance(exc, genai_errors.APIError):
@@ -52,17 +74,15 @@ def _is_rate_limit(exc: Exception) -> bool:
 
 
 def _is_daily_quota(exc: Exception) -> bool:
-    """True when the 429 is a per-day RPD exhaustion (not a per-minute RPM burst)."""
     msg = str(exc).upper()
-    rpm_keywords = ("PER MINUTE", "PER-MINUTE", "MINUTE", "RPM", "REQUESTS_PER_MINUTE")
-    if any(k in msg for k in rpm_keywords):
-        return False          # it's an RPM hit → short cooldown
-    rpd_keywords = ("QUOTA", "BILLING", "PLAN", "PER DAY", "DAILY", "RPD")
-    return any(k in msg for k in rpd_keywords)
+    rpm_kw = ("PER MINUTE", "PER-MINUTE", "MINUTE", "RPM", "REQUESTS_PER_MINUTE")
+    if any(k in msg for k in rpm_kw):
+        return False
+    rpd_kw = ("QUOTA", "BILLING", "PLAN", "PER DAY", "DAILY", "RPD")
+    return any(k in msg for k in rpd_kw)
 
 
 def _is_invalid_key(exc: Exception) -> bool:
-    """Leaked, revoked, or permission-denied keys — rotate and permanently disable."""
     if isinstance(exc, genai_errors.APIError):
         return exc.code in _INVALID_KEY_CODES
     msg = str(exc).upper()
@@ -79,49 +99,118 @@ def _make_client(key: str) -> genai.Client:
     return genai.Client(api_key=key)
 
 
+# ── Config builder ────────────────────────────────────────────────────────────
+
+def _build_config(
+    temperature: float,
+    max_output_tokens: int,
+    top_p: float | None,
+    top_k: int | None,
+    seed: int | None,
+    thinking_budget: int | None,
+    thinking_level: str | None,
+    response_schema: dict | None,
+    system_instruction: str | None,
+) -> types.GenerateContentConfig:
+    """
+    Build a GenerateContentConfig from keyword arguments, only setting
+    parameters that are explicitly provided (avoids overriding model defaults
+    with None values).
+    """
+    kwargs: dict = {
+        "temperature": temperature,
+        "max_output_tokens": max_output_tokens,
+    }
+
+    # Sampling parameters (leave as model default unless explicitly set)
+    if top_p is not None:
+        kwargs["top_p"] = top_p
+    if top_k is not None:
+        kwargs["top_k"] = top_k
+    if seed is not None:
+        kwargs["seed"] = seed
+
+    # Thinking configuration
+    # Only one of thinking_budget / thinking_level should be set.
+    # thinking_budget → gemini-2.5-x models
+    # thinking_level  → gemini-3.x models (including gemini-3.5-flash)
+    if thinking_budget is not None:
+        kwargs["thinking_config"] = {"thinking_budget": thinking_budget}
+    elif thinking_level is not None:
+        kwargs["thinking_config"] = {"thinking_level": thinking_level}
+
+    # Structured output (guarantees valid JSON — no regex parsing needed)
+    if response_schema is not None:
+        kwargs["response_mime_type"] = "application/json"
+        kwargs["response_schema"] = response_schema
+
+    if system_instruction is not None:
+        kwargs["system_instruction"] = system_instruction
+
+    return types.GenerateContentConfig(**kwargs)
+
+
+# ── generate_text ─────────────────────────────────────────────────────────────
+
 def generate_text(
     prompt: str,
     cost_tracker: CostTracker,
     stage: str,
     law_id: str,
     model_name: str = PRIMARY_MODEL,
+    # ── Core generation parameters ──────────────────────────────────────────
     temperature: float = 0.0,
-    max_output_tokens: int = 8192,
-    response_schema: dict | None = None,
-    system_instruction: str | None = None,
+    max_output_tokens: int = GEMINI_MAX_OUTPUT_TOKENS,  # 65536 = model maximum
+    # ── Sampling (leave None to use model defaults) ──────────────────────────
+    top_p: float | None = None,    # default ~0.95 — nucleus sampling threshold
+    top_k: int | None = None,      # default ~40  — hard token candidate limit
+    seed: int | None = None,       # set for reproducible outputs (debugging)
+    # ── Thinking (use the param matching your model) ─────────────────────────
+    thinking_budget: int | None = None,   # gemini-2.5-x: 0=off, N=token budget
+    thinking_level: str | None = None,    # gemini-3.x:  "OFF"|"LOW"|"MEDIUM"|"HIGH"
+    # ── Output format ────────────────────────────────────────────────────────
+    response_schema: dict | None = None,         # guarantees JSON matching schema
+    system_instruction: str | None = None,        # role/persona (separate from prompt)
 ) -> str:
     """
-    Generate text from Gemini.
+    Generate text from Gemini with full parameter control, key rotation,
+    and exponential backoff on transient errors.
 
     Parameters
     ----------
+    max_output_tokens : int
+        Defaults to 65536 (model maximum) — gives the model full breathing room.
+        Only lower this for cost optimisation on stages that rarely need long output.
+    thinking_budget : int | None
+        For gemini-2.5-x models. 0 = disabled, N = token budget.
+    thinking_level : str | None
+        For gemini-3.x models. "OFF" | "LOW" | "MEDIUM" | "HIGH".
+        Do NOT set both thinking_budget and thinking_level in the same call.
     response_schema : dict | None
-        JSON Schema dict for structured output.
-        When provided, the API guarantees a valid JSON response matching the
-        schema — no regex parsing needed. Sets response_mime_type automatically.
+        JSON Schema (OpenAPI 3.0 subset). When set, the API guarantees valid JSON
+        matching the schema — no manual parsing or regex extraction needed.
     system_instruction : str | None
-        System instruction (role/persona). Kept separate from the user prompt
-        per Google best practices for clarity and model performance.
+        Role/persona definition, kept separate from the user prompt per
+        Google's prompting best practices.
     """
     manager = _km.get_manager()
-
-    config_kwargs: dict = {
-        "temperature": temperature,
-        "max_output_tokens": max_output_tokens,
-    }
-    if response_schema is not None:
-        config_kwargs["response_mime_type"] = "application/json"
-        config_kwargs["response_schema"] = response_schema
-    if system_instruction is not None:
-        config_kwargs["system_instruction"] = system_instruction
-
-    config = types.GenerateContentConfig(**config_kwargs)
+    config = _build_config(
+        temperature=temperature,
+        max_output_tokens=max_output_tokens,
+        top_p=top_p,
+        top_k=top_k,
+        seed=seed,
+        thinking_budget=thinking_budget,
+        thinking_level=thinking_level,
+        response_schema=response_schema,
+        system_instruction=system_instruction,
+    )
     transient_backoff = GEMINI_RETRY_BASE_DELAY
 
     for attempt in range(GEMINI_MAX_RETRIES):
         current_key = manager.get_available_key_or_wait()
-        key_suffix = f"****{current_key[-3:]}"
-        client = _make_client(current_key)
+        key_suffix  = f"****{current_key[-3:]}"
+        client      = _make_client(current_key)
 
         try:
             response = client.models.generate_content(
@@ -152,7 +241,7 @@ def generate_text(
                     logger.warning("[%s] Key %s hit RPM limit — rotating.", stage, key_suffix)
                     manager.mark_rpm_limited(current_key)
                 cost_tracker.record_key_failure(key_suffix)
-                new_key = manager.get_available_key_or_wait()
+                new_key    = manager.get_available_key_or_wait()
                 new_suffix = f"****{new_key[-3:]}"
                 cost_tracker.record_rotation(key_suffix, new_suffix, "RATE_LIMIT")
                 transient_backoff = GEMINI_RETRY_BASE_DELAY
@@ -162,7 +251,7 @@ def generate_text(
                 logger.warning("[%s] Key %s is invalid/leaked — disabling permanently.", stage, key_suffix)
                 manager.mark_permanently_disabled(current_key, reason=str(exc)[:120])
                 cost_tracker.record_key_failure(key_suffix)
-                new_key = manager.get_available_key_or_wait()
+                new_key    = manager.get_available_key_or_wait()
                 new_suffix = f"****{new_key[-3:]}"
                 cost_tracker.record_rotation(key_suffix, new_suffix, "INVALID_KEY")
                 transient_backoff = GEMINI_RETRY_BASE_DELAY
@@ -186,6 +275,8 @@ def generate_text(
 
     raise RuntimeError(f"generate_text: failed after {GEMINI_MAX_RETRIES} attempts")
 
+
+# ── PDF upload helper ─────────────────────────────────────────────────────────
 
 def _upload_pdf_with_key(client: genai.Client, pdf_path: Path) -> object:
     """Upload PDF and wait for ACTIVE state. Returns the uploaded file object."""
@@ -211,6 +302,8 @@ def _upload_pdf_with_key(client: genai.Client, pdf_path: Path) -> object:
     return uploaded
 
 
+# ── ocr_pdf ───────────────────────────────────────────────────────────────────
+
 def ocr_pdf(
     pdf_path: Path,
     prompt: str,
@@ -222,31 +315,42 @@ def ocr_pdf(
     """
     Upload a PDF to Gemini and extract its text using the given prompt.
 
-    Key-pinning: the same API key is used for upload AND generation.
+    Design decisions:
+    - Key-pinning: same API key used for upload AND generation (File API scope).
+    - Thinking: NOT enabled (OCR is pure extraction; thinking adds cost/latency
+      without improving verbatim text accuracy).
+    - max_output_tokens: 65536 (model maximum) — legal PDFs can be very long.
+    - system_instruction: OCR_SYSTEM_INSTRUCTION (verbatim extraction role).
+
     If generation hits 429, the key is marked rate-limited and the entire
     operation restarts with a new key (re-upload included).
     """
     manager = _km.get_manager()
 
+    # OCR config: full output, no thinking (extraction ≠ reasoning)
+    ocr_config = types.GenerateContentConfig(
+        temperature=0.0,
+        max_output_tokens=65536,
+        system_instruction=OCR_SYSTEM_INSTRUCTION,
+        # thinking intentionally NOT set — model uses no/minimal internal reasoning
+        # for pure verbatim extraction tasks
+    )
+
     for outer_attempt in range(GEMINI_MAX_RETRIES):
         pinned_key = manager.get_available_key_or_wait()
         key_suffix = f"****{pinned_key[-3:]}"
-        client = _make_client(pinned_key)
+        client     = _make_client(pinned_key)
 
         try:
             uploaded = _upload_pdf_with_key(client, pdf_path)
         except Exception as exc:
             if _is_rate_limit(exc):
-                logger.warning(
-                    "[%s] Key %s hit rate limit during upload — rotating.", stage, key_suffix
-                )
+                logger.warning("[%s] Key %s hit rate limit during upload — rotating.", stage, key_suffix)
                 manager.mark_rate_limited(pinned_key, reason="RESOURCE_EXHAUSTED on upload")
                 cost_tracker.record_key_failure(key_suffix)
                 continue
             if _is_invalid_key(exc):
-                logger.warning(
-                    "[%s] Key %s is invalid/leaked during upload — disabling permanently.", stage, key_suffix
-                )
+                logger.warning("[%s] Key %s is invalid during upload — disabling permanently.", stage, key_suffix)
                 manager.mark_permanently_disabled(pinned_key, reason=str(exc)[:120])
                 cost_tracker.record_key_failure(key_suffix)
                 continue
@@ -258,10 +362,7 @@ def ocr_pdf(
                 response = client.models.generate_content(
                     model=model_name,
                     contents=[uploaded, prompt],
-                    config=types.GenerateContentConfig(
-                        temperature=0.0,
-                        max_output_tokens=65536,
-                    ),
+                    config=ocr_config,
                 )
                 usage = response.usage_metadata
                 manager.record_request(pinned_key, success=True)
@@ -286,71 +387,54 @@ def ocr_pdf(
             except Exception as exc:
                 if _is_rate_limit(exc):
                     if _is_daily_quota(exc):
-                        # Daily quota (RPD) — rotate immediately, long cooldown
-                        logger.warning(
-                            "[%s] Key %s daily quota exhausted during generation — rotating key.",
-                            stage, key_suffix,
-                        )
+                        logger.warning("[%s] Key %s daily quota exhausted during OCR — rotating.", stage, key_suffix)
                         manager.mark_daily_quota_exhausted(pinned_key)
                         cost_tracker.record_key_failure(key_suffix)
-                        new_key = manager.get_available_key_or_wait()
+                        new_key    = manager.get_available_key_or_wait()
                         new_suffix = f"****{new_key[-3:]}"
                         cost_tracker.record_rotation(key_suffix, new_suffix, "RPD_EXHAUSTED")
                         try:
                             client.files.delete(name=uploaded.name)
                         except Exception:
                             pass
-                        break  # exit inner loop → restart outer loop with new key
-                    # RPM burst — retry same key up to 2 times with short wait
+                        break
+
                     if gen_attempt < 2:
                         wait_secs = 30 * (gen_attempt + 1)
-                        logger.warning(
-                            "[%s] Key %s hit RPM limit (attempt %d) — waiting %ds before retry.",
-                            stage, key_suffix, gen_attempt + 1, wait_secs,
-                        )
+                        logger.warning("[%s] Key %s RPM limit (attempt %d) — waiting %ds.", stage, key_suffix, gen_attempt + 1, wait_secs)
                         time.sleep(wait_secs)
                         continue
-                    # Exhausted RPM retries → mark & rotate
-                    logger.warning(
-                        "[%s] Key %s exhausted RPM retries — rotating key.",
-                        stage, key_suffix,
-                    )
+
+                    logger.warning("[%s] Key %s exhausted RPM retries — rotating.", stage, key_suffix)
                     manager.mark_rpm_limited(pinned_key)
                     cost_tracker.record_key_failure(key_suffix)
-                    new_key = manager.get_available_key_or_wait()
+                    new_key    = manager.get_available_key_or_wait()
                     new_suffix = f"****{new_key[-3:]}"
                     cost_tracker.record_rotation(key_suffix, new_suffix, "RPM_EXHAUSTED")
                     try:
                         client.files.delete(name=uploaded.name)
                     except Exception:
                         pass
-                    break  # exit inner loop → restart outer loop with new key
+                    break
 
                 if _is_invalid_key(exc):
-                    logger.warning(
-                        "[%s] Key %s is invalid/leaked during generation — "
-                        "disabling permanently and re-uploading with new key.",
-                        stage, key_suffix,
-                    )
+                    logger.warning("[%s] Key %s invalid during OCR — disabling.", stage, key_suffix)
                     manager.mark_permanently_disabled(pinned_key, reason=str(exc)[:120])
                     cost_tracker.record_key_failure(key_suffix)
-                    new_key = manager.get_available_key_or_wait()
+                    new_key    = manager.get_available_key_or_wait()
                     new_suffix = f"****{new_key[-3:]}"
                     cost_tracker.record_rotation(key_suffix, new_suffix, "INVALID_KEY")
                     try:
                         client.files.delete(name=uploaded.name)
                     except Exception:
                         pass
-                    break  # exit inner loop → restart outer loop with new key
+                    break
 
                 if _is_transient(exc):
                     manager.record_request(pinned_key, success=False)
                     cost_tracker.record_key_failure(key_suffix)
                     if gen_attempt < GEMINI_MAX_RETRIES - 1:
-                        logger.warning(
-                            "[%s] Transient OCR error (attempt %d): %s. Retrying in %.1fs.",
-                            stage, gen_attempt + 1, exc, transient_backoff,
-                        )
+                        logger.warning("[%s] Transient OCR error (attempt %d): %s. Retrying in %.1fs.", stage, gen_attempt + 1, exc, transient_backoff)
                         time.sleep(transient_backoff)
                         transient_backoff = min(transient_backoff * 2, 60.0)
                         continue
