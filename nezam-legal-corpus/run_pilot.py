@@ -276,14 +276,19 @@ def _print_cleanup_report(audit) -> None:
         f"[{'yellow' if audit.chars_removed > 0 else 'green'}]{audit.chars_removed:,} ({pct}%)[/]",
     )
     table.add_row("", "")
-    table.add_row("NFC changed",         str(audit.nfc_changed))
-    table.add_row("Tatweel removed",     str(audit.tatweel_removed))
-    table.add_row("Diacritics removed",  str(audit.diacritics_removed))
-    table.add_row("Hamza normalised",    str(audit.hamza_normalised))
-    table.add_row("Yeh normalised",      str(audit.yeh_normalised))
+    if audit.presentation_forms_normalized:
+        table.add_row(
+            "NFKC (pres. forms→Arabic)",
+            f"[yellow]{audit.presentation_forms_normalized:,}[/]",
+        )
+    table.add_row("NFC changed",           str(audit.nfc_changed))
+    table.add_row("Tatweel removed",       str(audit.tatweel_removed))
+    table.add_row("Diacritics removed",    str(audit.diacritics_removed))
+    table.add_row("Hamza normalised",      str(audit.hamza_normalised))
+    table.add_row("Yeh normalised",        str(audit.yeh_normalised))
     table.add_row("Control chars removed", str(audit.control_removed))
-    table.add_row("Space runs collapsed", str(audit.spaces_collapsed))
-    table.add_row("Newline runs collapsed", str(audit.newlines_collapsed))
+    table.add_row("Space runs collapsed",  str(audit.spaces_collapsed))
+    table.add_row("Newline runs collapsed",str(audit.newlines_collapsed))
 
     console.print(table)
 

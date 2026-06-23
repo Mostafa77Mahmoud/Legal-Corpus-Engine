@@ -18,6 +18,8 @@ Metadata written to: data/extracted_raw/{law_id}_meta.json
 
 import json
 import logging
+import re
+import unicodedata
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -61,6 +63,34 @@ class ExtractionResult:
     extraction_date: str
     success: bool
     error: str | None = None
+
+
+_PRES_FORMS_B = re.compile(r"[\uFE70-\uFEFF]")
+_PRES_FORMS_THRESHOLD = 0.01   # apply NFKC when > 1% of chars are presentation forms
+
+
+def _normalize_presentation_forms(text: str) -> tuple[str, bool]:
+    """
+    Detect Arabic Presentation Forms (U+FE70-FEFF) and convert to standard
+    Arabic (U+0600-U+06FF) via NFKC.
+
+    Many older Egyptian law PDFs (pre-2010, Ministry of Finance) embed Arabic
+    in the Presentation Forms block instead of standard Unicode.  PyMuPDF
+    extracts this text correctly, but all downstream regex patterns (article
+    marker counts, structural heading counts, Stage 2 splitter) only match
+    standard Arabic codepoints.  Without normalization:
+      - count_article_markers() returns 0  → amd_norm = 0
+      - confidence collapses to ~0.28      → unnecessary Gemini OCR
+    NFKC resolves all ligature encodings to canonical form.
+
+    Returns (normalized_text, was_applied).
+    """
+    if not text:
+        return text, False
+    pres_count = len(_PRES_FORMS_B.findall(text))
+    if pres_count / len(text) >= _PRES_FORMS_THRESHOLD:
+        return unicodedata.normalize("NFKC", text), True
+    return text, False
 
 
 def _extract_pymupdf(pdf_path: Path) -> tuple[str, int]:
@@ -161,6 +191,18 @@ def run(
                 else:
                     logger.info("[%s] Attempting PyMuPDF extraction…", law_entry.law_id)
                     pymupdf_text, page_count = _extract_pymupdf(pdf_path)
+                    # Normalise Arabic Presentation Forms (U+FE70-FEFF) to
+                    # standard Arabic BEFORE confidence scoring.  PDFs that
+                    # use the legacy encoding (e.g. Ministry of Finance pre-2010)
+                    # score ~0.28 without this (markers=0) and incorrectly
+                    # trigger an expensive Gemini OCR call.
+                    pymupdf_text, pres_applied = _normalize_presentation_forms(pymupdf_text)
+                    if pres_applied:
+                        logger.info(
+                            "[%s] Arabic Presentation Forms detected — NFKC applied "
+                            "to PyMuPDF output before confidence scoring.",
+                            law_entry.law_id,
+                        )
                     pymupdf_confidence = _quick_confidence(pymupdf_text, law_entry)
                     logger.info(
                         "[%s] PyMuPDF confidence: %.4f (threshold: %.2f)",
