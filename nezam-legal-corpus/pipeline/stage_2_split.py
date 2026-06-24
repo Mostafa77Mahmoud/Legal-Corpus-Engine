@@ -114,9 +114,25 @@ _PAREN_DIGIT_RE = re.compile(
 )
 
 # مادة ١ / المادة 1 / ### مادة ١  — primary numeric articles
-# Line-start anchor prevents matching mid-sentence references
+# Line-start anchor prevents matching mid-sentence references.
+#
+# Two negative lookaheads after the digit group:
+#
+#   (?![\d٠-٩])         — No more digits.  Prevents regex backtracking from
+#                          partially matching a longer number: if "المادة 864"
+#                          is followed by a comma the engine would otherwise
+#                          retreat to "86", find "4" is not a comma, and
+#                          incorrectly report article 86.  This lookahead
+#                          makes the digit group effectively atomic.
+#
+#   (?![ \t\n]*[،,])    — Not immediately followed by an Arabic/Latin comma
+#                          (with optional whitespace/newlines in between).
+#                          Rejects cross-references like:
+#                            "المادة 864\n ، فان لم تتحقق…"
+#                          where PDF line-wrap places "المادة" at line start
+#                          but the context is a reference inside another article.
 _PRIMARY_RE = re.compile(
-    rf"{_MD}(?:مادة|المادة)\s+(?:\d+|[٠-٩]+)",
+    rf"{_MD}(?:مادة|المادة)\s+(?:\d+|[٠-٩]+)(?![\d٠-٩])(?![ \t\n]*[،,])",
     re.MULTILINE,
 )
 
@@ -291,6 +307,28 @@ def run(law_entry: LawEntry) -> tuple[list[ArticleRecord], SplitReport]:
             char_count=len(body),
         )
         articles.append(rec)
+
+    # ── Post-process: re-classify pre-article-1 entries as issuance ───────────
+    # Some PDFs (e.g. القانون المدني) encode issuance articles using the same
+    # numeric format as main articles ("مادة 2 – على وزير العدل…") rather than
+    # the ordinal form "(المادة الثانية)".  The splitter assigns them type="main"
+    # because they match _PRIMARY_RE.  To fix this without a law-specific hack:
+    #   • find the sequence index of the first occurrence of article 1
+    #   • any articles that appear before it (in document order) and were
+    #     classified as "main" are actually issuance articles
+    first_art1_seq = next(
+        (a.sequence_index for a in articles if a.article_number == 1 and a.article_type == "main"),
+        None,
+    )
+    if first_art1_seq is not None and first_art1_seq > 1:
+        for a in articles:
+            if a.sequence_index < first_art1_seq and a.article_type == "main":
+                a.article_type = "issuance"
+                logger.info(
+                    "[%s] Re-classified article %d (seq=%d) as issuance "
+                    "(appears before article 1 in document order)",
+                    law_entry.law_id, a.article_number, a.sequence_index,
+                )
 
     # Tally marker kinds
     kind_counts: dict[str, int] = {}

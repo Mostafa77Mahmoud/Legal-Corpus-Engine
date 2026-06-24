@@ -1,11 +1,11 @@
 {
-  "law_id": "EG_PDPL",
-  "total_articles": 56,
+  "law_id": "EG_ESIGN",
+  "total_articles": 30,
   "enriched": 0,
-  "skipped_cache": 56,
+  "skipped_cache": 30,
   "failed": 0,
   "total_cost_usd": 0.0,
-  "enriched_at": "2026-06-24T14:25:59.056589+00:00",
+  "enriched_at": "2026-06-24T15:05:49.763802+00:00",
   "model": "gemini-2.5-flash",
   "batch_size": 10,
   "total_api_calls": 0

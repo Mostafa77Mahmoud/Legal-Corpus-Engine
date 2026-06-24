@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_CIVIL_CODE",
+  "articles_found": 1039,
+  "expected_article_count": 1149,
+  "issuance_count": 1,
+  "main_count": 1038,
+  "orphan_text_chars": 288,
+  "marker_kinds": {
+    "primary": 1039
+  },
+  "split_source": "regex",
+  "split_at": "2026-06-24T15:05:50.089601+00:00"
+}

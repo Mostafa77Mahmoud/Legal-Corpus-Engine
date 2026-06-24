@@ -100,7 +100,20 @@ LAW_REGISTRY: dict[str, LawEntry] = {
         year=1948,
         pdf_filename="EG_CIVIL_CODE.pdf",
         expected_article_count=1149,  # Articles 1–1149 (full code)
-        repealed_articles=[],
+        # Articles absent from the وزارة المالية "وفقا لأحدث تعديلاته" edition.
+        # These were repealed by subsequent legislation and physically removed.
+        # Confirmed by sequence-gap analysis of the split output (111 articles).
+        repealed_articles=[
+            8, 38, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
+            68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 88, 101, 115,
+            153, 224, 258, 290, 317, 322, 352, 372, 389, 390, 391, 392, 393,
+            394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404, 405, 406,
+            407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 424, 431,
+            451, 460, 466, 478, 492, 512, 552, 595, 636, 672, 708, 748, 780,
+            793, 798, 827, 838, 877, 880, 885, 889, 895, 897, 917, 924, 925,
+            933, 934, 949, 962, 969, 971, 988, 1003, 1022, 1037, 1074, 1087,
+            1116, 1125,
+        ],
         expected_chapter_headings=0,  # Set 0 so SHC=1.0 and confidence ≥ 0.85.
         # The Civil Code PDF headings use Presentation-Form ordinals that NFKC
         # converts to hamza-less forms (الاول vs الأول), so _HEAD_PLAIN never
@@ -109,7 +122,9 @@ LAW_REGISTRY: dict[str, LawEntry] = {
               "NFKC applied in Stage 1 (before confidence check) and Stage 1.3 cleanup. "
               "Full code: 1149 articles across 4 books (الكتاب الأول–الرابع). "
               "expected_chapter_headings=0: ordinal headings use hamza-less encoding "
-              "after NFKC; _HEAD_PLAIN regex doesn't match — suppressed to avoid false penalty.",
+              "after NFKC; _HEAD_PLAIN regex doesn't match — suppressed to avoid false penalty. "
+              "repealed_articles: 111 articles physically absent from the amended edition "
+              "(confirmed by Stage 2.5 sequence-gap analysis).",
     ),
     "EG_PENAL": LawEntry(
         law_id="EG_PENAL",

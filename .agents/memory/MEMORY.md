@@ -1,0 +1,3 @@
+- [Nezam splitter regex backtracking fix](nezam-splitter-regex.md) — dual lookahead needed to prevent partial number matches and cross-reference false positives in Arabic legal PDFs.
+- [Nezam EG_CIVIL_CODE registration](nezam-civil-code-registry.md) — 111 repealed articles list, issuance detection, expected_chapter_headings=0 rationale.
+- [Nezam API quota / model switching](nezam-api-quota.md) — gemini-3.5-flash 503s + all-key daily quota exhaustion pattern; resume command after UTC midnight reset.
