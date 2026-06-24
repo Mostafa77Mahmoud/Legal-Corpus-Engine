@@ -93,9 +93,28 @@ ENRICH_THINKING_LEVEL:  str | None = os.getenv("ENRICH_THINKING_LEVEL")  # e.g. 
 CHUNK_THINKING_BUDGET: int | None = _parse_optional_int("CHUNK_THINKING_BUDGET")
 CHUNK_THINKING_LEVEL:  str | None = os.getenv("CHUNK_THINKING_LEVEL")   # e.g. "LOW"
 
+# ── Model rotation ─────────────────────────────────────────────────────────────
+# When the primary model's daily quota (RPD) is exhausted across all keys,
+# Stage 3 automatically falls back to FALLBACK_MODEL and vice-versa.
+# Default mapping: each flash variant falls back to the other.
+_FALLBACK_DEFAULTS = {
+    "gemini-3.5-flash": "gemini-2.5-flash",
+    "gemini-2.5-flash": "gemini-3.5-flash",
+    "gemini-2.5-flash-preview-05-20": "gemini-3.5-flash",
+    "gemini-3-flash-preview": "gemini-2.5-flash",
+}
+FALLBACK_MODEL: str = os.getenv(
+    "FALLBACK_MODEL",
+    _FALLBACK_DEFAULTS.get(os.getenv("PRIMARY_MODEL", "gemini-3.5-flash"), "gemini-2.5-flash"),
+)
+
 # ── Batch enrichment ───────────────────────────────────────────────────────────
-# Number of articles sent per Gemini call (reduces API calls by ~85%)
-ENRICH_BATCH_SIZE: int = int(os.getenv("ENRICH_BATCH_SIZE", "10"))
+# Number of articles sent per Gemini call.
+# Default raised from 10 → 50 because TPM usage is only 3-9 K out of 250 K per
+# request — packing 50 articles uses ~20 K output tokens (well within the 65 K
+# max_output_tokens limit) and reduces total API calls from ~104 to ~19 for
+# EG_CIVIL_CODE, easily fitting within the 20 RPD-per-key-per-model quota.
+ENRICH_BATCH_SIZE: int = int(os.getenv("ENRICH_BATCH_SIZE", "50"))
 
 # ── Semantic chunking ──────────────────────────────────────────────────────────
 # True → Gemini identifies semantic boundaries for long articles

@@ -56,12 +56,14 @@ from config.settings import (
     ENRICH_THINKING_BUDGET,
     ENRICH_THINKING_LEVEL,
     ENRICHED_ARTICLES_DIR,
+    FALLBACK_MODEL,
     GEMINI_MAX_OUTPUT_TOKENS,
     PRIMARY_MODEL,
     SPLIT_ARTICLES_DIR,
 )
 from utils.cost_tracker import CostTracker
-from utils.llm_client import generate_text
+from utils.llm_client import QuotaExhaustedError, generate_text
+from utils import key_manager as _km
 
 import logging
 logger = logging.getLogger(__name__)
@@ -269,12 +271,16 @@ def _enrich_batch(
     law_entry: LawEntry,
     cost_tracker: CostTracker,
     model: str,
+    fast_fail_on_quota: bool = False,
 ) -> dict[str, ArticleMetadata]:
     """
     Send a batch of articles in ONE Gemini call using structured output.
 
     Returns dict[article_id → ArticleMetadata].
     Missing article_ids in the response are excluded (caller will fallback).
+
+    Raises QuotaExhaustedError when fast_fail_on_quota=True and all keys hit RPD,
+    so the caller can switch to a fallback model immediately.
     """
     prompt = _build_batch_prompt(articles, law_entry)
     raw = generate_text(
@@ -289,6 +295,7 @@ def _enrich_batch(
         thinking_level=ENRICH_THINKING_LEVEL,          # e.g. "LOW" for gemini-3.x
         response_schema=_BATCH_SCHEMA,
         system_instruction=_SYSTEM_INSTRUCTION,
+        fast_fail_on_quota=fast_fail_on_quota,
     )
 
     # Structured output → guaranteed valid JSON array
@@ -366,12 +373,30 @@ def _assemble_output(
 
 # ── Public run function ───────────────────────────────────────────────────────
 
+def _build_model_list() -> list[str]:
+    """
+    Return the ordered list of models Stage 3 will try per batch.
+
+    Strategy:
+    - Always start with PRIMARY_MODEL.
+    - If FALLBACK_MODEL is different, append it.
+    - Deduplicates while preserving order.
+    """
+    seen: set[str] = set()
+    models: list[str] = []
+    for m in (PRIMARY_MODEL, FALLBACK_MODEL):
+        if m and m not in seen:
+            seen.add(m)
+            models.append(m)
+    return models
+
+
 def run(
     law_entry: LawEntry,
     cost_tracker: CostTracker,
     force_reenrich: bool = False,
     batch_size: int = ENRICH_BATCH_SIZE,
-    delay_seconds: float = 1.0,
+    delay_seconds: float = 0.5,
 ) -> EnrichmentReport:
     """
     Enrich all articles for *law_entry* with AI-generated metadata.
@@ -381,11 +406,23 @@ def run(
     force_reenrich : bool
         If True, ignore cache and re-enrich all articles.
     batch_size : int
-        Articles per Gemini call (default: ENRICH_BATCH_SIZE=10).
+        Articles per Gemini call.  Default raised to ENRICH_BATCH_SIZE=50 —
+        packs ~20 K output tokens per call (well within 65 K limit) and
+        reduces total API calls from ~104 → ~19 for EG_CIVIL_CODE.
     delay_seconds : float
         Sleep between batch calls for rate-limit courtesy.
+
+    Model rotation
+    --------------
+    When ALL keys exhaust their daily RPD quota for the primary model,
+    Stage 3 automatically switches to FALLBACK_MODEL (e.g. gemini-3.5-flash
+    ↔ gemini-2.5-flash) and resets the key pool state so the fresh-quota
+    keys become available again.  If both models are exhausted the pipeline
+    blocks as usual until UTC midnight.
     """
-    model = PRIMARY_MODEL
+    model_list = _build_model_list()
+    model_idx  = 0               # index into model_list; advances on quota exhaustion
+    model      = model_list[0]   # current active model
 
     # ── Load split articles ───────────────────────────────────────────────────
     articles_path = SPLIT_ARTICLES_DIR / law_entry.law_id / "articles.json"
@@ -412,8 +449,9 @@ def run(
     to_enrich = [a for a in articles if a["article_id"] not in cached_by_id or force_reenrich]
 
     logger.info(
-        "[%s] Stage 3: %d total | %d cached | %d to enrich | batch=%d",
-        law_entry.law_id, len(articles), len(cached_by_id), len(to_enrich), batch_size,
+        "[%s] Stage 3: %d total | %d cached | %d to enrich | batch=%d | models=%s",
+        law_entry.law_id, len(articles), len(cached_by_id), len(to_enrich),
+        batch_size, " → ".join(model_list),
     )
 
     # ── Batch enrichment loop ─────────────────────────────────────────────────
@@ -426,25 +464,64 @@ def run(
         batch_num = batch_start // batch_size + 1
 
         logger.info(
-            "[%s] Batch %d/%d: %s → %s",
-            law_entry.law_id, batch_num, total_batches,
+            "[%s] Batch %d/%d [%s]: %s → %s",
+            law_entry.law_id, batch_num, total_batches, model,
             batch[0]["article_id"], batch[-1]["article_id"],
         )
 
-        # ── Try batch call ────────────────────────────────────────────────────
+        # ── Try batch call — with model rotation on quota exhaustion ──────────
         batch_results: dict[str, ArticleMetadata] = {}
-        try:
-            batch_results = _enrich_batch(batch, law_entry, cost_tracker, model)
-            total_api_calls += 1
-            logger.info(
-                "[%s] Batch %d OK: %d/%d articles returned",
-                law_entry.law_id, batch_num, len(batch_results), len(batch),
-            )
-        except Exception as exc:
-            logger.warning(
-                "[%s] Batch %d failed (%s) — falling back to single-article mode",
-                law_entry.law_id, batch_num, exc,
-            )
+        batch_ok = False
+
+        for _model_attempt in range(len(model_list) + 1):
+            # Last pass: no more fallback models — use blocking wait (fast_fail=False)
+            is_last_model = (_model_attempt >= len(model_list) - 1)
+            try:
+                batch_results = _enrich_batch(
+                    batch, law_entry, cost_tracker, model,
+                    fast_fail_on_quota=not is_last_model,
+                )
+                total_api_calls += 1
+                logger.info(
+                    "[%s] Batch %d OK [%s]: %d/%d articles returned",
+                    law_entry.law_id, batch_num, model,
+                    len(batch_results), len(batch),
+                )
+                batch_ok = True
+                break
+
+            except QuotaExhaustedError:
+                # All keys RPD-exhausted for current model — try next model
+                next_idx = model_idx + 1
+                if next_idx < len(model_list):
+                    next_model = model_list[next_idx]
+                    logger.warning(
+                        "[%s] Batch %d: model '%s' daily quota exhausted (all %d keys). "
+                        "Switching to '%s' and resetting key pool.",
+                        law_entry.law_id, batch_num, model, 4, next_model,
+                    )
+                    model_idx = next_idx
+                    model = next_model
+                    # Reset key manager: clears per-process cooldown state so
+                    # the new model starts with a fresh key pool (each model has
+                    # independent RPD quota — exhausting model A does not affect B).
+                    _km.reset_manager()
+                else:
+                    # All models exhausted — fall through to blocking mode
+                    logger.warning(
+                        "[%s] Batch %d: all models quota-exhausted — blocking until reset.",
+                        law_entry.law_id, batch_num,
+                    )
+                    _km.reset_manager()
+                    # Next loop iteration will use is_last_model=True → no fast_fail
+                continue
+
+            except Exception as exc:
+                logger.warning(
+                    "[%s] Batch %d failed [%s] (%s) — falling back to single-article mode",
+                    law_entry.law_id, batch_num, model, exc,
+                )
+                break
 
         # ── Fallback for missing articles ─────────────────────────────────────
         for art in batch:
@@ -453,7 +530,7 @@ def run(
                 enriched_meta[aid] = batch_results[aid]
                 continue
 
-            logger.info("[%s] Single fallback for %s", law_entry.law_id, aid)
+            logger.info("[%s] Single fallback for %s [%s]", law_entry.law_id, aid, model)
             try:
                 meta = _enrich_single(art, law_entry, cost_tracker, model)
                 total_api_calls += 1

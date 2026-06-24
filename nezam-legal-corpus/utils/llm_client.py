@@ -64,6 +64,21 @@ _TRANSIENT_CODES   = {500, 503, 504}
 _INVALID_KEY_CODES = {403}
 
 
+class QuotaExhaustedError(Exception):
+    """
+    Raised by generate_text when fast_fail_on_quota=True and ALL API keys have
+    exhausted their daily quota (RPD) for the requested model.
+
+    The caller should switch to a different model or wait until keys reset.
+    """
+    def __init__(self, model_name: str) -> None:
+        self.model_name = model_name
+        super().__init__(
+            f"All API keys have exhausted their daily quota for model '{model_name}'. "
+            "Switch to a fallback model or wait until UTC midnight for quota reset."
+        )
+
+
 # ── Error classifiers ─────────────────────────────────────────────────────────
 
 def _is_rate_limit(exc: Exception) -> bool:
@@ -171,6 +186,12 @@ def generate_text(
     # ── Output format ────────────────────────────────────────────────────────
     response_schema: dict | None = None,         # guarantees JSON matching schema
     system_instruction: str | None = None,        # role/persona (separate from prompt)
+    # ── Quota handling ───────────────────────────────────────────────────────
+    fast_fail_on_quota: bool = False,
+    # When True: if ALL keys exhaust their daily RPD limit for this model,
+    # raises QuotaExhaustedError immediately instead of blocking.
+    # Use this when you have a fallback model to switch to.
+    # When False (default): blocks and waits for key cooldowns (original behavior).
 ) -> str:
     """
     Generate text from Gemini with full parameter control, key rotation,
@@ -207,8 +228,15 @@ def generate_text(
     )
     transient_backoff = GEMINI_RETRY_BASE_DELAY
 
+    def _get_key() -> str:
+        """Get an available key. When fast_fail_on_quota is set, raise immediately
+        instead of blocking if all keys are exhausted for this model."""
+        if fast_fail_on_quota and manager.all_keys_exhausted():
+            raise QuotaExhaustedError(model_name)
+        return manager.get_available_key_or_wait()
+
     for attempt in range(GEMINI_MAX_RETRIES):
-        current_key = manager.get_available_key_or_wait()
+        current_key = _get_key()
         key_suffix  = f"****{current_key[-3:]}"
         client      = _make_client(current_key)
 
@@ -232,16 +260,25 @@ def generate_text(
             )
             return response.text
 
+        except QuotaExhaustedError:
+            raise   # always propagate — caller handles model switching
+
         except Exception as exc:
             if _is_rate_limit(exc):
                 if _is_daily_quota(exc):
                     logger.warning("[%s] Key %s daily quota exhausted — rotating.", stage, key_suffix)
                     manager.mark_daily_quota_exhausted(current_key)
+                    cost_tracker.record_key_failure(key_suffix)
+                    # Fast-fail path: if all keys are now exhausted, raise immediately
+                    # so the caller can switch to a fallback model without blocking.
+                    if fast_fail_on_quota and manager.all_keys_exhausted():
+                        raise QuotaExhaustedError(model_name)
+                    new_key = manager.get_available_key_or_wait()
                 else:
                     logger.warning("[%s] Key %s hit RPM limit — rotating.", stage, key_suffix)
                     manager.mark_rpm_limited(current_key)
-                cost_tracker.record_key_failure(key_suffix)
-                new_key    = manager.get_available_key_or_wait()
+                    cost_tracker.record_key_failure(key_suffix)
+                    new_key = manager.get_available_key_or_wait()
                 new_suffix = f"****{new_key[-3:]}"
                 cost_tracker.record_rotation(key_suffix, new_suffix, "RATE_LIMIT")
                 transient_backoff = GEMINI_RETRY_BASE_DELAY
