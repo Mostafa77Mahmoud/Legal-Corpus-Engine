@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_CIVIL_CODE",
+  "total_articles": 1039,
+  "total_chunks": 1041,
+  "single_chunk_articles": 1037,
+  "multi_chunk_articles": 2,
+  "avg_chunk_words": 54.0,
+  "max_chunk_words": 203,
+  "min_chunk_words": 7,
+  "semantic_chunks": 0,
+  "rule_based_chunks": 1041,
+  "chunked_at": "2026-06-25T00:45:14.215487+00:00"
+}
