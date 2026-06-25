@@ -135,6 +135,36 @@ LEGAL_CONCEPTS: set[str] = {
     "administrative_penalty",
     "fine",
     "imprisonment",
+    "penalty",
+
+    # Administrative and regulatory law
+    "administrative_authority",
+    "public_authority",
+    "licensing",
+    "regulatory_compliance",
+    "regulatory_oversight",
+    "administrative_procedure",
+    "public_policy",
+    "organizational_structure",
+    "supervisory_power",
+    "inspection_authority",
+
+    # Legal capacity and procedure
+    "legal_capacity",
+    "legal_personality",
+    "due_process",
+    "judicial_procedure",
+    "dispute_resolution",
+    "legal_definitions",
+    "property_rights",
+
+    # Technology and digital governance
+    "certification_authority",
+    "digital_governance",
+    "information_technology",
+    "technical_standards",
+    "intellectual_property",
+    "cybersecurity",
 }
 
 CONCEPT_LIST: list[str] = sorted(LEGAL_CONCEPTS)

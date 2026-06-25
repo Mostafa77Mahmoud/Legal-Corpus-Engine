@@ -1,0 +1,258 @@
+فيه حاجات اتحسنت فعلًا، لكن لسه في ملاحظات مهمة قبل ما تعتبر الـ pipeline "مطابق للخطة".
+
+## 1. `target_article_ids` ممتاز
+
+الوكيل نفذ حاجة كنت شايفها مهمة:
+
+بدل:
+
+```json
+{
+  "article_numbers": [4]
+}
+```
+
+بقى:
+
+```json
+{
+  "article_numbers": [4],
+  "target_article_ids": ["EG_ESIGN_004"]
+}
+```
+
+وده هيفيد جدًا في الـ retrieval والـ graph navigation.
+
+---
+
+## 2. `concepts: []` مقلق
+
+مثال المادة 5:
+
+```json
+"concepts": []
+```
+
+في قانون التوقيع الإلكتروني.
+
+ده مش طبيعي أوي.
+
+مادة بتتكلم عن:
+
+* الهيئة
+* التراخيص
+* الرسوم
+* الإيرادات
+
+المفروض غالبًا يبقى فيها concepts زي:
+
+```json
+administrative_authority
+licensing
+fees
+regulatory_compliance
+```
+
+لو معظم المواد طالعة:
+
+```json
+[]
+```
+
+يبقى عندك واحدة من 3 مشاكل:
+
+### احتمال 1
+
+taxonomy ضيقة جدًا
+
+### احتمال 2
+
+Gemini بيرجع concepts مختلفة
+
+مثلاً:
+
+```json
+authority
+license
+fees
+```
+
+وأنت عامل validation صارم فبيترفضوا كلهم.
+
+### احتمال 3
+
+Prompt ضعيف.
+
+---
+
+### اطلب منه:
+
+```text
+Audit concepts extraction.
+
+Generate a report showing:
+
+1. Total articles
+2. Articles with at least one concept
+3. Articles with zero concepts
+4. Top 50 concepts returned by Gemini before taxonomy filtering
+5. Top 50 concepts after taxonomy filtering
+
+Determine whether low concept coverage is caused by:
+
+- Prompt quality
+- Taxonomy mismatch
+- Validation logic
+
+Do not modify code yet.
+Produce diagnostics only.
+```
+
+---
+
+## 3. `applicable_to` محتاج مراجعة
+
+المادة دي طلعلها:
+
+```json
+[
+  "administrative",
+  "commercial",
+  "digital"
+]
+```
+
+ممكن تكون صح.
+
+لكن لو لقيت 90% من مواد القانون:
+
+```json
+administrative
+commercial
+digital
+```
+
+يبقى الموديل بيرمي نفس التلات قيم لكل حاجة.
+
+وده هيخلي الحقل عديم القيمة.
+
+---
+
+## 4. الـ OCR Fix اليدوي مش عاجبني
+
+هو عمل:
+
+```text
+هيية -> هيئة
+رييس -> رئيس
+```
+
+في ملفات split_articles مباشرة.
+
+ده حل إسعافي.
+
+لكن مش حل هندسي.
+
+المفروض السبب الأصلي يكون متصلح.
+
+لو بكرة ظهر:
+
+```text
+مسيول
+شيون
+مسيولية
+```
+
+هتفضل تطارد الكلمات واحدة واحدة.
+
+---
+
+## 5. confidence_score = null
+
+ده مقبول مؤقتًا.
+
+لأن الـ PDF فعلاً مش موجود في:
+
+```text
+data/raw_pdfs/
+```
+
+لكن قبل ما تبني الـ corpus الحقيقي لازم الحقل ده يشتغل.
+
+لأن احنا اتفقنا من الأول إن:
+
+```text
+Stage 1.5
+```
+
+جزء أساسي من الجودة.
+
+---
+
+## 6. أهم حاجة ناقصة حاليًا
+
+عايز تتأكد من حاجة واحدة:
+
+### هل الـ batch فعلاً بيستغل التوكنز؟
+
+الوكيل بيقول:
+
+> 30 مادة في request واحدة
+
+كويس.
+
+لكن عايزين رقم حقيقي.
+
+ابعتله:
+
+```text
+Generate an enrichment batching report for EG_ESIGN.
+
+Show:
+
+- Number of articles
+- Number of Gemini requests
+- Average articles per request
+- Average prompt tokens per request
+- Average output tokens per request
+- Total token utilization percentage against model context window
+
+I want to verify that batching is actually efficient and not underutilizing the context window.
+```
+
+---
+
+## تقييمي الحالي
+
+| جزء                 | الحالة       |
+| ------------------- | ------------ |
+| Extraction          | 8/10         |
+| Cleanup             | 7/10         |
+| Splitter            | 9/10         |
+| Cross References    | 9.5/10       |
+| Metadata            | 7/10         |
+| Concepts            | 5/10         |
+| Applicable To       | 6/10         |
+| Chunking            | محتاج اختبار |
+| Confidence Tracking | 6/10         |
+| Mongo Schema        | 9/10         |
+
+لو كنت مكانك **مش هبدأ رفع بقية القوانين لسه**.
+
+أولًا أتأكد أن:
+
+1. `concepts` شغالة فعلاً.
+2. `applicable_to` مش مجرد قيم مكررة.
+3. `confidence_score` بيتولد صح.
+4. chunking بيتصرف كويس مع مواد طويلة.
+
+بعدها شغّل:
+
+* PDPL
+* قانون الإثبات
+
+وبعدين فقط ادخل على:
+
+القانون المدني المصري
+
+لأن القانون المدني هو أكبر مكان هيكشف أي عيوب مخفية في البايبلاين.

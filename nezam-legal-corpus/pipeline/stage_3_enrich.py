@@ -51,7 +51,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from config.law_registry import LawEntry
-from config.taxonomy import validate_concepts
+from config.taxonomy import CONCEPT_LIST, validate_concepts
 from config.settings import (
     ENRICH_BATCH_SIZE,
     ENRICH_THINKING_BUDGET,
@@ -196,11 +196,9 @@ _SYSTEM_INSTRUCTION = """\
 | **أخرى** | لا ينطبق عليها أي مما سبق | — |
 
 ## حقل concepts (مفاهيم قانونية — إنجليزي)
-أعد 3-6 tags قانونية بالإنجليزية بصيغة snake_case تصف جوهر المادة.
-أمثلة مقبولة: contract_validity، electronic_signature، data_protection،
-civil_liability، legal_capacity، due_process، penalty، consent،
-property_rights، judicial_procedure، administrative_authority، public_order.
-استخدم مفاهيم قانونية معيارية — لا تخترع مفاهيم جديدة.
+أعد 3-6 tags من القائمة التالية فقط — لا تخترع مفاهيم خارجها:
+
+{concept_list}
 
 ## حقل applicable_to (نطاق التطبيق)
 اختر 1-3 مجالات من القائمة المحددة فقط:
@@ -210,8 +208,13 @@ civil، commercial، criminal، administrative، employment، family، real_esta
 - **keywords**: مصطلحات من داخل النص فقط، لا تضف مصطلحات خارجية
 - **legal_entities**: الجهات المذكورة صراحةً في نص المادة فقط
 - **article_summary**: موضوعي ومحايد، بصيغة المضارع المبني للمعلوم
-- **concepts**: مفاهيم قانونية إنجليزية معيارية بـ snake_case، لا عربية\
+- **concepts**: اختر فقط من القائمة أعلاه — لا قيم خارجها\
 """
+
+# Inject the live taxonomy list so the model sees the exact valid vocabulary
+_SYSTEM_INSTRUCTION = _SYSTEM_INSTRUCTION.format(
+    concept_list=", ".join(CONCEPT_LIST)
+)
 
 
 # ── Prompts ────────────────────────────────────────────────────────────────────
