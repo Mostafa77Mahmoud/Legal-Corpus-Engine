@@ -2718,13 +2718,20 @@
     "split_source": "regex",
     "word_count": 28,
     "char_count": 139,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "إبطال العقد لغلط في القانون",
+    "keywords": [
+      "العقد",
+      "قابل للابطال",
+      "غلط في القانون",
+      "شروط الغلط",
+      "الواقع",
+      "القانون"
+    ],
+    "article_summary": "يكون العقد قابلاً للإبطال إذا وقع غلط في القانون وتوافرت فيه شروط الغلط في الواقع، ما لم ينص القانون على خلاف ذلك.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_092",
@@ -2739,13 +2746,18 @@
     "split_source": "regex",
     "word_count": 20,
     "char_count": 88,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "الغلط في الحساب والقلم",
+    "keywords": [
+      "صحة العقد",
+      "الغلط في الحساب",
+      "غلطات القلم",
+      "تصحيح الغلط"
+    ],
+    "article_summary": "لا يؤثر الغلط في الحساب أو غلطات القلم على صحة العقد، ولكن يجب تصحيح هذا الغلط.",
+    "article_category": "التزام",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_093",
@@ -2760,13 +2772,20 @@
     "split_source": "regex",
     "word_count": 41,
     "char_count": 184,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "التمسك بالغلط وحسن النية",
+    "keywords": [
+      "غلط",
+      "التمسك",
+      "حسن النية",
+      "ملزماً بالعقد",
+      "الطرف الآخر",
+      "تنفيذ العقد"
+    ],
+    "article_summary": "ليس لمن وقع في غلط أن يتمسك به على وجه يتعارض مع حسن النية، ويبقى ملزماً بالعقد الذي قصد إبرامه إذا أظهر الطرف الآخر استعداده لتنفيذه.",
+    "article_category": "التزام",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_094",
@@ -2781,13 +2800,22 @@
     "split_source": "regex",
     "word_count": 60,
     "char_count": 286,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "إبطال العقد للتدليس",
+    "keywords": [
+      "إبطال العقد",
+      "التدليس",
+      "الحيل",
+      "المتعاقدين",
+      "الطرف الثاني",
+      "السكوت عمداً",
+      "واقعة",
+      "ملابسة"
+    ],
+    "article_summary": "يجوز إبطال العقد للتدليس إذا كانت الحيل التي لجأ إليها أحد المتعاقدين جسيمة، ويعتبر السكوت عمداً عن واقعة أو ملابسة تدليساً إذا ثبت أن المدلس عليه ما كان ليبرم العقد لو علم بها.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_095",
@@ -2802,13 +2830,19 @@
     "split_source": "regex",
     "word_count": 33,
     "char_count": 159,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "تدليس من غير المتعاقدين",
+    "keywords": [
+      "التدليس",
+      "غير المتعاقدين",
+      "المتعاقد المدلس عليه",
+      "إبطال العقد",
+      "التعاقد الآخر"
+    ],
+    "article_summary": "إذا صدر التدليس من غير المتعاقدين، فليس للمتعاقد المدلس عليه أن يطلب إبطال العقد، ما لم يثبت أن المتعاقد الآخر كان من المفروض حتماً أن يعلم بهذا التدليس.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_096",
@@ -2823,13 +2857,24 @@
     "split_source": "regex",
     "word_count": 86,
     "char_count": 414,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "إبطال العقد للإكراه",
+    "keywords": [
+      "إبطال العقد",
+      "الإكراه",
+      "رهبة",
+      "المتعاقد الآخر",
+      "خطر جسيم",
+      "النفس",
+      "الجسم",
+      "الشرف",
+      "المال",
+      "تقدير الإكراه"
+    ],
+    "article_summary": "يجوز إبطال العقد للإكراه إذا تعاقد شخص تحت سلطان رهبة بعثها المتعاقد الآخر وكانت قائمة على أساس خطر جسيم يهدده أو غيره، ويراعى في تقدير الإكراه جنس وسن وحالة من وقع عليه الإكراه.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_097",
@@ -2844,13 +2889,19 @@
     "split_source": "regex",
     "word_count": 35,
     "char_count": 167,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "إكراه من غير المتعاقدين",
+    "keywords": [
+      "الإكراه",
+      "غير المتعاقدين",
+      "المتعاقد المكره",
+      "إبطال العقد",
+      "المتعاقد الآخر"
+    ],
+    "article_summary": "إذا صدر الإكراه من غير المتعاقدين، فليس للمتعاقد المكره أن يطلب إبطال العقد، ما لم يثبت أن المتعاقد الآخر كان يعلم أو كان من المفروض حتماً أن يعلم بهذا الإكراه.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_098",
@@ -2865,13 +2916,26 @@
     "split_source": "regex",
     "word_count": 104,
     "char_count": 522,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "إبطال العقد للغبن والاستغلال",
+    "keywords": [
+      "التزامات",
+      "المتعاقدين",
+      "فائدة",
+      "العقد",
+      "المتعاقد المغبون",
+      "استغل",
+      "طيش بيناً",
+      "هوى جامحاً",
+      "القاضي",
+      "إبطال العقد"
+    ],
+    "article_summary": "يجوز للقاضي بناءً على طلب المتعاقد المغبون إبطال العقد أو إنقاص التزاماته إذا كانت التزاماته لا تتعادل مع ما حصل عليه واستغل الطرف الآخر طيشه أو هواه، ويجب رفع الدعوى خلال سنة من تاريخ العقد، ويجوز للطرف الآخر توقي الإبطال بعرض ما يراه القاضي كافياً لرفع الغبن.",
+    "article_category": "حق",
+    "legal_entities": [
+      "القاضي"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_099",
@@ -2886,13 +2950,18 @@
     "split_source": "regex",
     "word_count": 20,
     "char_count": 110,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "أحكام الغبن الخاصة",
+    "keywords": [
+      "المادة السابقة",
+      "الغبن",
+      "العقود",
+      "سعر الفائدة"
+    ],
+    "article_summary": "يراعى في تطبيق المادة السابقة عدم الإخلال بالأحكام الخاصة بالغبن في بعض العقود أو بسعر الفائدة.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_100",
@@ -2907,13 +2976,20 @@
     "split_source": "regex",
     "word_count": 36,
     "char_count": 165,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "محل الالتزام المستقبلي",
+    "keywords": [
+      "محل الالتزام",
+      "شيئاً مستقبلاً",
+      "تركة إنسان",
+      "قيد الحياة",
+      "باطل",
+      "القانون"
+    ],
+    "article_summary": "يجوز أن يكون محل الالتزام شيئاً مستقبلاً، غير أن التعامل في تركة إنسان على قيد الحياة باطل إلا في الأحوال التي نص عليها القانون.",
+    "article_category": "تعريف",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_101",
@@ -2928,13 +3004,18 @@
     "split_source": "regex",
     "word_count": 12,
     "char_count": 57,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "استحالة محل الالتزام",
+    "keywords": [
+      "محل الالتزام",
+      "مستحيلاً",
+      "العقد",
+      "باطلاً"
+    ],
+    "article_summary": "إذا كان محل الالتزام مستحيلاً في ذاته كان العقد باطلاً.",
+    "article_category": "تعريف",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_102",
@@ -2949,13 +3030,25 @@
     "split_source": "regex",
     "word_count": 73,
     "char_count": 340,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "تعيين محل الالتزام",
+    "keywords": [
+      "محل الالتزام",
+      "معيناً بذاته",
+      "نوعه",
+      "مقداره",
+      "باطلاً",
+      "العقد",
+      "العرف",
+      "صنف متوسط",
+      "المدين"
+    ],
+    "article_summary": "إذا لم يكن محل الالتزام معيناً بذاته، وجب أن يكون معيناً بنوعه ومقداره وإلا كان العقد باطلاً، ويلتزم المدين بتسليم شيء من صنف متوسط إذا لم يتفق على درجته.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "المدين"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_103",
@@ -2970,13 +3063,23 @@
     "split_source": "regex",
     "word_count": 28,
     "char_count": 142,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "محل الالتزام نقوداً",
+    "keywords": [
+      "محل الالتزام",
+      "نقوداً",
+      "المدين",
+      "عددها",
+      "العقد",
+      "قيمة النقود",
+      "الوفاء"
+    ],
+    "article_summary": "إذا كان محل الالتزام نقوداً، التزم المدين بقدر عددها المذكور في العقد دون أن يكون لارتفاع قيمة هذه النقود أو لانخفاضها وقت الوفاء أي أثر.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "المدين"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_104",
@@ -2991,13 +3094,20 @@
     "split_source": "regex",
     "word_count": 16,
     "char_count": 81,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "مخالفة محل الالتزام للنظام العام",
+    "keywords": [
+      "محل الالتزام",
+      "مخالفاً",
+      "النظام العام",
+      "الآداب",
+      "العقد",
+      "باطلاً"
+    ],
+    "article_summary": "إذا كان محل الالتزام مخالفاً للنظام العام أو الآداب كان العقد باطلاً.",
+    "article_category": "تعريف",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_105",
@@ -3012,13 +3122,21 @@
     "split_source": "regex",
     "word_count": 20,
     "char_count": 91,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "سبب الالتزام وبطلان العقد",
+    "keywords": [
+      "الالتزام",
+      "سبب",
+      "مخالفاً",
+      "النظام العام",
+      "الآداب",
+      "العقد",
+      "باطلاً"
+    ],
+    "article_summary": "إذا لم يكن للالتزام سبب، أو كان سببه مخالفاً للنظام العام أو الآداب، كان العقد باطلاً.",
+    "article_category": "تعريف",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_106",
@@ -3033,13 +3151,22 @@
     "split_source": "regex",
     "word_count": 65,
     "char_count": 302,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "افتراض مشروعية السبب",
+    "keywords": [
+      "الالتزام",
+      "سبب",
+      "العقد",
+      "مشروعاً",
+      "الدليل",
+      "السبب الحقيقي",
+      "صورية السبب",
+      "يثبت"
+    ],
+    "article_summary": "إذا لم يذكر للالتزام سبب في العقد يفترض أن له سبباً مشروعاً، ويعتبر السبب المذكور هو الحقيقي حتى يقوم الدليل على ما يخالف ذلك، وعلى من يدعي صورية السبب إثبات السبب المشروع الآخر.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_107",
@@ -3054,13 +3181,19 @@
     "split_source": "regex",
     "word_count": 18,
     "char_count": 95,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "حق إبطال العقد",
+    "keywords": [
+      "القانون",
+      "المتعاقدين",
+      "حقاً",
+      "إبطال العقد",
+      "المتعاقد الآخر"
+    ],
+    "article_summary": "إذا جعل القانون لأحد المتعاقدين حقاً في إبطال العقد فليس للمتعاقد الآخر أن يتمسك بهذا الحق.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_108",
@@ -3075,13 +3208,19 @@
     "split_source": "regex",
     "word_count": 27,
     "char_count": 137,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "زوال حق إبطال العقد",
+    "keywords": [
+      "حق إبطال العقد",
+      "الإجازة الصريحة",
+      "الإجازة الضمنية",
+      "تاريخ العقد",
+      "حقوق الغير"
+    ],
+    "article_summary": "يزول حق إبطال العقد بالإجازة الصريحة أو الضمنية، وتستند الإجازة إلى التاريخ الذي تم فيه العقد، دون إخلال بحقوق الغير.",
+    "article_category": "إجراء",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_109",
@@ -3096,13 +3235,23 @@
     "split_source": "regex",
     "word_count": 79,
     "char_count": 357,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "سقوط حق إبطال العقد بالتقادم",
+    "keywords": [
+      "سقوط الحق",
+      "إبطال العقد",
+      "ثلاث سنوات",
+      "نقص الأهلية",
+      "غلط",
+      "تدليس",
+      "إكراه",
+      "خمس عشرة سنة",
+      "تمام العقد"
+    ],
+    "article_summary": "يسقط الحق في إبطال العقد إذا لم يتمسك به صاحبه خلال ثلاث سنوات، وتبدأ هذه المدة من زوال سبب نقص الأهلية أو انكشاف الغلط أو التدليس أو انقطاع الإكراه، ولا يجوز التمسك به بعد خمس عشرة سنة من وقت تمام العقد.",
+    "article_category": "إجراء",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_110",
@@ -3117,13 +3266,25 @@
     "split_source": "regex",
     "word_count": 40,
     "char_count": 190,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "بطلان العقد المطلق",
+    "keywords": [
+      "العقد باطلاً",
+      "ذي مصلحة",
+      "التمسك بالبطلان",
+      "المحكمة",
+      "تلقاء نفسها",
+      "الإجازة",
+      "دعوى البطلان",
+      "خمس عشرة سنة",
+      "وقت العقد"
+    ],
+    "article_summary": "إذا كان العقد باطلاً جاز لكل ذي مصلحة أن يتمسك بالبطلان، وللمحكمة أن تقضي به من تلقاء نفسها ولا يزول البطلان بالإجازة، وتسقط دعوى البطلان بمضي خمس عشرة سنة من وقت العقد.",
+    "article_category": "حق",
+    "legal_entities": [
+      "المحكمة"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_111",
@@ -3138,13 +3299,22 @@
     "split_source": "regex",
     "word_count": 55,
     "char_count": 261,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "آثار إبطال وبطلان العقد",
+    "keywords": [
+      "إبطال العقد",
+      "بطلانه",
+      "المتعاقدان",
+      "الحالة السابقة",
+      "تعويض معادل",
+      "ناقص الأهلية",
+      "منفعة",
+      "تنفيذ العقد"
+    ],
+    "article_summary": "في حالتي إبطال العقد وبطلانه يعاد المتعاقدان إلى الحالة التي كانا عليها قبل العقد، وإذا استحال ذلك جاز الحكم بتعويض معادل، ولا يلزم ناقص الأهلية برد غير ما عاد عليه من منفعة بسبب تنفيذ العقد.",
+    "article_category": "إجراء",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_112",
@@ -3159,13 +3329,20 @@
     "split_source": "regex",
     "word_count": 38,
     "char_count": 169,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "بطلان جزء من العقد",
+    "keywords": [
+      "العقد",
+      "باطلاً",
+      "قابلاً للإبطال",
+      "شق",
+      "يبطل",
+      "نية المتعاقدين"
+    ],
+    "article_summary": "إذا كان العقد في شق منه باطلاً أو قابلاً للإبطال فهذا الشق وحده هو الذي يبطل، إلا إذا تبين أن العقد ما كان ليتم بغير الشق الذي وقع باطلاً أو قابلاً للإبطال فيبطل العقد كله.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_113",
@@ -3180,13 +3357,20 @@
     "split_source": "regex",
     "word_count": 40,
     "char_count": 201,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "تحول العقد الباطل",
+    "keywords": [
+      "العقد باطلاً",
+      "قابلاً للإبطال",
+      "أركان عقد آخر",
+      "صحيحاً",
+      "نية المتعاقدين",
+      "إبرام هذا العقد"
+    ],
+    "article_summary": "إذا كان العقد باطلاً أو قابلاً للإبطال وتوافرت فيه أركان عقد آخر، فإن العقد يكون صحيحاً باعتباره العقد الذي توافرت أركانه، إذا تبين أن نية المتعاقدين كانت تنصرف إلى إبرام هذا العقد.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_114",
@@ -3201,13 +3385,20 @@
     "split_source": "regex",
     "word_count": 37,
     "char_count": 186,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "أثر العقد على الخلف العام",
+    "keywords": [
+      "أثر العقد",
+      "المتعاقدين",
+      "الخلف العام",
+      "الميراث",
+      "طبيعة التعامل",
+      "نص القانون"
+    ],
+    "article_summary": "ينصرف أثر العقد إلى المتعاقدين والخلف العام، ما لم يتبين من العقد أو من طبيعة التعامل أو من نص القانون أن هذا الأثر لا ينصرف إلى الخلف العام.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_115",
@@ -3222,13 +3413,21 @@
     "split_source": "regex",
     "word_count": 45,
     "char_count": 231,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "انتقال الحقوق والالتزامات للخلف الخاص",
+    "keywords": [
+      "العقد",
+      "التزامات",
+      "حقوق شخصية",
+      "شيء",
+      "خلف خاص",
+      "مستلزماته",
+      "علم الخلف الخاص"
+    ],
+    "article_summary": "إذا أنشأ العقد التزامات وحقوقاً شخصية تتصل بشيء انتقل بعد ذلك إلى خلف خاص، فإن هذه الالتزامات والحقوق تنتقل إلى هذا الخلف في الوقت الذي ينتقل فيه الشيء، إذا كانت من مستلزماته وكان الخلف الخاص يعلم بها وقت انتقال الشيء إليه.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_116",
@@ -3243,13 +3442,26 @@
     "split_source": "regex",
     "word_count": 84,
     "char_count": 433,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "العقد شريعة المتعاقدين والظروف الطارئة",
+    "keywords": [
+      "العقد",
+      "شريعة المتعاقدين",
+      "نقضه",
+      "تعديله",
+      "اتفاق الطرفين",
+      "القانون",
+      "حوادث استثنائية عامة",
+      "توقعها",
+      "تنفيذ الالتزام",
+      "مرهقاً"
+    ],
+    "article_summary": "العقد شريعة المتعاقدين فلا يجوز نقضه ولا تعديله إلا باتفاق الطرفين أو للأسباب التي يقررها القانون، ويجوز للقاضي رد الالتزام المرهق إلى الحد المعقول إذا طرأت حوادث استثنائية عامة غير متوقعة أدت إلى إرهاق المدين.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "القاضي"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_117",
@@ -3264,13 +3476,22 @@
     "split_source": "regex",
     "word_count": 46,
     "char_count": 229,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "تنفيذ العقد وحسن النية",
+    "keywords": [
+      "تنفيذ العقد",
+      "حسن النية",
+      "المتعاقد",
+      "مستلزماته",
+      "القانون",
+      "العرف",
+      "العدالة",
+      "طبيعة الالتزام"
+    ],
+    "article_summary": "يجب تنفيذ العقد طبقاً لما اشتمل عليه وبطريقة تتفق مع ما يوجبه حسن النية، ولا يقتصر العقد على ما ورد فيه بل يتناول أيضاً ما هو من مستلزماته وفقاً للقانون والعرف والعدالة.",
+    "article_category": "التزام",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_118",
@@ -3285,13 +3506,25 @@
     "split_source": "regex",
     "word_count": 41,
     "char_count": 190,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "عقود الإذعان والشروط التعسفية",
+    "keywords": [
+      "العقد",
+      "طريق الإذعان",
+      "شروطاً تعسفية",
+      "القاضي",
+      "تعديل",
+      "إعفاء",
+      "الطرف المذعن",
+      "العدالة",
+      "اتفاق"
+    ],
+    "article_summary": "إذا تم العقد بطريق الإذعان وتضمن شروطاً تعسفية جاز للقاضي أن يعدل هذه الشروط أو أن يعفي الطرف المذعن منها وفقاً لما تقضي به العدالة، ويقع باطلاً أي اتفاق على خلاف ذلك.",
+    "article_category": "حق",
+    "legal_entities": [
+      "القاضي"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_119",
@@ -3306,13 +3539,24 @@
     "split_source": "regex",
     "word_count": 68,
     "char_count": 356,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "تفسير العقد",
+    "keywords": [
+      "عبارة العقد",
+      "واضحة",
+      "تفسيرها",
+      "إرادة المتعاقدين",
+      "نية مشتركة",
+      "المعنى الحرفي",
+      "الألفاظ",
+      "طبيعة التعامل",
+      "أمانة",
+      "ثقة"
+    ],
+    "article_summary": "إذا كانت عبارة العقد واضحة فلا يجوز الانحراف عنها من طريق تفسيرها، أما إذا كان هناك محل لتفسير العقد فيجب البحث عن النية المشتركة للمتعاقدين دون الوقوف عند المعنى الحرفي للألفاظ.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_120",
@@ -3327,13 +3571,19 @@
     "split_source": "regex",
     "word_count": 28,
     "char_count": 135,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "تفسير الشك في العقد",
+    "keywords": [
+      "الشك",
+      "مصلحة المدين",
+      "عبارات غامضة",
+      "عقود الإذعان",
+      "الطرف المذعن"
+    ],
+    "article_summary": "يفسر الشك في مصلحة المدين، ومع ذلك لا يجوز أن يكون تفسير العبارات الغامضة في عقود الإذعان ضاراً بمصلحة الطرف المذعن.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_121",
@@ -3348,13 +3598,24 @@
     "split_source": "regex",
     "word_count": 105,
     "char_count": 467,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "التعهد عن الغير",
+    "keywords": [
+      "العقد",
+      "التزام",
+      "ذمة الغير",
+      "حقاً",
+      "تعهد شخص",
+      "الغير",
+      "يلتزم",
+      "تعويض",
+      "المتعهد",
+      "الالتزام"
+    ],
+    "article_summary": "لا يرتب العقد التزاماً في ذمة الغير، ولكن يجوز أن يكسبه حقاً، وإذا تعهد شخص بأن يجعل الغير يلتزم بأمر فلا يلزم الغير بتعهده، ويلتزم المتعهد بالتعويض إذا رفض الغير، ويجوز له القيام بالالتزام بنفسه، وقبول الغير لا ينتج أثراً إلا من وقت صدوره ما لم يقصد استناد الأثر لوقت التعهد.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_122",
@@ -3369,13 +3630,24 @@
     "split_source": "regex",
     "word_count": 97,
     "char_count": 484,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "الاشتراط لمصلحة الغير",
+    "keywords": [
+      "شخص",
+      "يتعاقد باسمه",
+      "التزامات",
+      "مصلحة الغير",
+      "مصلحة شخصية",
+      "مادية",
+      "أدبية",
+      "حقاً مباشراً",
+      "المتعهد",
+      "تنفيذ الاشتراط"
+    ],
+    "article_summary": "يجوز للشخص أن يتعاقد باسمه على التزامات يشترطها لمصلحة الغير إذا كانت له مصلحة شخصية، ويكسب الغير حقاً مباشراً قبل المتعهد بتنفيذ الاشتراط، ويجوز للمشترط أيضاً أن يطالب بتنفيذ ما اشترط لمصلحة المنتفع.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_123",
@@ -3390,13 +3662,24 @@
     "split_source": "regex",
     "word_count": 75,
     "char_count": 373,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "نقض المشارطة لمصلحة الغير",
+    "keywords": [
+      "المشترط",
+      "دائنيه",
+      "ورثته",
+      "نقض المشارطة",
+      "المنتفع",
+      "المتعهد",
+      "رغبته",
+      "الاستفادة",
+      "العقد",
+      "ذمة المتعهد"
+    ],
+    "article_summary": "يجوز للمشترط دون دائنيه أو ورثته أن ينقض المشارطة قبل أن يعلن المنتفع رغبته في الاستفادة منها، ولا يترتب على نقض المشارطة براءة ذمة المتعهد إلا باتفاق، وللمشترط إحلال منتفع آخر أو الاستئثار بالانتفاع.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_124",
@@ -3411,13 +3694,23 @@
     "split_source": "regex",
     "word_count": 43,
     "char_count": 211,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "تعيين المنتفع في الاشتراط",
+    "keywords": [
+      "الاشتراط لمصلحة الغير",
+      "المنتفع",
+      "شخصاً مستقبلاً",
+      "جهة مستقبلة",
+      "غير معينين",
+      "وقت العقد",
+      "تعيينهما",
+      "وقت أثر العقد",
+      "المشارطة"
+    ],
+    "article_summary": "يجوز في الاشتراط لمصلحة الغير أن يكون المنتفع شخصاً مستقبلاً أو جهة مستقبلة، أو شخصاً أو جهة لم يعينا وقت العقد، متى كان تعيينهما مستطاعاً وقت أن ينتج العقد أثره طبقاً للمشارطة.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_125",
@@ -3432,13 +3725,27 @@
     "split_source": "regex",
     "word_count": 71,
     "char_count": 349,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "فسخ العقد الملزم للجانبين",
+    "keywords": [
+      "العقود الملزمة للجانبين",
+      "عدم الوفاء",
+      "التزامه",
+      "المتعاقد الآخر",
+      "إعذاره المدين",
+      "تنفيذ العقد",
+      "فسخه",
+      "تعويض",
+      "القاضي",
+      "أجلاً"
+    ],
+    "article_summary": "في العقود الملزمة للجانبين، إذا لم يوفِ أحد المتعاقدين بالتزامه جاز للطرف الآخر بعد إعذار المدين المطالبة بتنفيذ العقد أو بفسخه مع التعويض، ويجوز للقاضي منح المدين أجلاً أو رفض الفسخ إذا كان عدم الوفاء قليل الأهمية.",
+    "article_category": "حق",
+    "legal_entities": [
+      "القاضي",
+      "المدين"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_126",
@@ -3453,13 +3760,23 @@
     "split_source": "regex",
     "word_count": 39,
     "char_count": 203,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "الاتفاق على الفسخ التلقائي",
+    "keywords": [
+      "الاتفاق",
+      "العقد مفسوخاً",
+      "تلقاء نفسه",
+      "حكم قضائي",
+      "عدم الوفاء",
+      "الالتزامات",
+      "الإعذار",
+      "المتعاقدان",
+      "الإعفاء"
+    ],
+    "article_summary": "يجوز الاتفاق على أن يعتبر العقد مفسوخاً من تلقاء نفسه دون حاجة إلى حكم قضائي عند عدم الوفاء بالالتزامات الناشئة عنه، وهذا الاتفاق لا يعفي من الإعذار إلا إذا اتفق المتعاقدان صراحة على الإعفاء منه.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_127",
@@ -3474,13 +3791,20 @@
     "split_source": "regex",
     "word_count": 22,
     "char_count": 129,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "فسخ العقد لاستحالة التنفيذ",
+    "keywords": [
+      "العقود الملزمة للجانبين",
+      "التزام",
+      "استحالة تنفيذه",
+      "الالتزامات المقابلة",
+      "ينفسخ العقد",
+      "تلقاء نفسه"
+    ],
+    "article_summary": "في العقود الملزمة للجانبين إذا انقضى التزام بسبب استحالة تنفيذه انقضت معه الالتزامات المقابلة له وينفسخ العقد من تلقاء نفسه.",
+    "article_category": "تنظيمية",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_128",
@@ -3495,13 +3819,18 @@
     "split_source": "regex",
     "word_count": 21,
     "char_count": 109,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "آثار فسخ العقد",
+    "keywords": [
+      "فسخ العقد",
+      "المتعاقدان",
+      "الحالة السابقة",
+      "تعويض"
+    ],
+    "article_summary": "إذا فسخ العقد أعيد المتعاقدان إلى الحالة التي كانا عليها قبل العقد، فإذا استحال ذلك جاز الحكم بالتعويض.",
+    "article_category": "إجراء",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_129",
@@ -3516,13 +3845,18 @@
     "split_source": "regex",
     "word_count": 25,
     "char_count": 154,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "الدفع بعدم التنفيذ",
+    "keywords": [
+      "العقود الملزمة للجانبين",
+      "الالتزامات المتقابلة",
+      "المتعاقد الآخر",
+      "تنفيذ"
+    ],
+    "article_summary": "في العقود الملزمة للجانبين إذا كانت الالتزامات متقابلة، يجوز للمتعاقد الامتناع عن تنفيذ التزامه إذا لم يقم المتعاقد الآخر بتنفيذ ما التزم به.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_130",
@@ -3537,13 +3871,24 @@
     "split_source": "regex",
     "word_count": 94,
     "char_count": 459,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "الوعد بجائزة للجمهور",
+    "keywords": [
+      "وعد",
+      "الجمهور",
+      "جائزة",
+      "عمل معين",
+      "التزام",
+      "قام بالعمل",
+      "أجلاً",
+      "الرجوع",
+      "إعلان",
+      "حق"
+    ],
+    "article_summary": "من وجه للجمهور وعداً بجائزة عن عمل معين التزم بإعطاء الجائزة لمن قام بهذا العمل، ويجوز للواعد الرجوع في وعده بإعلان للجمهور إذا لم يعين أجلاً، وتسقط دعوى المطالبة بالجائزة بعد ستة أشهر من تاريخ إعلان العدول.",
+    "article_category": "التزام",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_131",
@@ -3558,13 +3903,26 @@
     "split_source": "regex",
     "word_count": 57,
     "char_count": 252,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "المسؤولية عن الأعمال الشخصية",
+    "keywords": [
+      "الخطأ",
+      "ضرر",
+      "الغير",
+      "يلزم",
+      "تعويض",
+      "شخص غير مميز",
+      "مسؤول عنه",
+      "تعذر الحصول",
+      "القاضي",
+      "تعويض عادل"
+    ],
+    "article_summary": "كل خطأ سبب ضرراً للغير يلزم من ارتكبه بالتعويض، وإذا وقع الضرر من شخص غير مميز وتعذر الحصول على تعويض من المسؤول، جاز للقاضي إلزام من وقع منه الضرر بتعويض عادل مراعياً يسار الخصوم.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "القاضي"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_132",
@@ -3579,13 +3937,18 @@
     "split_source": "regex",
     "word_count": 14,
     "char_count": 67,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "مسؤولية الشخص المميز",
+    "keywords": [
+      "الشخص",
+      "مسؤولاً",
+      "أعماله غير المشروعة",
+      "مميز"
+    ],
+    "article_summary": "يكون الشخص مسؤولاً عن أعماله غير المشروعة متى صدرت منه وهو مميز.",
+    "article_category": "تعريف",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_133",
@@ -3600,13 +3963,24 @@
     "split_source": "regex",
     "word_count": 47,
     "char_count": 192,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "انتفاء المسؤولية لسبب أجنبي",
+    "keywords": [
+      "الشخص",
+      "الضرر",
+      "سبب أجنبي",
+      "حادث مفاجئ",
+      "قوة قاهرة",
+      "خطأ المضرور",
+      "خطأ الغير",
+      "غير ملزم",
+      "تعويض",
+      "نص"
+    ],
+    "article_summary": "إذا أثبت الشخص أن الضرر قد نشأ عن سبب أجنبي لا يد له فيه، كان غير ملزم بتعويض هذا الضرر ما لم يوجد نص أو اتفاق على غير ذلك.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_134",
@@ -3621,13 +3995,24 @@
     "split_source": "regex",
     "word_count": 42,
     "char_count": 188,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "المسؤولية في حالة الدفاع الشرعي",
+    "keywords": [
+      "ضرر",
+      "دفاع شرعي",
+      "نفسه",
+      "ماله",
+      "الغير",
+      "غير مسؤول",
+      "تجاوز",
+      "القدر الضروري",
+      "تعويض",
+      "مقتضيات العدالة"
+    ],
+    "article_summary": "من أحدث ضرراً وهو في حالة دفاع شرعي عن نفسه أو ماله أو عن نفس الغير أو ماله، كان غير مسؤول، على ألا يتجاوز في دفاعه القدر الضروري، وإلا أصبح ملزماً بتعويض تراعى فيه مقتضيات العدالة.",
+    "article_category": "حق",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_135",
@@ -3642,13 +4027,27 @@
     "split_source": "regex",
     "word_count": 60,
     "char_count": 283,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "مسؤولية الموظف العام",
+    "keywords": [
+      "الموظف العام",
+      "مسؤولاً",
+      "عمله",
+      "أضر بالغير",
+      "تنفيذاً لأمر",
+      "رئيس",
+      "طاعة واجبة",
+      "اعتقاد",
+      "مشروعية العمل",
+      "أسباب معقولة"
+    ],
+    "article_summary": "لا يكون الموظف العام مسؤولاً عن عمله الذي أضر بالغير إذا قام به تنفيذاً لأمر صدر إليه من رئيس، متى كانت طاعة هذا الأمر واجبة عليه، أو كان يعتقد أنها واجبة، وأثبت اعتقاده بمشروعية العمل ومراعاته جانب الحيطة.",
+    "article_category": "حق",
+    "legal_entities": [
+      "الموظف العام",
+      "رئيس"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_136",
@@ -3663,13 +4062,24 @@
     "split_source": "regex",
     "word_count": 24,
     "char_count": 114,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "المسؤولية في حالة الضرورة",
+    "keywords": [
+      "ضرر",
+      "الغير",
+      "يتفادى ضرراً أكبر",
+      "محدقاً",
+      "غير ملزم",
+      "تعويض",
+      "القاضي",
+      "مناسباً"
+    ],
+    "article_summary": "من سبب ضرراً للغير ليتفادى ضرراً أكبر، محدقاً به أو بغيره، لا يكون ملزماً إلا بالتعويض الذي يراه القاضي مناسباً.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "القاضي"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_137",
@@ -3684,13 +4094,25 @@
     "split_source": "regex",
     "word_count": 30,
     "char_count": 159,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "تعدد المسؤولين عن الضرر",
+    "keywords": [
+      "المسؤولون",
+      "عمل ضار",
+      "متضامنين",
+      "التزامهم",
+      "تعويض الضرر",
+      "المسؤولية",
+      "بالتساوي",
+      "القاضي",
+      "نصيب"
+    ],
+    "article_summary": "إذا تعدد المسؤولون عن عمل ضار كانوا متضامنين في التزامهم بتعويض الضرر، وتكون المسؤولية فيما بينهم بالتساوي، إلا إذا عين القاضي نصيب كل منهم في التعويض.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "القاضي"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_138",
@@ -3705,13 +4127,27 @@
     "split_source": "regex",
     "word_count": 52,
     "char_count": 263,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "تقدير التعويض عن الضرر",
+    "keywords": [
+      "القاضي",
+      "تقدير",
+      "التعويض",
+      "الضرر",
+      "المضرور",
+      "أحكام",
+      "الظروف الملابسة",
+      "تعيين نهائياً",
+      "يحتفظ",
+      "الحق"
+    ],
+    "article_summary": "يقدر القاضي مدى التعويض عن الضرر الذي لحق المضرور طبقاً للأحكام ذات الصلة، مراعياً الظروف الملابسة، وله أن يحتفظ للمضرور بالحق في إعادة النظر في التقدير إذا لم يتيسر له تعيينه نهائياً وقت الحكم.",
+    "article_category": "إجراء",
+    "legal_entities": [
+      "القاضي",
+      "المضرور"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_139",
@@ -3726,13 +4162,28 @@
     "split_source": "regex",
     "word_count": 74,
     "char_count": 367,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
-    "legal_entities": [],
+    "topic": "طريقة التعويض عن الضرر",
+    "keywords": [
+      "القاضي",
+      "طريقة التعويض",
+      "الظروف",
+      "مقسطاً",
+      "إيراداً مرتباً",
+      "المدين",
+      "تأميناً",
+      "التعويض بالنقد",
+      "المضرور",
+      "إعادة الحالة"
+    ],
+    "article_summary": "يعين القاضي طريقة التعويض تبعاً للظروف، ويصح أن يكون مقسطاً أو إيراداً مرتباً مع إمكانية إلزام المدين بتقديم تأمين، ويقدر التعويض بالنقد، ويجوز للقاضي الأمر بإعادة الحالة إلى ما كانت عليه أو الحكم بأداء أمر معين كتعويض.",
+    "article_category": "إجراء",
+    "legal_entities": [
+      "القاضي",
+      "المدين",
+      "المضرور"
+    ],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_140",
@@ -3747,13 +4198,24 @@
     "split_source": "regex",
     "word_count": 87,
     "char_count": 447,
-    "topic": "",
-    "keywords": [],
-    "article_summary": "",
-    "article_category": "أخرى",
+    "topic": "سقوط دعوى التعويض بالتقادم",
+    "keywords": [
+      "سقوط",
+      "التقادم",
+      "دعوى التعويض",
+      "العمل غير المشروع",
+      "ثلاث سنوات",
+      "المضرور",
+      "حدوث الضرر",
+      "الشخص المسؤول",
+      "خمس عشرة سنة",
+      "يوم وقوع العمل"
+    ],
+    "article_summary": "تسقط دعوى التعويض الناشئة عن العمل غير المشروع بالتقادم بانقضاء ثلاث سنوات من علم المضرور بالضرر والمسؤول، وتسقط في كل حال بانقضاء خمس عشرة سنة من يوم وقوع العمل، وإذا كانت ناشئة عن جريمة فلا تسقط إلا بسقوط الدعوى الجنائية.",
+    "article_category": "إجراء",
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
-    "enrichment_error": "not_reached"
+    "enrichment_error": null
   },
   {
     "article_id": "EG_CIVIL_CODE_141",
