@@ -51,6 +51,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from config.law_registry import LawEntry
+from config.taxonomy import validate_concepts
 from config.settings import (
     ENRICH_BATCH_SIZE,
     ENRICH_THINKING_BUDGET,
@@ -288,13 +289,17 @@ def _parse_metadata(data: dict[str, Any], model: str) -> ArticleMetadata:
     if category not in _VALID_CATEGORIES:
         category = "أخرى"
 
-    # concepts: keep only non-empty snake_case strings, max 10
+    # concepts: validate against taxonomy.py — reject anything not in LEGAL_CONCEPTS
     raw_concepts = data.get("concepts", []) or []
-    concepts = [
-        str(c).strip().lower().replace(" ", "_")[:60]
+    normalised_concepts = [
+        str(c).strip().lower().replace(" ", "_")
         for c in raw_concepts
         if c and str(c).strip()
-    ][:10]
+    ]
+    valid_concepts, rejected_concepts = validate_concepts(normalised_concepts)
+    if rejected_concepts:
+        logger.debug("Concepts rejected (not in taxonomy): %s", rejected_concepts)
+    concepts = valid_concepts[:10]
 
     # applicable_to: keep only enum-valid values
     raw_applicable = data.get("applicable_to", []) or []

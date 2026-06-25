@@ -10,6 +10,7 @@ Laws are processed sequentially.  Per-law results and a combined cost
 summary are printed at the end.
 """
 
+import argparse
 import logging
 import sys
 from dataclasses import dataclass
@@ -49,6 +50,9 @@ console = Console()
 # ── Default batch: laws with PDFs present in data/raw_pdfs/ ──────────────────
 BATCH_LAWS = ["EG_PDPL", "EG_ESIGN", "EG_CIVIL_CODE"]
 
+# ── Valid stage keys ──────────────────────────────────────────────────────────
+_ALL_STAGES = ["1", "1.3", "1.5", "2", "2.5", "3", "3.7", "4", "5", "6", "7"]
+
 
 # ── Per-law result dataclass ──────────────────────────────────────────────────
 
@@ -80,7 +84,20 @@ def _source_exists(law_id: str) -> bool:
 
 # ── Single-law runner ─────────────────────────────────────────────────────────
 
-def run_law(law_id: str, cost_tracker: CostTracker) -> LawResult:
+def run_law(
+    law_id: str,
+    cost_tracker: CostTracker,
+    stages: set[str],
+    force_reenrich: bool = False,
+) -> LawResult:
+    """
+    Run the pipeline for *law_id*, executing only the stages listed in *stages*.
+
+    When starting from a later stage (e.g. "3"), prior outputs are loaded from
+    disk rather than re-computed.  Variables that would have been produced by
+    skipped stages are initialised with sensible sentinel defaults so the rest
+    of the runner can reference them without NameError.
+    """
     law_entry = get_law(law_id)
     law_cost_before = cost_tracker.summary()["total_cost_usd"]
 
@@ -96,7 +113,17 @@ def run_law(law_id: str, cost_tracker: CostTracker) -> LawResult:
         style="blue",
     ))
 
-    if not source_path.exists():
+    # ── Sentinel defaults (filled in if the stage is actually run) ────────────
+    ext            = None   # ExtractionResult
+    conf           = None   # ConfidenceResult — populated by Stage 1.5 or loaded
+    articles       = None   # list[dict]        — populated by Stage 2 or loaded
+    split          = None   # SplitReport
+    chunk_report   = None   # ChunkReport
+    pres_normalized = 0
+    extraction_source = "unknown"
+
+    # ── Source-file check only when Stage 1 is requested ─────────────────────
+    if "1" in stages and not source_path.exists():
         console.print(f"  [red]✗ مصدر الملف غير موجود: {source_path}[/]")
         return LawResult(
             law_id=law_id, law_name_ar=law_entry.law_name_ar,
@@ -105,236 +132,297 @@ def run_law(law_id: str, cost_tracker: CostTracker) -> LawResult:
             chunks=None, cost_usd=0.0, presentation_forms_normalized=0,
         )
 
-    pres_normalized = 0
-
     # Stage 1 ─────────────────────────────────────────────────────────────────
-    try:
-        ext = stage_1_extract.run(pdf_path=pdf_path, law_entry=law_entry, cost_tracker=cost_tracker)
-        if not ext.success:
-            raise RuntimeError(ext.error or "extraction failed")
-        console.print(
-            f"  [green]✓[/] Stage 1  — {ext.extraction_source}  "
-            f"{ext.char_count:,} chars  {ext.page_count}p  "
-            f"arabic={ext.arabic_density:.2%}"
-        )
-    except Exception as exc:
-        console.print(f"  [red]✗ Stage 1 failed: {exc}[/]")
-        return LawResult(
-            law_id=law_id, law_name_ar=law_entry.law_name_ar,
-            status="fail", fail_stage="stage_1", fail_reason=str(exc),
-            extraction_source=None, confidence=None, articles_found=None,
-            chunks=None,
-            cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
-            presentation_forms_normalized=0,
-        )
-
-    # Stage 1.3 ───────────────────────────────────────────────────────────────
-    try:
-        audit = stage_1_3_cleanup.run(law_entry=law_entry, extraction_source=ext.extraction_source)
-        pres_normalized = audit.presentation_forms_normalized
-        pres_note = f"  [yellow]⚡ NFKC: {pres_normalized:,} chars converted[/]" if pres_normalized else ""
-        console.print(
-            f"  [green]✓[/] Stage 1.3 — cleanup  "
-            f"{audit.chars_before:,} → {audit.chars_after:,} chars"
-            + (f"  [yellow]NFKC={pres_normalized:,}[/]" if pres_normalized else "")
-        )
-    except Exception as exc:
-        console.print(f"  [red]✗ Stage 1.3 failed: {exc}[/]")
-        return LawResult(
-            law_id=law_id, law_name_ar=law_entry.law_name_ar,
-            status="fail", fail_stage="stage_1_3", fail_reason=str(exc),
-            extraction_source=ext.extraction_source, confidence=None,
-            articles_found=None, chunks=None,
-            cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
-            presentation_forms_normalized=pres_normalized,
-        )
-
-    # Stage 1.5 ───────────────────────────────────────────────────────────────
-    try:
-        conf = stage_1_5_val_extract.run(
-            law_entry=law_entry, extraction_source=ext.extraction_source
-        )
-        status_sym = "[green]✓[/]" if conf.passed else "[red]✗[/]"
-        console.print(
-            f"  {status_sym} Stage 1.5 — confidence {conf.confidence_score:.4f}  "
-            f"({'PASS' if conf.passed else 'FAIL'})"
-        )
-        if not conf.passed:
+    if "1" in stages:
+        try:
+            ext = stage_1_extract.run(pdf_path=pdf_path, law_entry=law_entry, cost_tracker=cost_tracker)
+            if not ext.success:
+                raise RuntimeError(ext.error or "extraction failed")
+            extraction_source = ext.extraction_source
+            console.print(
+                f"  [green]✓[/] Stage 1  — {ext.extraction_source}  "
+                f"{ext.char_count:,} chars  {ext.page_count}p  "
+                f"arabic={ext.arabic_density:.2%}"
+            )
+        except Exception as exc:
+            console.print(f"  [red]✗ Stage 1 failed: {exc}[/]")
             return LawResult(
                 law_id=law_id, law_name_ar=law_entry.law_name_ar,
-                status="fail", fail_stage="stage_1_5",
-                fail_reason=f"Low confidence: {conf.confidence_score:.4f}",
-                extraction_source=ext.extraction_source, confidence=conf.confidence_score,
+                status="fail", fail_stage="stage_1", fail_reason=str(exc),
+                extraction_source=None, confidence=None, articles_found=None,
+                chunks=None,
+                cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
+                presentation_forms_normalized=0,
+            )
+    else:
+        console.print(f"  [dim]— Stage 1  skipped[/]")
+
+    # Stage 1.3 ───────────────────────────────────────────────────────────────
+    if "1.3" in stages:
+        try:
+            audit = stage_1_3_cleanup.run(
+                law_entry=law_entry,
+                extraction_source=extraction_source,
+            )
+            pres_normalized = audit.presentation_forms_normalized
+            console.print(
+                f"  [green]✓[/] Stage 1.3 — cleanup  "
+                f"{audit.chars_before:,} → {audit.chars_after:,} chars"
+                + (f"  [yellow]NFKC={pres_normalized:,}[/]" if pres_normalized else "")
+            )
+        except Exception as exc:
+            console.print(f"  [red]✗ Stage 1.3 failed: {exc}[/]")
+            return LawResult(
+                law_id=law_id, law_name_ar=law_entry.law_name_ar,
+                status="fail", fail_stage="stage_1_3", fail_reason=str(exc),
+                extraction_source=extraction_source, confidence=None,
                 articles_found=None, chunks=None,
                 cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
                 presentation_forms_normalized=pres_normalized,
             )
-    except Exception as exc:
-        console.print(f"  [red]✗ Stage 1.5 failed: {exc}[/]")
-        return LawResult(
-            law_id=law_id, law_name_ar=law_entry.law_name_ar,
-            status="fail", fail_stage="stage_1_5", fail_reason=str(exc),
-            extraction_source=ext.extraction_source, confidence=None,
-            articles_found=None, chunks=None,
-            cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
-            presentation_forms_normalized=pres_normalized,
-        )
+    else:
+        console.print(f"  [dim]— Stage 1.3 skipped[/]")
+
+    # Stage 1.5 ───────────────────────────────────────────────────────────────
+    if "1.5" in stages:
+        try:
+            conf = stage_1_5_val_extract.run(
+                law_entry=law_entry, extraction_source=extraction_source
+            )
+            status_sym = "[green]✓[/]" if conf.passed else "[red]✗[/]"
+            console.print(
+                f"  {status_sym} Stage 1.5 — confidence {conf.confidence_score:.4f}  "
+                f"({'PASS' if conf.passed else 'FAIL'})"
+            )
+            if not conf.passed:
+                return LawResult(
+                    law_id=law_id, law_name_ar=law_entry.law_name_ar,
+                    status="fail", fail_stage="stage_1_5",
+                    fail_reason=f"Low confidence: {conf.confidence_score:.4f}",
+                    extraction_source=extraction_source,
+                    confidence=conf.confidence_score,
+                    articles_found=None, chunks=None,
+                    cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
+                    presentation_forms_normalized=pres_normalized,
+                )
+        except Exception as exc:
+            console.print(f"  [red]✗ Stage 1.5 failed: {exc}[/]")
+            return LawResult(
+                law_id=law_id, law_name_ar=law_entry.law_name_ar,
+                status="fail", fail_stage="stage_1_5", fail_reason=str(exc),
+                extraction_source=extraction_source, confidence=None,
+                articles_found=None, chunks=None,
+                cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
+                presentation_forms_normalized=pres_normalized,
+            )
+    else:
+        console.print(f"  [dim]— Stage 1.5 skipped[/]")
 
     # Stage 2 ─────────────────────────────────────────────────────────────────
-    try:
-        articles, split = stage_2_split.run(law_entry=law_entry)
-        console.print(
-            f"  [green]✓[/] Stage 2  — {split.articles_found} مواد  "
-            f"(متوقع: {split.expected_article_count})"
-        )
-    except Exception as exc:
-        console.print(f"  [red]✗ Stage 2 failed: {exc}[/]")
-        return LawResult(
-            law_id=law_id, law_name_ar=law_entry.law_name_ar,
-            status="fail", fail_stage="stage_2", fail_reason=str(exc),
-            extraction_source=ext.extraction_source, confidence=conf.confidence_score,
-            articles_found=None, chunks=None,
-            cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
-            presentation_forms_normalized=pres_normalized,
-        )
+    if "2" in stages:
+        try:
+            articles, split = stage_2_split.run(law_entry=law_entry)
+            console.print(
+                f"  [green]✓[/] Stage 2  — {split.articles_found} مواد  "
+                f"(متوقع: {split.expected_article_count})"
+            )
+        except Exception as exc:
+            console.print(f"  [red]✗ Stage 2 failed: {exc}[/]")
+            return LawResult(
+                law_id=law_id, law_name_ar=law_entry.law_name_ar,
+                status="fail", fail_stage="stage_2", fail_reason=str(exc),
+                extraction_source=extraction_source,
+                confidence=conf.confidence_score if conf else None,
+                articles_found=None, chunks=None,
+                cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
+                presentation_forms_normalized=pres_normalized,
+            )
+    else:
+        console.print(f"  [dim]— Stage 2  skipped[/]")
+        # Load split articles from disk for later stages
+        from config.settings import SPLIT_ARTICLES_DIR
+        import json as _json
+        _sp = SPLIT_ARTICLES_DIR / law_id / "articles.json"
+        if _sp.exists():
+            articles = _json.loads(_sp.read_text(encoding="utf-8"))
 
     # Stage 2.5 ───────────────────────────────────────────────────────────────
-    try:
-        val = stage_2_5_val_split.run(
-            law_entry=law_entry, articles=articles, split_report=split
-        )
-        status_sym = "[green]✓[/]" if val.passed else "[yellow]⚠[/]"
-        console.print(
-            f"  {status_sym} Stage 2.5 — validation  "
-            f"errors={val.error_count}  warnings={val.warning_count}  "
-            f"({'PASS' if val.passed else 'WARN'})"
-        )
-        if not val.passed:
-            console.print(f"  [red]  Stage 2.5 FAIL — {val.error_count} error(s)[/]")
-            return LawResult(
-                law_id=law_id, law_name_ar=law_entry.law_name_ar,
-                status="fail", fail_stage="stage_2_5",
-                fail_reason=f"{val.error_count} validation errors",
-                extraction_source=ext.extraction_source, confidence=conf.confidence_score,
-                articles_found=split.articles_found, chunks=None,
-                cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
-                presentation_forms_normalized=pres_normalized,
-            )
-    except Exception as exc:
-        console.print(f"  [red]✗ Stage 2.5 failed: {exc}[/]")
-        return LawResult(
-            law_id=law_id, law_name_ar=law_entry.law_name_ar,
-            status="fail", fail_stage="stage_2_5", fail_reason=str(exc),
-            extraction_source=ext.extraction_source, confidence=conf.confidence_score,
-            articles_found=split.articles_found, chunks=None,
-            cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
-            presentation_forms_normalized=pres_normalized,
-        )
+    if "2.5" in stages:
+        if articles is None or split is None:
+            console.print(f"  [yellow]⚠ Stage 2.5 skipped — no split data (run Stage 2 first)[/]")
+        else:
+            try:
+                val = stage_2_5_val_split.run(
+                    law_entry=law_entry, articles=articles, split_report=split
+                )
+                status_sym = "[green]✓[/]" if val.passed else "[yellow]⚠[/]"
+                console.print(
+                    f"  {status_sym} Stage 2.5 — validation  "
+                    f"errors={val.error_count}  warnings={val.warning_count}  "
+                    f"({'PASS' if val.passed else 'WARN'})"
+                )
+                if not val.passed:
+                    console.print(f"  [red]  Stage 2.5 FAIL — {val.error_count} error(s)[/]")
+                    return LawResult(
+                        law_id=law_id, law_name_ar=law_entry.law_name_ar,
+                        status="fail", fail_stage="stage_2_5",
+                        fail_reason=f"{val.error_count} validation errors",
+                        extraction_source=extraction_source,
+                        confidence=conf.confidence_score if conf else None,
+                        articles_found=split.articles_found, chunks=None,
+                        cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
+                        presentation_forms_normalized=pres_normalized,
+                    )
+            except Exception as exc:
+                console.print(f"  [red]✗ Stage 2.5 failed: {exc}[/]")
+                return LawResult(
+                    law_id=law_id, law_name_ar=law_entry.law_name_ar,
+                    status="fail", fail_stage="stage_2_5", fail_reason=str(exc),
+                    extraction_source=extraction_source,
+                    confidence=conf.confidence_score if conf else None,
+                    articles_found=split.articles_found if split else None, chunks=None,
+                    cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
+                    presentation_forms_normalized=pres_normalized,
+                )
+    else:
+        console.print(f"  [dim]— Stage 2.5 skipped[/]")
 
     # Stage 3 ─────────────────────────────────────────────────────────────────
-    try:
-        enrich = stage_3_enrich.run(law_entry=law_entry, cost_tracker=cost_tracker)
-        fail_color = "red" if enrich.failed else "green"
-        console.print(
-            f"  [green]✓[/] Stage 3  — enrichment  "
-            f"{enrich.enriched + enrich.skipped_cache}/{enrich.total_articles}  "
-            f"calls={enrich.total_api_calls}  "
-            f"[{fail_color}]fail={enrich.failed}[/]"
-        )
-    except Exception as exc:
-        console.print(f"  [red]✗ Stage 3 failed: {exc}[/]")
-        return LawResult(
-            law_id=law_id, law_name_ar=law_entry.law_name_ar,
-            status="fail", fail_stage="stage_3", fail_reason=str(exc),
-            extraction_source=ext.extraction_source, confidence=conf.confidence_score,
-            articles_found=split.articles_found, chunks=None,
-            cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
-            presentation_forms_normalized=pres_normalized,
-        )
-
-    # Stage 3.7 ───────────────────────────────────────────────────────────────
-    try:
-        chunk_report = stage_3_7_chunk.run(
-            law_entry=law_entry, cost_tracker=cost_tracker
-        )
-        console.print(
-            f"  [green]✓[/] Stage 3.7 — chunks  "
-            f"{chunk_report.total_articles} مواد → {chunk_report.total_chunks} chunks  "
-            f"avg={chunk_report.avg_chunk_words:.0f}w"
-        )
-    except Exception as exc:
-        console.print(f"  [red]✗ Stage 3.7 failed: {exc}[/]")
-        return LawResult(
-            law_id=law_id, law_name_ar=law_entry.law_name_ar,
-            status="fail", fail_stage="stage_3_7", fail_reason=str(exc),
-            extraction_source=ext.extraction_source, confidence=conf.confidence_score,
-            articles_found=split.articles_found, chunks=None,
-            cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
-            presentation_forms_normalized=pres_normalized,
-        )
-
-    # Stage 4 ─────────────────────────────────────────────────────────────────
-    try:
-        review = stage_4_human_review.run(law_entry=law_entry)
-        console.print(
-            f"  [green]✓[/] Stage 4  — review files → {Path(review.output_dir).name}/"
-        )
-    except Exception as exc:
-        console.print(f"  [yellow]⚠ Stage 4 failed: {exc}[/]")
-
-    # Stage 5 ─────────────────────────────────────────────────────────────────
-    try:
-        valid = stage_5_validate.run(law_entry=law_entry)
-        status_sym = "[green]✓[/]" if valid.passed else "[red]✗[/]"
-        console.print(
-            f"  {status_sym} Stage 5  — validation  "
-            f"errors={valid.error_count}  warnings={valid.warning_count}  "
-            f"({'PASS' if valid.passed else 'FAIL'})"
-        )
-        if not valid.passed:
+    if "3" in stages:
+        try:
+            enrich = stage_3_enrich.run(
+                law_entry=law_entry,
+                cost_tracker=cost_tracker,
+                force_reenrich=force_reenrich,
+            )
+            fail_color = "red" if enrich.failed else "green"
+            console.print(
+                f"  [green]✓[/] Stage 3  — enrichment  "
+                f"{enrich.enriched + enrich.skipped_cache}/{enrich.total_articles}  "
+                f"calls={enrich.total_api_calls}  "
+                f"[{fail_color}]fail={enrich.failed}[/]"
+            )
+        except Exception as exc:
+            console.print(f"  [red]✗ Stage 3 failed: {exc}[/]")
             return LawResult(
                 law_id=law_id, law_name_ar=law_entry.law_name_ar,
-                status="fail", fail_stage="stage_5",
-                fail_reason=f"{valid.error_count} validation errors",
-                extraction_source=ext.extraction_source,
-                confidence=conf.confidence_score,
-                articles_found=split.articles_found,
-                chunks=chunk_report.total_chunks,
+                status="fail", fail_stage="stage_3", fail_reason=str(exc),
+                extraction_source=extraction_source,
+                confidence=conf.confidence_score if conf else None,
+                articles_found=len(articles) if articles else None, chunks=None,
                 cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
                 presentation_forms_normalized=pres_normalized,
             )
-    except Exception as exc:
-        console.print(f"  [yellow]⚠ Stage 5 failed: {exc}[/]")
+    else:
+        console.print(f"  [dim]— Stage 3  skipped[/]")
+
+    # Stage 3.7 ───────────────────────────────────────────────────────────────
+    if "3.7" in stages:
+        try:
+            chunk_report = stage_3_7_chunk.run(
+                law_entry=law_entry, cost_tracker=cost_tracker
+            )
+            console.print(
+                f"  [green]✓[/] Stage 3.7 — chunks  "
+                f"{chunk_report.total_articles} مواد → {chunk_report.total_chunks} chunks  "
+                f"avg={chunk_report.avg_chunk_words:.0f}w"
+            )
+        except Exception as exc:
+            console.print(f"  [red]✗ Stage 3.7 failed: {exc}[/]")
+            return LawResult(
+                law_id=law_id, law_name_ar=law_entry.law_name_ar,
+                status="fail", fail_stage="stage_3_7", fail_reason=str(exc),
+                extraction_source=extraction_source,
+                confidence=conf.confidence_score if conf else None,
+                articles_found=len(articles) if articles else None, chunks=None,
+                cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
+                presentation_forms_normalized=pres_normalized,
+            )
+    else:
+        console.print(f"  [dim]— Stage 3.7 skipped[/]")
+
+    # Stage 4 ─────────────────────────────────────────────────────────────────
+    if "4" in stages:
+        try:
+            review = stage_4_human_review.run(law_entry=law_entry)
+            console.print(
+                f"  [green]✓[/] Stage 4  — review files → {Path(review.output_dir).name}/"
+            )
+        except Exception as exc:
+            console.print(f"  [yellow]⚠ Stage 4 failed: {exc}[/]")
+    else:
+        console.print(f"  [dim]— Stage 4  skipped[/]")
+
+    # Stage 5 ─────────────────────────────────────────────────────────────────
+    if "5" in stages:
+        try:
+            valid = stage_5_validate.run(law_entry=law_entry)
+            status_sym = "[green]✓[/]" if valid.passed else "[red]✗[/]"
+            console.print(
+                f"  {status_sym} Stage 5  — validation  "
+                f"errors={valid.error_count}  warnings={valid.warning_count}  "
+                f"({'PASS' if valid.passed else 'FAIL'})"
+            )
+            if not valid.passed:
+                return LawResult(
+                    law_id=law_id, law_name_ar=law_entry.law_name_ar,
+                    status="fail", fail_stage="stage_5",
+                    fail_reason=f"{valid.error_count} validation errors",
+                    extraction_source=extraction_source,
+                    confidence=conf.confidence_score if conf else None,
+                    articles_found=len(articles) if articles else None,
+                    chunks=chunk_report.total_chunks if chunk_report else None,
+                    cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
+                    presentation_forms_normalized=pres_normalized,
+                )
+        except Exception as exc:
+            console.print(f"  [yellow]⚠ Stage 5 failed: {exc}[/]")
+    else:
+        console.print(f"  [dim]— Stage 5  skipped[/]")
 
     # Stage 6 ─────────────────────────────────────────────────────────────────
-    try:
-        assembly = stage_6_assemble.run(law_entry=law_entry)
-        console.print(
-            f"  [green]✓[/] Stage 6  — assembly  "
-            f"{assembly.total_articles_out} articles  {assembly.total_chunks_out} chunks"
-        )
-    except Exception as exc:
-        console.print(f"  [yellow]⚠ Stage 6 failed: {exc}[/]")
+    if "6" in stages:
+        try:
+            assembly = stage_6_assemble.run(law_entry=law_entry)
+            console.print(
+                f"  [green]✓[/] Stage 6  — assembly  "
+                f"{assembly.total_articles_out} articles  {assembly.total_chunks_out} chunks"
+            )
+        except Exception as exc:
+            console.print(f"  [yellow]⚠ Stage 6 failed: {exc}[/]")
+    else:
+        console.print(f"  [dim]— Stage 6  skipped[/]")
 
     # Stage 7 ─────────────────────────────────────────────────────────────────
-    try:
-        export = stage_7_export.run(law_entry=law_entry)
-        mongo_note = "  [dim](+MongoDB)[/]" if export.mongodb_exported else ""
-        console.print(
-            f"  [green]✓[/] Stage 7  — export → releases/{law_id}/"
-            + mongo_note
-        )
-    except Exception as exc:
-        console.print(f"  [yellow]⚠ Stage 7 failed: {exc}[/]")
+    if "7" in stages:
+        try:
+            export = stage_7_export.run(law_entry=law_entry)
+            mongo_note = "  [dim](+MongoDB)[/]" if export.mongodb_exported else ""
+            console.print(
+                f"  [green]✓[/] Stage 7  — export → releases/{law_id}/"
+                + mongo_note
+            )
+        except Exception as exc:
+            console.print(f"  [yellow]⚠ Stage 7 failed: {exc}[/]")
+    else:
+        console.print(f"  [dim]— Stage 7  skipped[/]")
 
     law_cost = cost_tracker.summary()["total_cost_usd"] - law_cost_before
+    articles_found = (
+        split.articles_found if split is not None
+        else len(articles) if articles is not None
+        else None
+    )
+    chunks_found = chunk_report.total_chunks if chunk_report is not None else None
+    confidence_val = conf.confidence_score if conf is not None else None
+
     return LawResult(
         law_id=law_id, law_name_ar=law_entry.law_name_ar,
         status="ok", fail_stage=None, fail_reason=None,
-        extraction_source=ext.extraction_source,
-        confidence=conf.confidence_score,
-        articles_found=split.articles_found,
-        chunks=chunk_report.total_chunks,
+        extraction_source=extraction_source,
+        confidence=confidence_val,
+        articles_found=articles_found,
+        chunks=chunks_found,
         cost_usd=law_cost,
         presentation_forms_normalized=pres_normalized,
     )
@@ -343,13 +431,48 @@ def run_law(law_id: str, cost_tracker: CostTracker) -> LawResult:
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    if len(sys.argv) > 1:
-        law_ids = sys.argv[1:]
-    else:
-        law_ids = [lid for lid in BATCH_LAWS if _source_exists(lid)]
-        if not law_ids:
-            console.print("[red]No source files found for default batch.[/]")
-            sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="Nezam Legal Corpus — Batch Runner",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "law_ids",
+        nargs="*",
+        metavar="LAW_ID",
+        help="Law IDs to process (default: all laws with source files present)",
+    )
+    parser.add_argument(
+        "--stages",
+        nargs="+",
+        metavar="STAGE",
+        default=_ALL_STAGES,
+        help=(
+            "Stages to run (default: all).\n"
+            "Valid values: 1  1.3  1.5  2  2.5  3  3.7  4  5  6  7\n"
+            "Example: --stages 3 4 5 6 7"
+        ),
+    )
+    parser.add_argument(
+        "--force-reenrich",
+        action="store_true",
+        default=False,
+        help="Ignore Stage 3 cache and re-enrich all articles (useful after schema changes)",
+    )
+    args = parser.parse_args()
+
+    law_ids: list[str] = args.law_ids or [
+        lid for lid in BATCH_LAWS if _source_exists(lid)
+    ]
+    if not law_ids:
+        console.print("[red]No source files found for default batch.[/]")
+        sys.exit(1)
+
+    stages: set[str] = set(args.stages)
+    invalid_stages = stages - set(_ALL_STAGES)
+    if invalid_stages:
+        console.print(f"[red]Unknown stage(s): {sorted(invalid_stages)}[/]")
+        console.print(f"Valid stages: {_ALL_STAGES}")
+        sys.exit(1)
 
     console.print(Panel.fit(
         f"[bold]Nezam Legal Corpus — Batch Runner[/]\n"
@@ -364,7 +487,11 @@ def main() -> None:
         if law_id not in LAW_REGISTRY:
             console.print(f"[red]Unknown law ID: {law_id}[/]")
             continue
-        result = run_law(law_id, cost_tracker)
+        result = run_law(
+            law_id, cost_tracker,
+            stages=stages,
+            force_reenrich=args.force_reenrich,
+        )
         results.append(result)
         console.print()
 
