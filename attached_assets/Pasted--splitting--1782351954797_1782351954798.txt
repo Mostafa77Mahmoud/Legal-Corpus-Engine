@@ -1,0 +1,1333 @@
+بص، من الملف ده واضح إن البايبلاين شغال أساسًا:
+
+
+
+### الحاجات الكويسة
+
+
+
+* الـ splitting نجح: عندك 30 مادة من 1 إلى 30 بدون فجوات واضحة.  
+
+* الـ enrichment شغال:
+
+
+
+  * keywords موجودة.
+
+  * summaries موجودة.
+
+  * categories موجودة.
+
+  * legal_entities موجودة.
+
+* article_id متولد بشكل منظم.
+
+* القانون صغير واتحلل بالكامل.
+
+
+
+---
+
+
+
+## لكن في مشاكل مهمة
+
+
+
+### 1) مفيش explicit_cross_refs نهائيًا
+
+
+
+وده فعلاً مشكلة.
+
+
+
+مثلاً المادة 5 فيها:
+
+
+
+> البند (ا) من المادة (٤) من هذا القانون 
+
+
+
+المفروض يطلع:
+
+
+
+```json
+
+"explicit_cross_refs": [
+
+  {
+
+    "article_number": 4,
+
+    "target_id": "EG_ESIGN_004"
+
+  }
+
+]
+
+```
+
+
+
+---
+
+
+
+المادة 6 فيها:
+
+
+
+* المادة (٥)
+
+* المادة (٩)
+
+* المادتين (١٩)، (٢٢)
+
+
+
+
+
+
+
+دي كلها cross references واضحة جدًا.
+
+
+
+---
+
+
+
+المادة 23 فيها:
+
+
+
+* المادتين (19) و (21)
+
+
+
+
+
+
+
+المادة 26 فيها:
+
+
+
+* المادة (23)
+
+* المادة (19)
+
+
+
+
+
+
+
+المادة 28 فيها:
+
+
+
+* المادة (13)
+
+
+
+
+
+
+
+كل ده ضاع.
+
+
+
+---
+
+
+
+### 2) schema ناقص
+
+
+
+إحنا في V7 كنا متفقين إن Stage 3 يطلع:
+
+
+
+```json
+
+explicit_cross_refs
+
+concepts
+
+applicable_to
+
+title
+
+```
+
+
+
+أنا مش شايف:
+
+
+
+```json
+
+explicit_cross_refs
+
+concepts
+
+applicable_to
+
+```
+
+
+
+في أي مادة.
+
+
+
+---
+
+
+
+### 3) فيه inconsistency في الموديل
+
+
+
+بعض المواد:
+
+
+
+```json
+
+gemini-3.5-flash
+
+```
+
+
+
+وبعضها:
+
+
+
+```json
+
+gemini-2.5-flash
+
+```
+
+
+
+ 
+
+
+
+ده معناه إن pipeline شغال على إعدادات مختلفة أو حصل تغيير أثناء التشغيل.
+
+
+
+لازم يبقى:
+
+
+
+```python
+
+PRIMARY_MODEL
+
+```
+
+
+
+من settings.py فقط.
+
+
+
+---
+
+
+
+### 4) OCR normalization محتاج شغل
+
+
+
+لسه عندك:
+
+
+
+* هيية بدل هيئة
+
+* شيون بدل شؤون
+
+* رييس بدل رئيس
+
+* نتايج بدل نتائج
+
+
+
+موجودة في مواد كثيرة.  
+
+
+
+دي مش كارثة، لكن معناها Stage 1.3 cleanup لسه محتاج يتحسن.
+
+
+
+---
+
+
+
+## هل عدم وجود cross refs طبيعي؟
+
+
+
+لو Stage 3 الحالي بيولد:
+
+
+
+```json
+
+keywords
+
+summary
+
+category
+
+entities
+
+```
+
+
+
+فأيوة طبيعي.
+
+
+
+لكن بالنسبة للخطة اللي اتفقنا عليها:
+
+
+
+**لا.**
+
+
+
+الـ explicit_cross_refs كان من أهم أسباب بناء corpus article-level أصلًا.
+
+
+
+---
+
+
+
+## قبل ما تدخل قانون أكبر
+
+
+
+أنا أنصح توقف هنا وتصلح 4 حاجات فقط:
+
+
+
+1. استخراج explicit_cross_refs regex-based.
+
+2. إضافة concepts.
+
+3. إضافة applicable_to.
+
+4. توحيد model configuration.
+
+
+
+
+
+
+
+كمان نقدر نكبر tokens per request علشان نقل عدد الطلبات ونقدر نبعت اكبر قدر ممكن من المواد ل gemini api منغير ما نضرب الليميت بسرعة 
+
+ 
+
+
+
+بالنسبة للخطة v7 الي ذكرتها كانت هي دي الاساس للمشروع الذي نعمل عليه حاليا 
+
+
+
+الخطة النهائية اللي استقرينا عليها بعد V6 → V7 كانت تقريبًا بالشكل ده، مع حذف كل التعقيدات اللي ملهاش قيمة مباشرة في بناء الـ corpus.
+
+
+
+# V7 Minimal Production Architecture
+
+
+
+## Stage 1 — Extraction
+
+
+
+### الهدف
+
+
+
+استخراج النص من PDF بأعلى دقة وأقل تكلفة.
+
+
+
+### الآلية
+
+
+
+```text
+
+PDF
+
+ │
+
+ ▼
+
+PyMuPDF Extraction
+
+ │
+
+ ▼
+
+Confidence Check
+
+ │
+
+ ├─ Confidence >= 0.85
+
+ │      └─ Accept
+
+ │
+
+ └─ Confidence < 0.85
+
+        └─ Gemini OCR Fallback
+
+```
+
+
+
+### المخرجات
+
+
+
+```text
+
+data/extracted_raw/
+
+```
+
+
+
+مع:
+
+
+
+```json
+
+{
+
+  "extraction_source": "pymupdf"
+
+}
+
+```
+
+
+
+أو
+
+
+
+```json
+
+{
+
+  "extraction_source": "gemini_ocr"
+
+}
+
+```
+
+
+
+---
+
+
+
+## Stage 1.3 — Cleanup
+
+
+
+### الهدف
+
+
+
+تنظيف النص فقط.
+
+
+
+بدون LLM.
+
+
+
+### أمثلة
+
+
+
+* إزالة أرقام الصفحات
+
+* إزالة Watermarks
+
+* توحيد الحروف العربية
+
+* إزالة المسافات المكسورة
+
+
+
+### المخرجات
+
+
+
+```text
+
+data/extracted_clean/
+
+```
+
+
+
+### مطلوب
+
+
+
+Audit Log
+
+
+
+```text
+
+data/cleanup_audit_logs/
+
+```
+
+
+
+يسجل كل تعديل تم.
+
+
+
+---
+
+
+
+## Stage 1.5 — Confidence Scoring
+
+
+
+### حساب
+
+
+
+```text
+
+AMD
+
+ACD
+
+EACC
+
+SHC
+
+CS
+
+```
+
+
+
+ثم:
+
+
+
+```text
+
+Confidence =
+
+(AMD × 0.25)
+
++
+
+(ACD × 0.25)
+
++
+
+(EACC × 0.25)
+
++
+
+(SHC × 0.15)
+
++
+
+((1-CS) × 0.10)
+
+```
+
+
+
+كل Metric لازم تكون normalized بين:
+
+
+
+```text
+
+0 → 1
+
+```
+
+
+
+### إذا
+
+
+
+```text
+
+confidence < 0.85
+
+```
+
+
+
+يتم:
+
+
+
+```json
+
+{
+
+  "manual_review": true
+
+}
+
+```
+
+
+
+---
+
+
+
+# Stage 2 — Article Splitting
+
+
+
+### الهدف
+
+
+
+تحويل القانون إلى مواد منفصلة.
+
+
+
+مثال:
+
+
+
+```json
+
+{
+
+  "article_number": 5,
+
+  "text": "..."
+
+}
+
+```
+
+
+
+---
+
+
+
+# Stage 2.5 — Split Validation
+
+
+
+### التأكد من
+
+
+
+* عدم وجود مواد مفقودة
+
+* عدم وجود مواد مكررة
+
+* عدم دمج مادتين معًا
+
+* عدم تقسيم مادة واحدة بالخطأ
+
+
+
+### Error Codes
+
+
+
+```text
+
+ERROR_MISSING_ARTICLE
+
+ERROR_DUPLICATE_ARTICLE
+
+ERROR_MERGED_ARTICLE
+
+ERROR_SPLIT_ARTICLE
+
+ERROR_CORRUPTED_TEXT
+
+ERROR_INVALID_REFERENCE
+
+```
+
+
+
+---
+
+
+
+# Stage 3 — Metadata Enrichment
+
+
+
+### هنا Gemini يدخل
+
+
+
+لكل مادة.
+
+
+
+المفروض يخرج:
+
+
+
+```json
+
+{
+
+  "keywords": [],
+
+  "synonyms": [],
+
+  "concepts": [],
+
+  "applicable_to": [],
+
+  "article_type": "",
+
+  "title": "",
+
+  "explicit_cross_refs": []
+
+}
+
+```
+
+
+
+---
+
+
+
+## explicit_cross_refs
+
+
+
+دي كانت جزء أساسي من الخطة.
+
+
+
+مثال:
+
+
+
+النص:
+
+
+
+```text
+
+طبقاً للمادة 147
+
+```
+
+
+
+المفروض:
+
+
+
+```json
+
+{
+
+  "explicit_cross_refs": [
+
+    {
+
+      "article_number": 147,
+
+      "target_id": "EG_CIVIL_CODE_ART_147"
+
+    }
+
+  ]
+
+}
+
+```
+
+
+
+---
+
+
+
+## concepts
+
+
+
+مثال
+
+
+
+```json
+
+[
+
+  "contract_formation",
+
+  "contract_validity",
+
+  "electronic_signature"
+
+]
+
+```
+
+
+
+---
+
+
+
+## applicable_to
+
+
+
+مثال
+
+
+
+```json
+
+[
+
+  "civil",
+
+  "commercial",
+
+  "employment"
+
+]
+
+```
+
+
+
+---
+
+
+
+# Stage 3.7 — Chunking
+
+
+
+### مهم جداً
+
+
+
+اتفقنا على Paragraph First Chunking
+
+
+
+وليس Fixed Split.
+
+
+
+### الطريقة
+
+
+
+```text
+
+Paragraph
+
+ ↓
+
+Paragraph
+
+ ↓
+
+Paragraph
+
+```
+
+
+
+نجمع الفقرات حتى:
+
+
+
+```text
+
+≈ 400 token
+
+```
+
+
+
+مع حد أقصى:
+
+
+
+```text
+
+500 token
+
+```
+
+
+
+لو فقرة أكبر من 500:
+
+
+
+```text
+
+Split on sentence boundary
+
+```
+
+
+
+وليس منتصف الجملة.
+
+
+
+---
+
+
+
+### المخرجات
+
+
+
+Collection
+
+
+
+```text
+
+egyptian_law_chunks
+
+```
+
+
+
+---
+
+
+
+# Stage 4 — Human Review Queue
+
+
+
+بدل Dashboard.
+
+
+
+مجرد:
+
+
+
+```text
+
+review_queue.json
+
+```
+
+
+
+مرتب حسب الأولوية.
+
+
+
+---
+
+
+
+# Stage 5 — Validation
+
+
+
+Rule Based Validation
+
+
+
+ثم
+
+
+
+LLM Validation
+
+
+
+فقط لحالة:
+
+
+
+```text
+
+ERROR_INVALID_REFERENCE
+
+```
+
+
+
+---
+
+
+
+# Stage 6 — Assembly
+
+
+
+دمج النتائج.
+
+
+
+Deduplication.
+
+
+
+وإضافة:
+
+
+
+```json
+
+{
+
+  "is_current_version": true,
+
+  "is_repealed": false
+
+}
+
+```
+
+
+
+---
+
+
+
+# Stage 7 — Export
+
+
+
+إنتاج:
+
+
+
+```text
+
+MongoDB JSON
+
+```
+
+
+
+و
+
+
+
+```text
+
+BSON
+
+```
+
+
+
+---
+
+
+
+# MongoDB Collections النهائية
+
+
+
+كنا متفقين على اثنين فقط:
+
+
+
+```text
+
+egyptian_law_articles
+
+```
+
+
+
+و
+
+
+
+```text
+
+egyptian_law_chunks
+
+```
+
+
+
+---
+
+
+
+# الحاجات اللي اتفقنا نحذفها بالكامل
+
+
+
+### محذوف
+
+
+
+```text
+
+Amendment Registry
+
+```
+
+
+
+---
+
+
+
+```text
+
+Temporal Reconstruction
+
+```
+
+
+
+---
+
+
+
+```text
+
+Semantic Cross References
+
+```
+
+
+
+---
+
+
+
+```text
+
+Corpus Intelligence Stage
+
+```
+
+
+
+---
+
+
+
+```text
+
+Retrieval Evaluation Framework
+
+```
+
+
+
+---
+
+
+
+```text
+
+Prompt Registry System
+
+```
+
+
+
+---
+
+
+
+```text
+
+Taxonomy Drift Migration
+
+```
+
+
+
+---
+
+
+
+```text
+
+Streamlit Dashboard
+
+```
+
+
+
+---
+
+
+
+```text
+
+Release Receipt Signing
+
+```
+
+
+
+---
+
+
+
+# Key Rotation
+
+
+
+أضفنا بعد كده:
+
+
+
+```text
+
+GEMINI_API_KEYS=
+
+key1,key2,key3,...
+
+```
+
+
+
+والنظام:
+
+
+
+```text
+
+429
+
+↓
+
+Mark key exhausted
+
+↓
+
+Cooldown 60 min
+
+↓
+
+Rotate automatically
+
+↓
+
+Continue pipeline
+
+```
+
+
+
+بدون إعادة تشغيل.
+
+
+
+---
+
+
+
+# لو رجعنا لملف E-Signature اللي عرضته
+
+
+
+المفروض أراجع وجود الآتي:
+
+
+
+* ✅ extraction_source
+
+* ✅ confidence_score
+
+* ✅ keywords
+
+* ✅ synonyms
+
+* ❌ concepts
+
+* ❌ applicable_to
+
+* ❌ explicit_cross_refs
+
+* ✅ article_type
+
+* ✅ title
+
+* ✅ chunk generation
+
+
+
+وأتأكد أيضًا أن الـ chunk collection اتولد فعلًا وليس فقط articles.json.
+
+
+
+أكبر نقص حاليًا من الناحية المعمارية هو:
+
+
+
+```text
+
+explicit_cross_refs
+
+concepts
+
+applicable_to
+
+```
+
+
+
+لأن الثلاثة كانوا جزءًا من Stage 3 في الخطة النهائية، وليسوا Features مؤجلة لـ V2.

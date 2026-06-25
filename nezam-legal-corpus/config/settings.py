@@ -114,9 +114,11 @@ FALLBACK_MODEL: str = os.getenv(
 # request — packing 50 articles uses ~20 K output tokens (well within the 65 K
 # max_output_tokens limit) and reduces total API calls from ~104 to ~19 for
 # EG_CIVIL_CODE, easily fitting within the 20 RPD-per-key-per-model quota.
-ENRICH_BATCH_SIZE: int = int(os.getenv("ENRICH_BATCH_SIZE", "150"))
-# Raised from 50 → 150 to better utilise the 250 K TPM limit.
-# With batch=150: ~27 K output tokens/call (< 65 K max) × 5 RPM = 245 K TPM/min (97%).
+ENRICH_BATCH_SIZE: int = int(os.getenv("ENRICH_BATCH_SIZE", "200"))
+# Raised from 150 → 200 to utilise more of the 250 K TPM limit.
+# With 7 output fields (added concepts + applicable_to) per article ≈ 250 output tokens:
+#   200 articles × 250 tokens = 50 K output tokens/call (< 65 K max)
+# EG_CIVIL_CODE (1039 articles): 1039 / 200 = 6 API calls (was 7 at batch=150).
 
 # ── Semantic chunking ──────────────────────────────────────────────────────────
 # True → Gemini identifies semantic boundaries for long articles

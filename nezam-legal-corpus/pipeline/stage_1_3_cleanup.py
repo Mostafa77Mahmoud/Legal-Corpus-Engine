@@ -52,7 +52,11 @@ _MULTI_SPACE   = re.compile(r"[^\S\n]+")
 _MULTI_NEWLINE = re.compile(r"\n{3,}")
 
 _HAMZA_MAP = str.maketrans("أإآٱ", "اااا")
-_YEH_MAP   = str.maketrans("ىئ", "يي")
+# NOTE: ى (alef maqsura U+0649) → ي for search consistency and Stage 2 pattern matching.
+# ئ (ya with hamza above U+0626) is intentionally NOT normalised here because it
+# changes meaningful Arabic words: رئيس → رييس, هيئة → هيية, بيئة → بيية.
+# Legal text orthography must be preserved.
+_YEH_MAP   = str.maketrans("ى", "ي")
 
 # Threshold: apply NFKC pre-pass only when presentation forms exceed this
 # fraction of total characters (avoids false-positive NFKC on clean texts)

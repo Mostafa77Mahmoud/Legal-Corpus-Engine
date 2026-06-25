@@ -64,6 +64,7 @@ from config.settings import (
 from utils.cost_tracker import CostTracker
 from utils.llm_client import QuotaExhaustedError, generate_text
 from utils import key_manager as _km
+from utils.cross_refs import extract_cross_refs
 
 import logging
 logger = logging.getLogger(__name__)
@@ -104,10 +105,41 @@ _ARTICLE_METADATA_PROPERTIES: dict = {
         "items": {"type": "string"},
         "description": "الجهات والهيئات والأشخاص الاعتباريين المذكورون صراحةً",
     },
+    "concepts": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": (
+            "Legal concept tags in English (snake_case). "
+            "3-6 tags from the article content. "
+            "Examples: contract_validity, electronic_signature, data_protection, "
+            "civil_liability, legal_capacity, due_process, penalty, consent"
+        ),
+    },
+    "applicable_to": {
+        "type": "array",
+        "items": {
+            "type": "string",
+            "enum": [
+                "civil", "commercial", "criminal", "administrative",
+                "employment", "family", "real_estate", "digital", "procedural",
+            ],
+        },
+        "description": (
+            "Legal domains this article applies to. "
+            "Choose from the enum values only. "
+            "1-3 values that best fit the article scope."
+        ),
+    },
 }
 
-_METADATA_REQUIRED = ["topic", "keywords", "article_summary", "article_category", "legal_entities"]
-_METADATA_ORDER    = ["topic", "keywords", "article_summary", "article_category", "legal_entities"]
+_METADATA_REQUIRED = [
+    "topic", "keywords", "article_summary", "article_category",
+    "legal_entities", "concepts", "applicable_to",
+]
+_METADATA_ORDER = [
+    "topic", "keywords", "article_summary", "article_category",
+    "legal_entities", "concepts", "applicable_to",
+]
 
 # Schema للـ batch: مصفوفة كل عنصر فيها {article_id + metadata}
 _BATCH_SCHEMA: dict = {
@@ -162,10 +194,22 @@ _SYSTEM_INSTRUCTION = """\
 | **إصدار** | ديباجة القانون أو صيغة الإصدار | "رئيس الجمهورية، بعد الاطلاع..." |
 | **أخرى** | لا ينطبق عليها أي مما سبق | — |
 
+## حقل concepts (مفاهيم قانونية — إنجليزي)
+أعد 3-6 tags قانونية بالإنجليزية بصيغة snake_case تصف جوهر المادة.
+أمثلة مقبولة: contract_validity، electronic_signature، data_protection،
+civil_liability، legal_capacity، due_process، penalty، consent،
+property_rights، judicial_procedure، administrative_authority، public_order.
+استخدم مفاهيم قانونية معيارية — لا تخترع مفاهيم جديدة.
+
+## حقل applicable_to (نطاق التطبيق)
+اختر 1-3 مجالات من القائمة المحددة فقط:
+civil، commercial، criminal، administrative، employment، family، real_estate، digital، procedural.
+
 ## قواعد الجودة
 - **keywords**: مصطلحات من داخل النص فقط، لا تضف مصطلحات خارجية
 - **legal_entities**: الجهات المذكورة صراحةً في نص المادة فقط
-- **article_summary**: موضوعي ومحايد، بصيغة المضارع المبني للمعلوم\
+- **article_summary**: موضوعي ومحايد، بصيغة المضارع المبني للمعلوم
+- **concepts**: مفاهيم قانونية إنجليزية معيارية بـ snake_case، لا عربية\
 """
 
 
@@ -210,6 +254,8 @@ class ArticleMetadata:
     article_summary: str = ""
     article_category: str = "أخرى"
     legal_entities: list[str] = field(default_factory=list)
+    concepts: list[str] = field(default_factory=list)
+    applicable_to: list[str] = field(default_factory=list)
     enrichment_model: str = ""
     enrichment_error: str | None = None
 
@@ -230,17 +276,42 @@ class EnrichmentReport:
 
 # ── Metadata parsing ───────────────────────────────────────────────────────────
 
+_VALID_APPLICABLE_TO = frozenset({
+    "civil", "commercial", "criminal", "administrative",
+    "employment", "family", "real_estate", "digital", "procedural",
+})
+
+
 def _parse_metadata(data: dict[str, Any], model: str) -> ArticleMetadata:
     """Convert a JSON dict from structured output into ArticleMetadata."""
     category = data.get("article_category", "أخرى")
     if category not in _VALID_CATEGORIES:
         category = "أخرى"
+
+    # concepts: keep only non-empty snake_case strings, max 10
+    raw_concepts = data.get("concepts", []) or []
+    concepts = [
+        str(c).strip().lower().replace(" ", "_")[:60]
+        for c in raw_concepts
+        if c and str(c).strip()
+    ][:10]
+
+    # applicable_to: keep only enum-valid values
+    raw_applicable = data.get("applicable_to", []) or []
+    applicable_to = [
+        str(a).strip().lower()
+        for a in raw_applicable
+        if str(a).strip().lower() in _VALID_APPLICABLE_TO
+    ][:5]
+
     return ArticleMetadata(
         topic=str(data.get("topic", ""))[:100],
         keywords=[str(k)[:80] for k in data.get("keywords", [])[:10]],
         article_summary=str(data.get("article_summary", ""))[:600],
         article_category=category,
         legal_entities=[str(e)[:80] for e in data.get("legal_entities", [])[:15]],
+        concepts=concepts,
+        applicable_to=applicable_to,
         enrichment_model=model,
     )
 
@@ -360,14 +431,19 @@ def _assemble_output(
     for art in articles:
         aid = art["article_id"]
         if aid in enriched_meta:
-            result.append({**art, **asdict(enriched_meta[aid])})
+            merged = {**art, **asdict(enriched_meta[aid])}
         elif aid in cached_by_id:
-            result.append(cached_by_id[aid])
+            merged = dict(cached_by_id[aid])
         else:
-            result.append({
+            merged = {
                 **art,
                 **asdict(ArticleMetadata(enrichment_model=model, enrichment_error="not_reached")),
-            })
+            }
+        # Always (re-)extract explicit_cross_refs from article text via regex
+        # This is free (no API call) and ensures the field is always present
+        # and up-to-date even for cache hits from previous runs.
+        merged["explicit_cross_refs"] = extract_cross_refs(merged.get("text", ""))
+        result.append(merged)
     return result
 
 
