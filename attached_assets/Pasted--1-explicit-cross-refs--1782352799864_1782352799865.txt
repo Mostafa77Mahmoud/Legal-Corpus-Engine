@@ -1,0 +1,254 @@
+الرد فيه حاجات صحيحة وحاجات محتاجة تدقيق.
+
+## 1. موضوع `explicit_cross_refs`
+
+ده كان ناقص فعلاً من الـ output اللي وريتني إياه قبل كده.
+
+لكن عندي ملاحظة مهمة:
+
+هو بيقول:
+
+> explicit_cross_refs — regex، صفر API cost
+
+وده قرار كويس جداً في V1.
+
+لأن أغلب الإشارات القانونية في القوانين المصرية بتبقى:
+
+* المادة (5)
+* المادة 17
+* المادتين (19) و(22)
+* المواد 10، 11، 12
+
+دي كلها Regex-friendly.
+
+مش محتاج Gemini يصرف فلوس عشان يكتشفها.
+
+---
+
+## 2. موضوع `concepts`
+
+هنا محتاج تراجع.
+
+هو بيقول هيطلع حاجة زي:
+
+```json
+"concepts": [
+  "electronic_signature",
+  "legal_validity",
+  "data_integrity"
+]
+```
+
+السؤال:
+
+هل دي جاية من Taxonomy ثابتة؟
+
+ولا Gemini بيخترع Concepts من دماغه؟
+
+في V7 إحنا اتفقنا:
+
+```python
+config/taxonomy.py
+```
+
+يبقى مصدر الحقيقة الوحيد.
+
+يعني لازم الوكيل يضمن:
+
+```python
+concept in TAXONOMY
+```
+
+وإلا يترفض.
+
+مش مجرد Gemini يرجع أي Labels.
+
+---
+
+## 3. موضوع `applicable_to`
+
+كويس.
+
+لكن لازم يبقى Controlled Vocabulary برضو.
+
+مثلاً:
+
+```json
+[
+  "civil",
+  "commercial",
+  "criminal",
+  "administrative",
+  "labor",
+  "digital"
+]
+```
+
+مش كل مرة Gemini يطلع كلمة مختلفة.
+
+وإلا هتبقى البيانات فوضى.
+
+---
+
+## 4. موضوع إصلاح OCR
+
+هنا عندي اعتراض.
+
+هو قال:
+
+> إزالة ئ من _YEH_MAP
+
+دي خطوة صحيحة.
+
+لكن مش كفاية.
+
+لو Gemini OCR نفسه طلع:
+
+```text
+رييس
+هيية
+شيون
+```
+
+فالمشكلة حصلت قبل الـ cleanup.
+
+يعني Stage 1.3 مش هتعالجها.
+
+لازم تعرف:
+
+هل الغلط جاي من:
+
+### PyMuPDF
+
+ولا
+
+### Gemini OCR
+
+علشان كده كنت مصر من البداية على وجود:
+
+```json
+extraction_source
+```
+
+في metadata.
+
+---
+
+## 5. موضوع تغيير الـ Model
+
+هو قال:
+
+> design مقصود (quota fallback)
+
+أنا موافق جزئياً.
+
+لكن لازم يبقى موثق.
+
+مثلاً:
+
+```json
+{
+  "enrichment_model": "gemini-2.5-flash"
+}
+```
+
+أو
+
+```json
+{
+  "enrichment_model": "gemini-3.5-flash"
+}
+```
+
+لكل Article.
+
+مش على مستوى الـ Run كله.
+
+عشان لو بعدين لقيت سلوك مختلف تعرف السبب.
+
+---
+
+## 6. نقطة مهمة جداً لم يذكرها
+
+أنا كنت هسأله عنها فوراً.
+
+### هل الـ Batching الحقيقي اتنفذ؟
+
+هو قال:
+
+> ENRICH_BATCH_SIZE 150 → 200
+
+ده مش دليل.
+
+السؤال الحقيقي:
+
+هل Gemini بيتبعتله:
+
+```json
+[
+  article1,
+  article2,
+  article3,
+  ...
+]
+```
+
+في Request واحدة؟
+
+ولا لسه:
+
+```python
+for article in articles:
+    call_gemini(article)
+```
+
+وبعدين مجرد متغير اسمه Batch Size؟
+
+فرق ضخم.
+
+اسأله حرفياً:
+
+> Does Stage 3 enrichment perform a single Gemini request containing multiple articles, or does it still perform one request per article internally?
+
+---
+
+## 7. أهم سؤال أسأله حالياً
+
+ابعتله:
+
+```text
+Before proceeding, generate a sample output from one enriched article after all modifications.
+
+I want to see the COMPLETE final schema exactly as it will be exported to MongoDB.
+
+Include every field and a realistic example value.
+
+Do not describe the schema.
+
+Output a real JSON example for one article from EG_ESIGN.
+```
+
+ليه؟
+
+لأن الكلام النظري سهل.
+
+أنا عايز أشوف فعلياً:
+
+```json
+{
+  "_id": "...",
+  "law_id": "...",
+  "article_number": 5,
+  "title": "...",
+  "concepts": [...],
+  "applicable_to": [...],
+  "keywords": [...],
+  "explicit_cross_refs": [...],
+  "chunk_ids": [...],
+  "confidence_score": ...
+}
+```
+
+وأراجع الـ Schema النهائي كله مرة واحدة.
+
+دي أسرع طريقة تكتشف أي حاجة ناقصة قبل ما تكمل على باقي القوانين.
