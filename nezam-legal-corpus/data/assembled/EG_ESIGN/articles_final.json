@@ -30,7 +30,13 @@
     ],
     "enrichment_model": "gemini-3.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_002",
@@ -60,7 +66,13 @@
     ],
     "enrichment_model": "gemini-3.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_003",
@@ -90,7 +102,13 @@
     ],
     "enrichment_model": "gemini-3.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_004",
@@ -121,7 +139,13 @@
     ],
     "enrichment_model": "gemini-3.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_005",
@@ -152,7 +176,13 @@
     ],
     "enrichment_model": "gemini-3.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_006",
@@ -185,7 +215,13 @@
     ],
     "enrichment_model": "gemini-3.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_007",
@@ -220,7 +256,13 @@
     ],
     "enrichment_model": "gemini-3.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_008",
@@ -261,7 +303,13 @@
     ],
     "enrichment_model": "gemini-3.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_009",
@@ -294,7 +342,13 @@
     ],
     "enrichment_model": "gemini-3.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_010",
@@ -324,7 +378,13 @@
     ],
     "enrichment_model": "gemini-3.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_011",
@@ -359,7 +419,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_012",
@@ -390,7 +456,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_013",
@@ -425,7 +497,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_014",
@@ -457,7 +535,13 @@
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_015",
@@ -490,7 +574,13 @@
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_016",
@@ -520,7 +610,13 @@
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_017",
@@ -549,7 +645,13 @@
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_018",
@@ -581,7 +683,13 @@
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_019",
@@ -617,7 +725,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_020",
@@ -643,7 +757,13 @@
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_021",
@@ -675,7 +795,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_022",
@@ -709,7 +835,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_023",
@@ -744,7 +876,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_024",
@@ -778,7 +916,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_025",
@@ -811,7 +955,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_026",
@@ -845,7 +995,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_027",
@@ -873,7 +1029,13 @@
     "legal_entities": [],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_028",
@@ -909,7 +1071,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_029",
@@ -938,7 +1106,13 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   },
   {
     "article_id": "EG_ESIGN_030",
@@ -969,6 +1143,12 @@
     ],
     "enrichment_model": "gemini-2.5-flash",
     "enrichment_error": null,
-    "is_current_version": true
+    "is_current_version": true,
+    "corpus_metadata": {
+      "schema_version": "1.1",
+      "pipeline_version": "1.1.0",
+      "extraction_source": "gemini_ocr",
+      "confidence_score": null
+    }
   }
 ]

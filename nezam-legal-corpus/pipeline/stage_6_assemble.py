@@ -13,7 +13,9 @@ What this stage does:
   3. Set is_current_version = True (one version per law in current corpus).
   4. Deduplicate by article_id (keeps last occurrence; duplicates logged).
   5. Sort articles by article_number, then issuance articles at end.
-  6. Produce clean final JSON files ready for Stage 7 export.
+  6. Resolve explicit_cross_refs → add target_article_id for same-law refs.
+  7. Inject corpus_metadata (schema_version, pipeline_version, law metadata).
+  8. Produce clean final JSON files ready for Stage 7 export.
 
 No Gemini calls — pure Python, zero API cost.
 """
@@ -32,7 +34,11 @@ from config.settings import CHUNKS_DIR, ENRICHED_ARTICLES_DIR
 
 logger = logging.getLogger(__name__)
 
-ASSEMBLED_DIR = ENRICHED_ARTICLES_DIR.parent / "assembled"
+ASSEMBLED_DIR     = ENRICHED_ARTICLES_DIR.parent / "assembled"
+EXTRACTED_RAW_DIR = ENRICHED_ARTICLES_DIR.parent / "extracted_raw"
+
+PIPELINE_VERSION = "1.1.0"
+SCHEMA_VERSION   = "1.1"
 
 
 # ── Data classes ──────────────────────────────────────────────────────────────
@@ -111,6 +117,59 @@ def run(law_entry: LawEntry) -> AssemblyReport:
         return (is_issuance, a.get("article_number") or 0)
 
     final_articles.sort(key=sort_key)
+
+    # ── Resolve explicit_cross_refs → target_article_id ───────────────────────
+    # Build article_number → article_id lookup for this law
+    num_to_id: dict[int, str] = {
+        a["article_number"]: a["article_id"]
+        for a in final_articles
+        if a.get("article_number") is not None
+    }
+    cross_ref_resolved = 0
+    for art in final_articles:
+        refs = art.get("explicit_cross_refs")
+        if not refs:
+            continue
+        resolved_refs = []
+        for ref in refs:
+            same_law = ref.get("same_law", True)
+            if same_law:
+                nums = ref.get("article_numbers", [])
+                if len(nums) == 1 and nums[0] in num_to_id:
+                    ref = dict(ref)  # copy before mutating
+                    ref["target_article_id"] = num_to_id[nums[0]]
+                    cross_ref_resolved += 1
+                else:
+                    ref = dict(ref)
+                    ref["target_article_id"] = None  # multi-ref or unresolvable
+            else:
+                ref = dict(ref)
+                ref["target_article_id"] = None  # cross-law ref — resolved in Stage 6+
+            resolved_refs.append(ref)
+        art["explicit_cross_refs"] = resolved_refs
+    logger.info("[%s] Resolved %d same-law cross-ref target_article_ids", law_id, cross_ref_resolved)
+
+    # ── Load confidence_score from Stage 1.5 report (if available) ────────────
+    confidence_score: float | None = None
+    conf_path = EXTRACTED_RAW_DIR / f"{law_id}_confidence.json"
+    if conf_path.exists():
+        try:
+            conf_data = json.loads(conf_path.read_text(encoding="utf-8"))
+            confidence_score = conf_data.get("confidence_score")
+        except Exception:
+            pass
+
+    # ── Determine extraction_source from law_registry ─────────────────────────
+    extraction_source = "gemini_ocr" if law_entry.txt_filename is None else "text_file"
+
+    # ── Inject corpus_metadata into every article ─────────────────────────────
+    for art in final_articles:
+        art["corpus_metadata"] = {
+            "schema_version":    SCHEMA_VERSION,
+            "pipeline_version":  PIPELINE_VERSION,
+            "extraction_source": extraction_source,
+            "confidence_score":  confidence_score,
+        }
 
     # ── Propagate is_repealed to chunks ───────────────────────────────────────
     repealed_article_ids: frozenset[str] = frozenset(

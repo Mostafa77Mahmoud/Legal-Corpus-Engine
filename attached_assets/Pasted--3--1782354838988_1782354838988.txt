@@ -1,0 +1,181 @@
+الرد الأخير أفضل من الردود اللي قبله، لكنه ما زال فيه 3 نقاط لازم تتأكد منها قبل ما تكمل تشغيل القوانين كلها.
+
+## 1. أهم نقطة: هل الـ Batch فعلاً Request واحدة؟
+
+هو قال:
+
+> _enrich_batch يرسل batch كاملة في request واحد لـ Gemini
+
+أنا عايز دليل مش وصف.
+
+اطلب منه:
+
+Show me the actual implementation of _enrich_batch().
+
+I want to verify:
+
+1. How many Gemini API calls are made per batch.
+2. The exact prompt structure sent to Gemini.
+3. The exact JSON schema expected back.
+4. Whether the entire batch is sent in a single generate_content call.
+5. How partial failures are handled if Gemini returns malformed JSON.
+
+Do not summarize.
+
+Show the actual code.
+
+لو طلع بيعمل:
+
+```python
+for article in batch:
+    client.generate_content(...)
+```
+
+يبقى لسه مفيش batching حقيقي.
+
+---
+
+## 2. الـ Cross References الحالية ضعيفة
+
+هو بيقول:
+
+```json
+{
+  "ref_text": "المادة (٥)",
+  "article_numbers": [5]
+}
+```
+
+لكن ناقص أهم شيء:
+
+### target_article_id
+
+الأفضل يبقى:
+
+```json
+{
+  "ref_text": "المادة (٥)",
+  "article_numbers": [5],
+  "target_article_id": "EG_ESIGN_005",
+  "same_law": true
+}
+```
+
+لأن بعدين في Retrieval أو Graph Queries هتحتاج Jump مباشر.
+
+بدل ما كل مرة تدور على المادة رقم 5.
+
+اسأله:
+
+> Can explicit_cross_refs be resolved into target_article_ids during Stage 6 assembly?
+
+تكلفة التنفيذ شبه صفر.
+
+---
+
+## 3. Schema ما زال ناقص Metadata مهمة
+
+الـ Example اللي عرضه:
+
+```json
+{
+  "article_id": "...",
+  "concepts": [...],
+  ...
+}
+```
+
+لكن في V7 كان عندنا:
+
+```json
+metadata:
+{
+  pipeline_version,
+  prompt_version,
+  extraction_source,
+  confidence_score
+}
+```
+
+عايز تتأكد إنها موجودة فعلاً في الـ Export النهائي.
+
+اطلب منه:
+
+Generate one REAL exported MongoDB document from the latest pipeline output.
+
+Not a mock example.
+
+Read an actual article from the exported JSON and print the full document exactly as stored.
+
+I want to verify:
+
+* metadata
+* extraction_source
+* confidence_score
+* prompt_version
+* enrichment_model
+* concepts
+* applicable_to
+* explicit_cross_refs
+
+Do not truncate fields.
+
+---
+
+## نقطة إضافية مهمة جداً
+
+هو قال:
+
+> Stage 1.3 مصلوح
+>
+> لكن EG_ESIGN الحالي الخطأ من Gemini OCR
+
+ده استنتاج وليس إثبات.
+
+قبل ما تعيد تشغيل أي Pipeline اطلب منه يعمل مقارنة.
+
+مثلاً:
+
+```text
+Show the raw extracted text before Stage 1.3
+for one article containing the word "هيئة".
+
+Then show the same text after Stage 1.3.
+
+I want to determine whether the corruption originated from Gemini OCR or from normalization.
+```
+
+لأن لو Gemini فعلاً بيطلع:
+
+```text
+هيئة
+```
+
+وStage 1.3 حولتها:
+
+```text
+هيية
+```
+
+يبقى لسه فيه Bug.
+
+---
+
+### لو سألتني عن الخطوة التالية
+
+أنا لن أشغل:
+
+```bash
+python3 run_batch.py ...
+```
+
+حالياً.
+
+أولاً أطلب:
+
+1. كود `_enrich_batch()`.
+2. Export حقيقي لمادة واحدة.
+3. إثبات مصدر خطأ `هيية/رييس`.
+4. إضافة `target_article_id` للـ cross refs.
+
+لو الأربع حاجات تمام، وقتها ابدأ إعادة الـ enrichment للقوانين الصغيرة (`EG_ESIGN` و `EG_PDPL`) قبل ما تلمس القانون المدني أو التجاري.
