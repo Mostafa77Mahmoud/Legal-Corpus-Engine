@@ -32,6 +32,9 @@ from pipeline import (
     stage_3_enrich,
     stage_3_7_chunk,
     stage_4_human_review,
+    stage_5_validate,
+    stage_6_assemble,
+    stage_7_export,
 )
 from utils.cost_tracker import CostTracker
 
@@ -278,6 +281,51 @@ def run_law(law_id: str, cost_tracker: CostTracker) -> LawResult:
         )
     except Exception as exc:
         console.print(f"  [yellow]⚠ Stage 4 failed: {exc}[/]")
+
+    # Stage 5 ─────────────────────────────────────────────────────────────────
+    try:
+        valid = stage_5_validate.run(law_entry=law_entry)
+        status_sym = "[green]✓[/]" if valid.passed else "[red]✗[/]"
+        console.print(
+            f"  {status_sym} Stage 5  — validation  "
+            f"errors={valid.error_count}  warnings={valid.warning_count}  "
+            f"({'PASS' if valid.passed else 'FAIL'})"
+        )
+        if not valid.passed:
+            return LawResult(
+                law_id=law_id, law_name_ar=law_entry.law_name_ar,
+                status="fail", fail_stage="stage_5",
+                fail_reason=f"{valid.error_count} validation errors",
+                extraction_source=ext.extraction_source,
+                confidence=conf.confidence_score,
+                articles_found=split.articles_found,
+                chunks=chunk_report.total_chunks,
+                cost_usd=cost_tracker.summary()["total_cost_usd"] - law_cost_before,
+                presentation_forms_normalized=pres_normalized,
+            )
+    except Exception as exc:
+        console.print(f"  [yellow]⚠ Stage 5 failed: {exc}[/]")
+
+    # Stage 6 ─────────────────────────────────────────────────────────────────
+    try:
+        assembly = stage_6_assemble.run(law_entry=law_entry)
+        console.print(
+            f"  [green]✓[/] Stage 6  — assembly  "
+            f"{assembly.total_articles_out} articles  {assembly.total_chunks_out} chunks"
+        )
+    except Exception as exc:
+        console.print(f"  [yellow]⚠ Stage 6 failed: {exc}[/]")
+
+    # Stage 7 ─────────────────────────────────────────────────────────────────
+    try:
+        export = stage_7_export.run(law_entry=law_entry)
+        mongo_note = "  [dim](+MongoDB)[/]" if export.mongodb_exported else ""
+        console.print(
+            f"  [green]✓[/] Stage 7  — export → releases/{law_id}/"
+            + mongo_note
+        )
+    except Exception as exc:
+        console.print(f"  [yellow]⚠ Stage 7 failed: {exc}[/]")
 
     law_cost = cost_tracker.summary()["total_cost_usd"] - law_cost_before
     return LawResult(

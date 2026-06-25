@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_PDPL",
+  "law_name_ar": "قانون حماية البيانات الشخصية",
+  "assembled_at": "2026-06-25T01:16:44.300406+00:00",
+  "total_articles_in": 56,
+  "total_articles_out": 56,
+  "total_chunks_in": 61,
+  "total_chunks_out": 61,
+  "duplicates_removed": 0,
+  "repealed_articles": 0,
+  "repealed_flagged": 0,
+  "is_current_version": true
+}

@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_CIVIL_CODE",
+  "law_name_ar": "القانون المدني المصري",
+  "assembled_at": "2026-06-25T01:13:51.491418+00:00",
+  "total_articles_in": 1039,
+  "total_articles_out": 1039,
+  "total_chunks_in": 1041,
+  "total_chunks_out": 1041,
+  "duplicates_removed": 0,
+  "repealed_articles": 111,
+  "repealed_flagged": 0,
+  "is_current_version": true
+}

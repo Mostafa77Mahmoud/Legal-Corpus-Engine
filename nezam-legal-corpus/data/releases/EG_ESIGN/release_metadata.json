@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "law_id": "EG_ESIGN",
+  "law_name_ar": "قانون التوقيع الإلكتروني وإنشاء هيئة تنمية صناعة تكنولوجيا المعلومات",
+  "law_number": "15 لسنة 2004",
+  "year": 2004,
+  "exported_at": "2026-06-25T01:13:51.399096+00:00",
+  "is_current_version": true,
+  "statistics": {
+    "total_articles": 30,
+    "active_articles": 30,
+    "issuance_articles": 0,
+    "repealed_articles": 0,
+    "total_chunks": 30,
+    "total_article_words": 2244,
+    "total_chunk_words": 2244,
+    "avg_words_per_article": 74.8,
+    "avg_words_per_chunk": 74.8,
+    "article_categories": {
+      "تعريف": 2,
+      "تنظيمية": 8,
+      "إجراء": 9,
+      "التزام": 3,
+      "حق": 3,
+      "عقوبة": 2,
+      "انتقالية": 1,
+      "أخرى": 1,
+      "إصدار": 1
+    }
+  },
+  "enrichment": {
+    "models_used": {
+      "gemini-3.5-flash": 10,
+      "gemini-2.5-flash": 20
+    }
+  },
+  "output_files": {
+    "articles_json": "articles.json",
+    "articles_jsonl": "articles.jsonl",
+    "chunks_json": "chunks.json",
+    "chunks_jsonl": "chunks.jsonl"
+  }
+}

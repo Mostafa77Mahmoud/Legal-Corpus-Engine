@@ -2,7 +2,7 @@
 # دورة حياة القانون من الرفع حتى التصدير النهائي
 
 **آخر تحديث:** يونيو 2026  
-**الحالة الحالية:** Stage 1 → Stage 4 مكتملة ✅ | Stage 5 → Post-Export قيد التخطيط ⏳
+**الحالة الحالية:** Stage 1 → Stage 7 مكتملة ✅ | Post-Export Embeddings قيد التخطيط ⏳
 
 ---
 
@@ -20,9 +20,9 @@
 10. [Stage 3: Metadata Enrichment](#10-stage-3--metadata-enrichment-)
 11. [Stage 3.7: Chunking](#11-stage-37--chunking-)
 12. [Stage 4: Human Review Export](#12-stage-4--human-review-export-)
-13. [Stage 5: Final Validation ⏳](#13-stage-5--final-validation-)
-14. [Stage 6: Assembly ⏳](#14-stage-6--assembly-)
-15. [Stage 7: MongoDB + JSON Export ⏳](#15-stage-7--mongodb--json-export-)
+13. [Stage 5: Final Validation ✅](#13-stage-5--final-validation-)
+14. [Stage 6: Assembly ✅](#14-stage-6--assembly-)
+15. [Stage 7: JSON Export + MongoDB ✅](#15-stage-7--mongodb--json-export-)
 16. [Post-Export: Embeddings ⏳](#16-post-export--embeddings-)
 17. [القوانين المسجلة](#17-القوانين-المسجلة)
 18. [بنية الملفات الكاملة](#18-بنية-الملفات-الكاملة)

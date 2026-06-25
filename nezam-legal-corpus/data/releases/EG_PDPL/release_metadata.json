@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "law_id": "EG_PDPL",
+  "law_name_ar": "قانون حماية البيانات الشخصية",
+  "law_number": "151 لسنة 2020",
+  "year": 2020,
+  "exported_at": "2026-06-25T01:16:44.304667+00:00",
+  "is_current_version": true,
+  "statistics": {
+    "total_articles": 56,
+    "active_articles": 49,
+    "issuance_articles": 7,
+    "repealed_articles": 0,
+    "total_chunks": 61,
+    "total_article_words": 5799,
+    "total_chunk_words": 5949,
+    "avg_words_per_article": 103.6,
+    "avg_words_per_chunk": 97.5,
+    "article_categories": {
+      "تعريف": 1,
+      "حق": 1,
+      "التزام": 13,
+      "تنظيمية": 13,
+      "إجراء": 5,
+      "عقوبة": 16,
+      "إصدار": 7
+    }
+  },
+  "enrichment": {
+    "models_used": {
+      "gemini-3.5-flash": 56
+    }
+  },
+  "output_files": {
+    "articles_json": "articles.json",
+    "articles_jsonl": "articles.jsonl",
+    "chunks_json": "chunks.json",
+    "chunks_jsonl": "chunks.jsonl"
+  }
+}

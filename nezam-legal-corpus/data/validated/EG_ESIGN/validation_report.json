@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_ESIGN",
+  "law_name_ar": "قانون التوقيع الإلكتروني وإنشاء هيئة تنمية صناعة تكنولوجيا المعلومات",
+  "validated_at": "2026-06-25T01:13:51.385639+00:00",
+  "passed": true,
+  "total_articles": 30,
+  "total_chunks": 30,
+  "error_count": 0,
+  "warning_count": 0,
+  "quality_gate": "PASS",
+  "issues": [],
+  "summary_by_code": {}
+}
