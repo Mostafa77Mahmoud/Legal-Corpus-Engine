@@ -4,7 +4,7 @@
   "law_name_ar": "قانون حماية البيانات الشخصية",
   "law_number": "151 لسنة 2020",
   "year": 2020,
-  "exported_at": "2026-06-25T01:16:44.304667+00:00",
+  "exported_at": "2026-06-25T03:12:23.845363+00:00",
   "is_current_version": true,
   "statistics": {
     "total_articles": 56,
@@ -17,18 +17,19 @@
     "avg_words_per_article": 103.6,
     "avg_words_per_chunk": 97.5,
     "article_categories": {
-      "تعريف": 1,
+      "تعريف": 3,
       "حق": 1,
-      "التزام": 13,
-      "تنظيمية": 13,
-      "إجراء": 5,
-      "عقوبة": 16,
-      "إصدار": 7
+      "التزام": 11,
+      "تنظيمية": 9,
+      "إجراء": 12,
+      "عقوبة": 15,
+      "إصدار": 4,
+      "انتقالية": 1
     }
   },
   "enrichment": {
     "models_used": {
-      "gemini-3.5-flash": 56
+      "gemini-2.5-flash": 56
     }
   },
   "output_files": {

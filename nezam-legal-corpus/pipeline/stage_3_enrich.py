@@ -200,6 +200,12 @@ _SYSTEM_INSTRUCTION = """\
 
 {concept_list}
 
+### تمييزات مهمة في concepts:
+- `fine` = غرامة مالية عقوبةً على مخالفة — لا تستخدمها لـ رسم أو مقابل خدمة
+- `administrative_penalty` = جزاء إداري (توقيف ترخيص، إلغاء، إنذار)
+- `licensing` = منح التراخيص أو شروطها — لا `fine`
+- `fees` غير موجودة — استخدم `licensing` أو `regulatory_compliance` للمواد عن رسوم الخدمات
+
 ## حقل applicable_to (نطاق التطبيق)
 اختر 1-3 مجالات من القائمة المحددة فقط:
 civil، commercial، criminal، administrative، employment، family، real_estate، digital، procedural.

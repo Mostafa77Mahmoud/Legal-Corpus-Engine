@@ -1,12 +1,12 @@
 {
   "law_id": "EG_PDPL",
   "total_articles": 56,
-  "enriched": 0,
-  "skipped_cache": 56,
+  "enriched": 56,
+  "skipped_cache": 0,
   "failed": 0,
-  "total_cost_usd": 0.0,
-  "enriched_at": "2026-06-25T01:16:44.258681+00:00",
-  "model": "gemini-3.5-flash",
+  "total_cost_usd": 0.0180095,
+  "enriched_at": "2026-06-25T03:12:23.816424+00:00",
+  "model": "gemini-2.5-flash",
   "batch_size": 150,
-  "total_api_calls": 0
+  "total_api_calls": 1
 }

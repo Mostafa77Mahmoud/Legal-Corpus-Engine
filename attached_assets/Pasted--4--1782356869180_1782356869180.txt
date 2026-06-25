@@ -1,0 +1,203 @@
+الرد ده أفضل بكتير من الردود السابقة، وفيه دليل فعلي بدل الافتراضات.
+
+لكن عندي 4 ملاحظات مهمة قبل ما أقول إن EG_ESIGN بقى "جاهز بالكامل".
+
+---
+
+# 1. نسبة 100% Concepts ليست بالضرورة شيء جيد
+
+الوكيل فرحان إن:
+
+```text
+قبل: 9/30
+بعد: 30/30
+```
+
+لكن ده ممكن يكون Over-Tagging.
+
+لو كل مادة بقت تطلع:
+
+```json
+[
+  "administrative_authority",
+  "public_authority",
+  "regulatory_compliance"
+]
+```
+
+حتى المواد البسيطة جدًا،
+
+يبقى الموديل بقى بيسكب concepts زيادة.
+
+### اطلب منه
+
+```text
+Generate a concepts coverage audit.
+
+For each concept provide:
+
+- occurrence count
+- percentage of articles
+
+Flag any concept appearing in more than 80% of articles.
+
+I want to detect concept inflation after the taxonomy expansion.
+```
+
+---
+
+# 2. فيه Concept مش مقتنع بيه
+
+المادة 5 طلعلها:
+
+```json
+"fine"
+```
+
+بينما المادة بتتكلم عن:
+
+```text
+رسم
+إيرادات
+ترخيص
+```
+
+وليس:
+
+```text
+غرامة
+عقوبة
+جزاء
+```
+
+فرق قانوني مهم.
+
+في القانون:
+
+* Fine = غرامة
+* Fee = رسم
+
+مش نفس الحاجة إطلاقًا.
+
+لو Gemini بيخلط بينهم يبقى عندك مشكلة Prompt أو Taxonomy.
+
+### اطلب منه
+
+```text
+Audit the use of the concept "fine".
+
+List every article tagged with "fine"
+and show the exact text span that triggered the tag.
+
+Verify whether the article actually concerns
+a penalty/fine or merely a fee/payment.
+```
+
+---
+
+# 3. كلام الـ 4000 مادة في Batch واحد غير واقعي
+
+الوكيل قال:
+
+> 6411 tokens = 0.6% of context window
+
+وبعدين استنتج:
+
+> يمكن إرسال القانون المدني بالكامل دفعة واحدة
+
+دي قفزة استنتاجية مش مضمونة.
+
+لأن:
+
+* Prompt نفسه يكبر
+* Structured JSON يكبر
+* Output يكبر جدًا (النموذج اخره 64 ألف توكن )
+* Gemini له output limits مستقلة
+
+أنا شخصيًا مش هبعت 1000 مادة في Request واحدة.
+
+---
+
+### الأفضل
+
+اسأله:
+
+```text
+What is the maximum safe batch size based on:
+
+- model input limit
+- model output limit
+- structured JSON response size
+
+I want an engineering estimate with 30% safety margin,
+not a theoretical maximum.
+```
+
+---
+
+# 4. أهم نقطة في الرد كله
+
+دي ممتازة:
+
+> taxonomy is now injected directly into the prompt
+
+دي خطوة صحيحة جدًا.
+
+لأن قبل كده كان عندك:
+
+```text
+Prompt
+↓
+Examples
+↓
+Gemini invents concept
+↓
+Validator rejects concept
+```
+
+دلوقتي بقى:
+
+```text
+Taxonomy
+↓
+Prompt
+↓
+Gemini chooses from taxonomy
+↓
+Validator passes
+```
+
+وده يقلل الـ mismatch بشكل كبير.
+
+---
+
+# رأيي الحالي
+
+| الجزء         | التقييم             |
+| ------------- | ------------------- |
+| Extraction    | 8/10                |
+| Cleanup       | 8/10                |
+| Splitter      | 9/10                |
+| Metadata      | 8.5/10              |
+| Concepts      | 8/10                |
+| Cross Refs    | 9.5/10              |
+| Applicable To | 8/10                |
+| Chunking      | لم يُختبر جيدًا بعد |
+| Confidence    | 6/10                |
+
+---
+
+# الخطوة التالية
+
+أنا **مش هروح للقانون المدني الآن**.
+
+الترتيب المنطقي:
+
+1. EG_ESIGN ✅
+2. EG_PDPL
+3. قانون الإثبات
+4. قانون العمل
+5. قانون الإيجارات (أول OCR حقيقي)
+6. بعدها فقط القانون المدني
+
+ولو EG_PDPL طلع بنفس الجودة تقريبًا، يبقى البايبلاين بدأ يستقر فعلًا بدل ما يكون نجاحه مقتصر على قانون صغير فيه 30 مادة فقط.

@@ -61,7 +61,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd nezam-legal-corpus && PRIMARY_MODEL=gemini-2.5-flash python run_batch.py EG_ESIGN --stages 3 4 5 6 7 --force-reenrich"
+args = "cd nezam-legal-corpus && PRIMARY_MODEL=gemini-2.5-flash python run_batch.py EG_PDPL --stages 3 4 5 6 7 --force-reenrich"
 
 [agent]
 stack = "BEST_EFFORT_FALLBACK"
