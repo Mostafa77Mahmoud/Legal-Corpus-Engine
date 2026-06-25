@@ -1,12 +1,12 @@
 {
   "law_id": "EG_CIVIL_CODE",
   "total_articles": 1039,
-  "enriched": 899,
-  "skipped_cache": 140,
+  "enriched": 0,
+  "skipped_cache": 1039,
   "failed": 0,
-  "total_cost_usd": 0.19670474999999998,
-  "enriched_at": "2026-06-25T00:45:14.151144+00:00",
+  "total_cost_usd": 0.0,
+  "enriched_at": "2026-06-25T01:02:54.384720+00:00",
   "model": "gemini-2.5-flash",
-  "batch_size": 50,
-  "total_api_calls": 18
+  "batch_size": 150,
+  "total_api_calls": 0
 }
