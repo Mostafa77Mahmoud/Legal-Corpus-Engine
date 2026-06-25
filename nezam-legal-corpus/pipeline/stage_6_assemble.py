@@ -132,19 +132,15 @@ def run(law_entry: LawEntry) -> AssemblyReport:
             continue
         resolved_refs = []
         for ref in refs:
+            ref = dict(ref)  # always copy before mutating
             same_law = ref.get("same_law", True)
             if same_law:
                 nums = ref.get("article_numbers", [])
-                if len(nums) == 1 and nums[0] in num_to_id:
-                    ref = dict(ref)  # copy before mutating
-                    ref["target_article_id"] = num_to_id[nums[0]]
-                    cross_ref_resolved += 1
-                else:
-                    ref = dict(ref)
-                    ref["target_article_id"] = None  # multi-ref or unresolvable
+                resolved_ids = [num_to_id[n] for n in nums if n in num_to_id]
+                ref["target_article_ids"] = resolved_ids if resolved_ids else None
+                cross_ref_resolved += len(resolved_ids)
             else:
-                ref = dict(ref)
-                ref["target_article_id"] = None  # cross-law ref — resolved in Stage 6+
+                ref["target_article_ids"] = None  # cross-law ref — law_id unknown at this stage
             resolved_refs.append(ref)
         art["explicit_cross_refs"] = resolved_refs
     logger.info("[%s] Resolved %d same-law cross-ref target_article_ids", law_id, cross_ref_resolved)

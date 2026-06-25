@@ -1,12 +1,12 @@
 {
   "law_id": "EG_ESIGN",
   "total_articles": 30,
-  "enriched": 0,
-  "skipped_cache": 30,
+  "enriched": 30,
+  "skipped_cache": 0,
   "failed": 0,
-  "total_cost_usd": 0.0,
-  "enriched_at": "2026-06-24T15:05:49.763802+00:00",
+  "total_cost_usd": 0.00933825,
+  "enriched_at": "2026-06-25T02:52:38.834645+00:00",
   "model": "gemini-2.5-flash",
-  "batch_size": 10,
-  "total_api_calls": 0
+  "batch_size": 200,
+  "total_api_calls": 1
 }
