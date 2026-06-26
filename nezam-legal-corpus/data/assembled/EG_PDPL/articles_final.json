@@ -1673,7 +1673,6 @@
       "administrative_penalty",
       "regulatory_oversight",
       "licensing",
-      "fine",
       "enforcement"
     ],
     "applicable_to": [
@@ -1730,8 +1729,7 @@
     "concepts": [
       "organizational_structure",
       "administrative_authority",
-      "regulatory_compliance",
-      "fine"
+      "regulatory_compliance"
     ],
     "applicable_to": [
       "administrative"
