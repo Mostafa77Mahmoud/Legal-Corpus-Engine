@@ -268,6 +268,10 @@ class ArticleMetadata:
     applicable_to: list[str] = field(default_factory=list)
     enrichment_model: str = ""
     enrichment_error: str | None = None
+    enrichment_status: str = ""
+    # "completed" — enrichment succeeded and data is trustworthy
+    # "failed"    — enrichment was attempted but errored (will be retried on resume)
+    # ""          — article was never attempted (pipeline died before reaching it)
 
 
 @dataclass
@@ -327,6 +331,7 @@ def _parse_metadata(data: dict[str, Any], model: str) -> ArticleMetadata:
         concepts=concepts,
         applicable_to=applicable_to,
         enrichment_model=model,
+        enrichment_status="completed",
     )
 
 
@@ -531,7 +536,15 @@ def run(
     if out_path.exists() and not force_reenrich:
         try:
             for art in json.loads(out_path.read_text(encoding="utf-8")):
-                if art.get("enrichment_model") and not art.get("enrichment_error"):
+                # Only trust articles with explicit enrichment_status="completed".
+                # Older cache entries lacking the field fall back to the proxy check
+                # (enrichment_model set + no error) for backwards compatibility.
+                status = art.get("enrichment_status", "")
+                if status == "completed" or (
+                    not status
+                    and art.get("enrichment_model")
+                    and not art.get("enrichment_error")
+                ):
                     cached_by_id[art["article_id"]] = art
         except Exception:
             pass
@@ -626,8 +639,22 @@ def run(
                 total_api_calls += 1
             except Exception as exc:
                 logger.error("[%s] Single failed for %s: %s", law_entry.law_id, aid, exc)
-                meta = ArticleMetadata(enrichment_model=model, enrichment_error=str(exc))
+                meta = ArticleMetadata(
+                    enrichment_model=model,
+                    enrichment_error=str(exc),
+                    enrichment_status="failed",
+                )
             enriched_meta[aid] = meta
+
+            # ── Intra-batch checkpoint (single-article fallback only) ──────────
+            # Save after every successful single-article enrichment so a crash or
+            # quota kill never loses more than one article of completed work.
+            if meta.enrichment_status == "completed":
+                assembled = _assemble_output(articles, cached_by_id, enriched_meta, model)
+                out_path.write_text(
+                    json.dumps(assembled, ensure_ascii=False, indent=2), encoding="utf-8"
+                )
+
             time.sleep(0.5)
 
         # ── Crash-safe save after each batch ──────────────────────────────────
