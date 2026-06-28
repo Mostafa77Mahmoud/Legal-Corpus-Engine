@@ -4,8 +4,8 @@
   "enriched": 30,
   "skipped_cache": 0,
   "failed": 0,
-  "total_cost_usd": 0.010680750000000001,
-  "enriched_at": "2026-06-25T03:10:39.487435+00:00",
+  "total_cost_usd": 0.011068,
+  "enriched_at": "2026-06-28T15:11:10.083086+00:00",
   "model": "gemini-2.5-flash",
   "batch_size": 150,
   "total_api_calls": 1

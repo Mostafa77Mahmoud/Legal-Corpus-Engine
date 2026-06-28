@@ -4,10 +4,10 @@
   "total_chunks": 30,
   "single_chunk_articles": 30,
   "multi_chunk_articles": 0,
-  "avg_chunk_words": 74.8,
-  "max_chunk_words": 232,
-  "min_chunk_words": 10,
+  "avg_chunk_words": 72.4,
+  "max_chunk_words": 210,
+  "min_chunk_words": 11,
   "semantic_chunks": 0,
   "rule_based_chunks": 30,
-  "chunked_at": "2026-06-24T15:05:49.771470+00:00"
+  "chunked_at": "2026-06-28T15:11:47.035703+00:00"
 }

@@ -48,8 +48,14 @@ from config.settings import EXTRACTED_CLEAN_DIR, SPLIT_ARTICLES_DIR
 logger = logging.getLogger(__name__)
 
 # ── Arabic numeral translation ───────────────────────────────────────────────
+# Covers Arabic-Eastern (٠-٩) and Persian/Extended-Arabic (۰-۹) digit forms.
+# Both appear in Egyptian legal PDFs when OCR uses different Unicode blocks.
 
-_EASTERN_TO_WESTERN = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+_EASTERN_TO_WESTERN = str.maketrans(
+    "٠١٢٣٤٥٦٧٨٩"   # Arabic-Eastern (U+0660..U+0669)
+    "۰۱۲۳۴۵۶۷۸۹",  # Persian/Extended-Arabic (U+06F0..U+06F9)
+    "01234567890123456789",
+)
 
 
 def _to_int(s: str) -> int:
@@ -106,38 +112,37 @@ _ISSUANCE_RE = re.compile(
     re.MULTILINE,
 )
 
+# Digit character class covering Latin, Arabic-Eastern, and Persian digits
+_DIGITS = r"[\d٠-٩۰-۹]"
+
+# مادة word — accepts تاء مربوطة (ة) or open heh (ه) — OCR sometimes outputs ماده
+_MADA_WORD = r"(?:مادة|ماده|المادة|الماده)"
+
 # مادة (١) / مادة ( 5 ) — paren-digit articles
 # Line-start anchor prevents matching cross-references like "وفقاً لمادة (8)"
 _PAREN_DIGIT_RE = re.compile(
-    rf"{_MD}مادة\s*\(\s*(?:\d+|[٠-٩]+)\s*\)",
+    rf"{_MD}{_MADA_WORD}\s*\(\s*{_DIGITS}+\s*\)",
     re.MULTILINE,
 )
 
-# مادة ١ / المادة 1 / ### مادة ١  — primary numeric articles
+# مادة ١ / المادة 1 / ### مادة ١ / ماده ۹  — primary numeric articles
 # Line-start anchor prevents matching mid-sentence references.
 #
 # Two negative lookaheads after the digit group:
 #
-#   (?![\d٠-٩])         — No more digits.  Prevents regex backtracking from
-#                          partially matching a longer number: if "المادة 864"
-#                          is followed by a comma the engine would otherwise
-#                          retreat to "86", find "4" is not a comma, and
-#                          incorrectly report article 86.  This lookahead
-#                          makes the digit group effectively atomic.
+#   (?![\d٠-٩۰-۹])     — No more digits (any script).  Prevents backtracking
+#                          from partially matching a longer number.
 #
-#   (?![ \t\n]*[،,])    — Not immediately followed by an Arabic/Latin comma
-#                          (with optional whitespace/newlines in between).
+#   (?![ \t\n]*[،,])    — Not immediately followed by an Arabic/Latin comma.
 #                          Rejects cross-references like:
 #                            "المادة 864\n ، فان لم تتحقق…"
-#                          where PDF line-wrap places "المادة" at line start
-#                          but the context is a reference inside another article.
 _PRIMARY_RE = re.compile(
-    rf"{_MD}(?:مادة|المادة)\s+(?:\d+|[٠-٩]+)(?![\d٠-٩])(?![ \t\n]*[،,])",
+    rf"{_MD}{_MADA_WORD}\s+{_DIGITS}+(?![\d٠-٩۰-۹])(?![ \t\n]*[،,])",
     re.MULTILINE,
 )
 
 # Extract just the digit portion from a matched marker string
-_DIGIT_RE = re.compile(r"[\d٠-٩]+")
+_DIGIT_RE = re.compile(r"[\d٠-٩۰-۹]+")
 
 
 # ── internal types ────────────────────────────────────────────────────────────

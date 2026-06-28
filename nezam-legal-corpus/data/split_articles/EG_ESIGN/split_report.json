@@ -4,10 +4,10 @@
   "expected_article_count": 30,
   "issuance_count": 0,
   "main_count": 30,
-  "orphan_text_chars": 200,
+  "orphan_text_chars": 197,
   "marker_kinds": {
     "primary": 30
   },
   "split_source": "regex",
-  "split_at": "2026-06-24T15:05:49.695963+00:00"
+  "split_at": "2026-06-28T15:10:03.115141+00:00"
 }
