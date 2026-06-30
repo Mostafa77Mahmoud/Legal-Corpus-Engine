@@ -1,0 +1,32 @@
+{
+  "description": "Model quality issues flagged during pipeline runs. These are NOT engineering/code bugs. They reflect LLM misclassification or enrichment errors to be addressed in a future consolidated prompt improvement pass.",
+  "issues": [
+    {
+      "law_id": "EG_PDPL",
+      "article_number": 26,
+      "article_type": "main",
+      "issue_type": "wrong_concept_tag",
+      "concept": "fine",
+      "severity": "low",
+      "description": "Article is about licensing and permits (تراخيص وتصاريح). The model incorrectly assigned the 'fine' concept. No penalty language present in text.",
+      "detected_in_stage": "stage_3",
+      "pipeline_run_date": "2026-06-29",
+      "action": "log_only — to be addressed in consolidated prompt improvement pass"
+    },
+    {
+      "law_id": "EG_PDPL",
+      "article_number": 31,
+      "article_type": "main",
+      "issue_type": "wrong_concept_tag",
+      "concept": "fine",
+      "severity": "low",
+      "description": "Article is about the center's budget and financial structure (موازنة المركز). The model incorrectly assigned the 'fine' concept. No penalty language present in text.",
+      "detected_in_stage": "stage_3",
+      "pipeline_run_date": "2026-06-29",
+      "action": "log_only — to be addressed in consolidated prompt improvement pass"
+    }
+  ],
+  "audit_notes": {
+    "EG_PDPL_art_36": "Audit script flagged Art 36 as BOTH (penalty + fee) due to the word مقابل appearing in context 'ارتكب ذلك مقابل الحصول على منفعة' (committed in exchange for a benefit) — this is a penalty-aggravation clause, NOT a fee. The 'fine' tag is CORRECT. The audit script keyword مقابل produces a false positive here."
+  }
+}

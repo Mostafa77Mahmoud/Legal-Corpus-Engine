@@ -2,3 +2,4 @@
 - [Nezam EG_CIVIL_CODE registration](nezam-civil-code-registry.md) — 111 repealed articles list, issuance detection, expected_chapter_headings=0 rationale.
 - [Nezam API quota / model switching](nezam-api-quota.md) — gemini-3.5-flash 503s + all-key daily quota exhaustion pattern; resume command after UTC midnight reset.
 - [Nezam pipeline complete state](nezam-pipeline-state.md) — Stages 1→7 all built and tested; 3 laws released; google-genai package required alongside google-generativeai.
+- [Nezam clean pipeline protocol](nezam-clean-pipeline-protocol.md) — how to fully wipe a law before re-running; multiple old data directories exist beyond the obvious ones.
