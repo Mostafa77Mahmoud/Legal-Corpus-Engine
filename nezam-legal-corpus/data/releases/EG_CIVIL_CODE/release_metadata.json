@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "law_id": "EG_CIVIL_CODE",
+  "law_name_ar": "القانون المدني المصري",
+  "law_number": "131 لسنة 1948",
+  "year": 1948,
+  "exported_at": "2026-07-01T03:45:30.789383+00:00",
+  "is_current_version": true,
+  "statistics": {
+    "total_articles": 1039,
+    "active_articles": 1038,
+    "issuance_articles": 1,
+    "repealed_articles": 0,
+    "total_chunks": 1041,
+    "total_article_words": 56197,
+    "total_chunk_words": 56257,
+    "avg_words_per_article": 54.1,
+    "avg_words_per_chunk": 54.0,
+    "article_categories": {
+      "إجراء": 116,
+      "تنظيمية": 355,
+      "حق": 237,
+      "التزام": 255,
+      "انتقالية": 3,
+      "تعريف": 70,
+      "عقوبة": 2,
+      "إصدار": 1
+    }
+  },
+  "enrichment": {
+    "models_used": {
+      "gemini-3.5-flash": 1039
+    }
+  },
+  "output_files": {
+    "articles_json": "articles.json",
+    "articles_jsonl": "articles.jsonl",
+    "chunks_json": "chunks.json",
+    "chunks_jsonl": "chunks.jsonl"
+  }
+}

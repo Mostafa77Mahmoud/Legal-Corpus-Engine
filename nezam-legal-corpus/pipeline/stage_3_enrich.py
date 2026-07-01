@@ -621,12 +621,49 @@ def run(
 
             except Exception as exc:
                 logger.warning(
-                    "[%s] Batch %d failed [%s] (%s) — falling back to single-article mode",
+                    "[%s] Batch %d failed [%s] (%s) — will try sub-batches before single-article",
                     law_entry.law_id, batch_num, model, exc,
                 )
                 break
 
-        # ── Fallback for missing articles ─────────────────────────────────────
+        # ── Sub-batch halving: before going single-article, try half-size batches ─
+        # Prevents rapid quota exhaustion when a large batch fails due to truncated
+        # JSON output (output token limit exceeded). Halving reduces output size by
+        # ~50% per level, making it much more likely to succeed within token limits.
+        missing_arts = [a for a in batch if a["article_id"] not in batch_results]
+        if missing_arts and not batch_ok and len(missing_arts) > 1:
+            sub_size = max(2, len(missing_arts) // 2)
+            sub_total = (len(missing_arts) + sub_size - 1) // sub_size
+            logger.info(
+                "[%s] Batch %d: trying %d sub-batches of ≤%d articles",
+                law_entry.law_id, batch_num, sub_total, sub_size,
+            )
+            for sub_start in range(0, len(missing_arts), sub_size):
+                sub_batch = missing_arts[sub_start: sub_start + sub_size]
+                sub_num = sub_start // sub_size + 1
+                logger.info(
+                    "[%s] Batch %d sub-batch %d/%d [%s]: %s → %s",
+                    law_entry.law_id, batch_num, sub_num, sub_total, model,
+                    sub_batch[0]["article_id"], sub_batch[-1]["article_id"],
+                )
+                try:
+                    sub_res = _enrich_batch(
+                        sub_batch, law_entry, cost_tracker, model,
+                        fast_fail_on_quota=False,
+                    )
+                    total_api_calls += 1
+                    batch_results.update(sub_res)
+                    logger.info(
+                        "[%s] Sub-batch %d OK: %d/%d articles returned",
+                        law_entry.law_id, sub_num, len(sub_res), len(sub_batch),
+                    )
+                except Exception as sub_exc:
+                    logger.warning(
+                        "[%s] Sub-batch %d failed (%s) — single-article for these %d",
+                        law_entry.law_id, sub_num, sub_exc, len(sub_batch),
+                    )
+
+        # ── Single-article fallback for anything still missing ─────────────────
         for art in batch:
             aid = art["article_id"]
             if aid in batch_results:
