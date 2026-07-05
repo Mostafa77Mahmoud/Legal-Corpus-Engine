@@ -126,6 +126,33 @@ LAW_REGISTRY: dict[str, LawEntry] = {
               "repealed_articles: 111 articles physically absent from the amended edition "
               "(confirmed by Stage 2.5 sequence-gap analysis).",
     ),
+    "EG_RENT_1969": LawEntry(
+        law_id="EG_RENT_1969",
+        law_name_ar="قانون إيجار الأماكن وتنظيم العلاقة بين المؤجرين والمستأجرين",
+        law_number="52 لسنة 1969",
+        year=1969,
+        pdf_filename="EG_RENT_1969.pdf",
+        expected_article_count=36,
+        repealed_articles=[],
+        expected_chapter_headings=0,
+        notes="قانون رقم 52 لسنة 1969 — ألغى القانون رقم 121 لسنة 1947. "
+              "PDF مصدره alberonsy.com — جودة OCR متوسطة، يُتوقع Gemini OCR fallback. "
+              "expected_chapter_headings=0 لتجنب عقوبة SHC حتى تأكيد العدد الفعلي.",
+    ),
+    "EG_LABOR_2025": LawEntry(
+        law_id="EG_LABOR_2025",
+        law_name_ar="قانون العمل",
+        law_number="14 لسنة 2025",
+        year=2025,
+        pdf_filename="EG_LABOR_2025.pdf",
+        expected_article_count=315,
+        repealed_articles=[],
+        expected_chapter_headings=0,
+        notes="قانون رقم 14 لسنة 2025 بإصدار قانون العمل — صادر بالجريدة الرسمية العدد 18 (تابع) في 3 مايو 2025. "
+              "PDF يستخدم خطوط ligature مشفّرة (مثل EG_ESIGN) — يتطلب Gemini OCR. "
+              "expected_article_count=315 تقدير أولي — يُحدَّث بعد Stage 1. "
+              "expected_chapter_headings=0 حتى تأكيد عناوين الأبواب من OCR.",
+    ),
     "EG_PENAL": LawEntry(
         law_id="EG_PENAL",
         law_name_ar="قانون العقوبات",

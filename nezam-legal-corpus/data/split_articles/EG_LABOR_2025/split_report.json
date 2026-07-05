@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_LABOR_2025",
+  "articles_found": 300,
+  "expected_article_count": 315,
+  "issuance_count": 0,
+  "main_count": 300,
+  "orphan_text_chars": 6045,
+  "marker_kinds": {
+    "paren_digit": 300
+  },
+  "split_source": "regex",
+  "split_at": "2026-07-05T00:52:43.898066+00:00"
+}

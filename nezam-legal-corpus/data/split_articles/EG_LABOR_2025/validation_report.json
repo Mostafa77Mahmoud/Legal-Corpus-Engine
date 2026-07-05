@@ -1,0 +1,186 @@
+{
+  "law_id": "EG_LABOR_2025",
+  "articles_checked": 300,
+  "passed": false,
+  "error_count": 19,
+  "warning_count": 3,
+  "issues": [
+    {
+      "code": "E002",
+      "severity": "error",
+      "name": "DUPLICATE_ARTICLE",
+      "description": "Article 143 appears 2 times: ['EG_LABOR_2025_143', 'EG_LABOR_2025_151']",
+      "article_number": 143,
+      "article_id": null
+    },
+    {
+      "code": "E002",
+      "severity": "error",
+      "name": "DUPLICATE_ARTICLE",
+      "description": "Article 202 appears 2 times: ['EG_LABOR_2025_201', 'EG_LABOR_2025_204']",
+      "article_number": 202,
+      "article_id": null
+    },
+    {
+      "code": "E003",
+      "severity": "error",
+      "name": "SEQUENCE_GAP",
+      "description": "Article 299 missing and not in repealed_articles (neighbours present — likely a split error)",
+      "article_number": 299,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 300 expected but not found in split output",
+      "article_number": 300,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 301 expected but not found in split output",
+      "article_number": 301,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 302 expected but not found in split output",
+      "article_number": 302,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 303 expected but not found in split output",
+      "article_number": 303,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 304 expected but not found in split output",
+      "article_number": 304,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 305 expected but not found in split output",
+      "article_number": 305,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 306 expected but not found in split output",
+      "article_number": 306,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 307 expected but not found in split output",
+      "article_number": 307,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 308 expected but not found in split output",
+      "article_number": 308,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 309 expected but not found in split output",
+      "article_number": 309,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 310 expected but not found in split output",
+      "article_number": 310,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 311 expected but not found in split output",
+      "article_number": 311,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 312 expected but not found in split output",
+      "article_number": 312,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 313 expected but not found in split output",
+      "article_number": 313,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 314 expected but not found in split output",
+      "article_number": 314,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 315 expected but not found in split output",
+      "article_number": 315,
+      "article_id": null
+    },
+    {
+      "code": "E005",
+      "severity": "warning",
+      "name": "OVERSIZED_ARTICLE",
+      "description": "Article 1 has 1340 words (median=68, ceiling=500) — review manually: may be a merged split or a genuine long article",
+      "article_number": 1,
+      "article_id": "EG_LABOR_2025_001"
+    },
+    {
+      "code": "E006",
+      "severity": "warning",
+      "name": "ORPHAN_TEXT",
+      "description": "6045 chars appear before the first article marker — unusually large preamble, check for missed markers",
+      "article_number": null,
+      "article_id": null
+    },
+    {
+      "code": "W003",
+      "severity": "warning",
+      "name": "ISSUANCE_MISMATCH",
+      "description": "No issuance articles found for a law with 315 articles — ordinal marker patterns may not have matched",
+      "article_number": null,
+      "article_id": null
+    }
+  ],
+  "validated_at": "2026-07-05T00:52:44.006710+00:00"
+}
