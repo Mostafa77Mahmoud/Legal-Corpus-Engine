@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "law_id": "EG_LABOR_2025",
+  "law_name_ar": "قانون العمل",
+  "law_number": "14 لسنة 2025",
+  "year": 2025,
+  "exported_at": "2026-07-05T07:16:39.345648+00:00",
+  "is_current_version": true,
+  "statistics": {
+    "total_articles": 308,
+    "active_articles": 298,
+    "issuance_articles": 10,
+    "repealed_articles": 0,
+    "total_chunks": 321,
+    "total_article_words": 28269,
+    "total_chunk_words": 28659,
+    "avg_words_per_article": 91.8,
+    "avg_words_per_chunk": 89.3,
+    "article_categories": {
+      "تعريف": 15,
+      "التزام": 103,
+      "حق": 39,
+      "تنظيمية": 85,
+      "إجراء": 38,
+      "أخرى": 1,
+      "عقوبة": 18,
+      "إصدار": 2,
+      "انتقالية": 7
+    }
+  },
+  "enrichment": {
+    "models_used": {
+      "gemini-2.5-flash": 308
+    }
+  },
+  "output_files": {
+    "articles_json": "articles.json",
+    "articles_jsonl": "articles.jsonl",
+    "chunks_json": "chunks.json",
+    "chunks_jsonl": "chunks.jsonl"
+  }
+}

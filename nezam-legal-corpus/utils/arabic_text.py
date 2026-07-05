@@ -26,11 +26,10 @@ _ORDINALS = (
     r"|التاسع\s+عشر[ة]?|العشرون|الحادي\s+والعشرون"
 )
 
-# Article marker patterns (all supported formats)
-_ART_PRIMARY     = re.compile(r"(?:مادة|المادة)\s+(?:\d+|[٠-٩]+)", re.MULTILINE)
-_ART_ABBREV      = re.compile(r"(?<!\w)ما\s{0,3}(?=\d)(?:\d+|[٠-٩]+)", re.MULTILINE)
-_ART_PAREN_DIGIT = re.compile(r"مادة\s*\(\s*(?:\d+|[٠-٩]+)\s*\)", re.MULTILINE)
-_ART_ORDINAL     = re.compile(rf"\(المادة\s+(?:{_ORDINALS})\)", re.MULTILINE)
+# Article marker pattern for abbreviated/garbled markers not handled by the
+# Stage 2 splitter (see count_article_markers below for the primary formats,
+# which delegate to pipeline.stage_2_split for consistency).
+_ART_ABBREV = re.compile(r"(?<!\w)ما\s{0,3}(?=\d)(?:\d+|[٠-٩]+)", re.MULTILINE)
 
 # Structural heading patterns (all supported formats)
 _HEAD_PLAIN = re.compile(
@@ -87,13 +86,35 @@ def count_article_markers(text: str) -> int:
     - Abbreviated:    ما5 / ما 6          (garbled/encoding-broken PDFs)
     - Paren-digit:    مادة (١) / مادة ( ٢ )  (Masaar TXT and some PDFs)
     - Ordinal-paren:  (المادة الأولى) ... (المادة السابعة)  (issuance articles)
+
+    Delegates the standard/paren-digit/ordinal detection to
+    ``pipeline.stage_2_split``'s hit-collector so that Stage 1.5 (confidence
+    scoring) and Stage 2 (splitting) always agree on what counts as a real
+    article marker. Import is deferred to avoid a module-load cycle, since
+    ``stage_2_split`` is a pipeline module and this is a low-level util.
+
+    The splitter's patterns are anchored to line-start and exclude
+    mid-sentence cross-references (e.g. "المادة 604 من القانون المدنى" or
+    "المادة (143) من هذا القانون"), and dedupe by *article number* rather
+    than by matched string — so "مادة 5" and "المادة 5" referring to the
+    same article are counted once, not twice. The abbreviated "ما5" format
+    (garbled/encoding-broken PDFs) is not handled by the splitter, so it is
+    still counted separately here via number extraction.
     """
-    hits: set[str] = set()
-    hits.update(_ART_PRIMARY.findall(text))
-    hits.update(_ART_ABBREV.findall(text))
-    hits.update(_ART_PAREN_DIGIT.findall(text))
-    hits.update(_ART_ORDINAL.findall(text))
-    return len(hits)
+    from pipeline.stage_2_split import _collect_hits
+
+    numbers: set[int] = {hit.number for hit in _collect_hits(text)}
+    numbers.update(_to_int_digits(m) for m in _ART_ABBREV.findall(text))
+    return len(numbers)
+
+
+_DIGIT_TRANSLATE = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+
+
+def _to_int_digits(raw: str) -> int:
+    """Extract the integer value from a raw abbreviated marker like 'ما5'."""
+    digits = re.sub(r"\D", "", raw.translate(_DIGIT_TRANSLATE))
+    return int(digits) if digits else -1
 
 
 def count_structural_headings(text: str) -> int:

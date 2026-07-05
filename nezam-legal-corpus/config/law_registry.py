@@ -132,12 +132,14 @@ LAW_REGISTRY: dict[str, LawEntry] = {
         law_number="52 لسنة 1969",
         year=1969,
         pdf_filename="EG_RENT_1969.pdf",
-        expected_article_count=36,
+        expected_article_count=48,
         repealed_articles=[],
         expected_chapter_headings=0,
         notes="قانون رقم 52 لسنة 1969 — ألغى القانون رقم 121 لسنة 1947. "
               "PDF مصدره alberonsy.com — جودة OCR متوسطة، يُتوقع Gemini OCR fallback. "
-              "expected_chapter_headings=0 لتجنب عقوبة SHC حتى تأكيد العدد الفعلي.",
+              "expected_chapter_headings=0 لتجنب عقوبة SHC حتى تأكيد العدد الفعلي. "
+              "expected_article_count=48 مؤكد من نهاية النص الفعلية بعد إصلاح باغ "
+              "عد المواد (كان 36 تقديراً أولياً خاطئاً).",
     ),
     "EG_LABOR_2025": LawEntry(
         law_id="EG_LABOR_2025",
@@ -145,12 +147,14 @@ LAW_REGISTRY: dict[str, LawEntry] = {
         law_number="14 لسنة 2025",
         year=2025,
         pdf_filename="EG_LABOR_2025.pdf",
-        expected_article_count=315,
+        expected_article_count=298,
         repealed_articles=[],
         expected_chapter_headings=0,
         notes="قانون رقم 14 لسنة 2025 بإصدار قانون العمل — صادر بالجريدة الرسمية العدد 18 (تابع) في 3 مايو 2025. "
               "PDF يستخدم خطوط ligature مشفّرة (مثل EG_ESIGN) — يتطلب Gemini OCR. "
-              "expected_article_count=315 تقدير أولي — يُحدَّث بعد Stage 1. "
+              "expected_article_count=298 مؤكد من نهاية النص الفعلية (المادة الأخيرة "
+              "٢٩٨ يتبعها مباشرة رقم الإيداع وتوقيع رئيس مجلس الإدارة) بعد إصلاح باغ "
+              "عد المواد (كان 315 تقديراً أولياً خاطئاً). "
               "expected_chapter_headings=0 حتى تأكيد عناوين الأبواب من OCR.",
     ),
     "EG_PENAL": LawEntry(

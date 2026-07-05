@@ -7,13 +7,19 @@ description: Current state of the Nezam Legal Corpus pipeline — what's done, w
 
 ## What's built (as of June 2026)
 
-All pipeline stages 1→7 are implemented and tested. Three laws are fully released:
+All pipeline stages 1→7 are implemented and tested. Four laws are fully released:
 
 | Law | Articles | Chunks | Production files |
 |-----|----------|--------|-----------------|
 | EG_PDPL | 56 | 61 | `data/releases/EG_PDPL/` |
 | EG_ESIGN | 30 | 30 | `data/releases/EG_ESIGN/` |
 | EG_CIVIL_CODE | 1039 | 1041 | `data/releases/EG_CIVIL_CODE/` |
+| EG_LABOR_2025 | 308 | 321 | `data/releases/EG_LABOR_2025/` |
+
+EG_RENT_1969 is stalled at Stage 2.5 (1 residual duplicate-article error) pending
+human review of a data-quality issue in its source PDF's explanatory memo — see
+`nezam-splitter-regex.md` and `nezam-legal-corpus/docs/DIAGNOSTIC_NOTE_EG_RENT_1969_EG_LABOR_2025.md`.
+Not a code bug; do not attempt further regex fixes for this single case.
 
 ## What's NOT built yet
 

@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_LABOR_2025",
+  "law_name_ar": "قانون العمل",
+  "assembled_at": "2026-07-05T07:16:39.272539+00:00",
+  "total_articles_in": 308,
+  "total_articles_out": 308,
+  "total_chunks_in": 321,
+  "total_chunks_out": 321,
+  "duplicates_removed": 0,
+  "repealed_articles": 0,
+  "repealed_flagged": 0,
+  "is_current_version": true
+}

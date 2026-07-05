@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_LABOR_2025",
+  "total_articles": 308,
+  "total_chunks": 321,
+  "single_chunk_articles": 299,
+  "multi_chunk_articles": 9,
+  "avg_chunk_words": 89.3,
+  "max_chunk_words": 274,
+  "min_chunk_words": 10,
+  "semantic_chunks": 0,
+  "rule_based_chunks": 321,
+  "chunked_at": "2026-07-05T07:16:39.127375+00:00"
+}

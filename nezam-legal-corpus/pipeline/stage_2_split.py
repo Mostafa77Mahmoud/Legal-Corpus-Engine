@@ -105,10 +105,12 @@ _ORD_ALT = (
 # Use [ \t]* not \s* to avoid consuming newlines (which would corrupt split boundaries)
 _MD = r"^#{0,6}[ \t]*"
 
-# (المادة الاولي) / (المادة الثانية) … — issuance articles
+# (المادة الاولي) / (المادة الثانية) / ( المادة الاولي ) … — issuance articles
+# Optional whitespace after "(" and before ")" — Gemini OCR sometimes inserts
+# a space inside the parentheses ("( المادة الاولي )") depending on source PDF.
 # ^ with MULTILINE anchors to line start → avoids matching inside article bodies
 _ISSUANCE_RE = re.compile(
-    rf"{_MD}\(المادة\s+(?:{_ORD_ALT})\)",
+    rf"{_MD}\(\s*المادة\s+(?:{_ORD_ALT})\s*\)",
     re.MULTILINE,
 )
 
@@ -118,17 +120,27 @@ _DIGITS = r"[\d٠-٩۰-۹]"
 # مادة word — accepts تاء مربوطة (ة) or open heh (ه) — OCR sometimes outputs ماده
 _MADA_WORD = r"(?:مادة|ماده|المادة|الماده)"
 
+# Cross-reference lookahead — rejects markers immediately followed by a
+# reference phrase such as "من هذا القانون" / "من ذلك القانون" / "من القانون
+# المدني" / "من المشروع".  PDF line-wrap can place "مادة (N)" / "المادة N" at
+# the start of a line even when it is a mid-sentence citation of an article
+# (in this law, another law, or the bill/draft being explained by an
+# accompanying "مذكرة إيضاحية") rather than a real article header.  Real
+# article headers are followed by a colon or body text, never by these
+# reference phrases.
+_NOT_LAW_REFERENCE = r"(?![ \t\n]*من\s+(?:هذا\s+|ذلك\s+)?(?:القانون|المشروع))"
+
 # مادة (١) / مادة ( 5 ) — paren-digit articles
 # Line-start anchor prevents matching cross-references like "وفقاً لمادة (8)"
 _PAREN_DIGIT_RE = re.compile(
-    rf"{_MD}{_MADA_WORD}\s*\(\s*{_DIGITS}+\s*\)",
+    rf"{_MD}{_MADA_WORD}\s*\(\s*{_DIGITS}+\s*\){_NOT_LAW_REFERENCE}",
     re.MULTILINE,
 )
 
 # مادة ١ / المادة 1 / ### مادة ١ / ماده ۹  — primary numeric articles
 # Line-start anchor prevents matching mid-sentence references.
 #
-# Two negative lookaheads after the digit group:
+# Three negative lookaheads after the digit group:
 #
 #   (?![\d٠-٩۰-۹])     — No more digits (any script).  Prevents backtracking
 #                          from partially matching a longer number.
@@ -136,8 +148,12 @@ _PAREN_DIGIT_RE = re.compile(
 #   (?![ \t\n]*[،,])    — Not immediately followed by an Arabic/Latin comma.
 #                          Rejects cross-references like:
 #                            "المادة 864\n ، فان لم تتحقق…"
+#
+#   _NOT_LAW_REFERENCE  — Not immediately followed by "من (هذا/ذلك) القانون".
+#                          Rejects cross-references like:
+#                            "المادة 143 من هذا القانون"
 _PRIMARY_RE = re.compile(
-    rf"{_MD}{_MADA_WORD}\s+{_DIGITS}+(?![\d٠-٩۰-۹])(?![ \t\n]*[،,])",
+    rf"{_MD}{_MADA_WORD}\s+{_DIGITS}+(?![\d٠-٩۰-۹])(?![ \t\n]*[،,]){_NOT_LAW_REFERENCE}",
     re.MULTILINE,
 )
 
@@ -317,21 +333,27 @@ def run(law_entry: LawEntry) -> tuple[list[ArticleRecord], SplitReport]:
     # Some PDFs (e.g. القانون المدني) encode issuance articles using the same
     # numeric format as main articles ("مادة 2 – على وزير العدل…") rather than
     # the ordinal form "(المادة الثانية)".  The splitter assigns them type="main"
-    # because they match _PRIMARY_RE.  To fix this without a law-specific hack:
-    #   • find the sequence index of the first occurrence of article 1
-    #   • any articles that appear before it (in document order) and were
-    #     classified as "main" are actually issuance articles
-    first_art1_seq = next(
-        (a.sequence_index for a in articles if a.article_number == 1 and a.article_type == "main"),
+    # because they match _PRIMARY_RE.
+    #
+    # Other PDFs (e.g. EG_RENT_1969) prepend a full "مذكرة إيضاحية" (explanatory
+    # memorandum) that narrates the bill article-by-article using the exact same
+    # "مادة 1" … "مادة N" numbering as the codified law that follows — i.e. the
+    # numbering sequence 1..N genuinely repeats twice in the raw text before the
+    # real codified text is reached.  To handle both cases without a law-specific
+    # hack, anchor on the LAST occurrence of article 1 (not the first): anything
+    # before that point is preamble/issuance content, and the codified law text
+    # that actually defines articles 1..N starts there.
+    last_art1_seq = next(
+        (a.sequence_index for a in reversed(articles) if a.article_number == 1 and a.article_type == "main"),
         None,
     )
-    if first_art1_seq is not None and first_art1_seq > 1:
+    if last_art1_seq is not None and last_art1_seq > 1:
         for a in articles:
-            if a.sequence_index < first_art1_seq and a.article_type == "main":
+            if a.sequence_index < last_art1_seq and a.article_type == "main":
                 a.article_type = "issuance"
                 logger.info(
                     "[%s] Re-classified article %d (seq=%d) as issuance "
-                    "(appears before article 1 in document order)",
+                    "(appears before the final/codified article 1 in document order)",
                     law_entry.law_id, a.article_number, a.sequence_index,
                 )
 

@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_RENT_1969",
+  "articles_found": 98,
+  "expected_article_count": 48,
+  "issuance_count": 49,
+  "main_count": 49,
+  "orphan_text_chars": 787,
+  "marker_kinds": {
+    "primary": 98
+  },
+  "split_source": "regex",
+  "split_at": "2026-07-05T06:50:04.641457+00:00"
+}

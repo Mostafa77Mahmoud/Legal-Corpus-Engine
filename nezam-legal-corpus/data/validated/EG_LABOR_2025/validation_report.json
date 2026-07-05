@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_LABOR_2025",
+  "law_name_ar": "قانون العمل",
+  "validated_at": "2026-07-05T07:16:39.187099+00:00",
+  "passed": true,
+  "total_articles": 308,
+  "total_chunks": 321,
+  "error_count": 0,
+  "warning_count": 0,
+  "quality_gate": "PASS",
+  "issues": [],
+  "summary_by_code": {}
+}
