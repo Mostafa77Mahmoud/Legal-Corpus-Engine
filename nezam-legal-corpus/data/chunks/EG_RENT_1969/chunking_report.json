@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_RENT_1969",
+  "total_articles": 48,
+  "total_chunks": 62,
+  "single_chunk_articles": 47,
+  "multi_chunk_articles": 1,
+  "avg_chunk_words": 121.0,
+  "max_chunk_words": 279,
+  "min_chunk_words": 25,
+  "semantic_chunks": 0,
+  "rule_based_chunks": 62,
+  "chunked_at": "2026-07-06T08:46:23.494532+00:00"
+}

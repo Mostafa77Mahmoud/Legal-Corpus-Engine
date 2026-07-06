@@ -237,8 +237,21 @@ def _parse_digit_number(marker_text: str) -> int:
     return _to_int(m.group())
 
 
-def _collect_hits(text: str) -> list[_Hit]:
-    """Find all article-marker positions, sorted and deduplicated."""
+_MANUAL_EXCLUSION_LOOKBACK = 40  # chars of preceding context to check
+
+
+def _collect_hits(
+    text: str, manual_marker_exclusions: list[str] | None = None
+) -> list[_Hit]:
+    """Find all article-marker positions, sorted and deduplicated.
+
+    *manual_marker_exclusions*: optional list of human-reviewed phrases
+    (see `config.law_registry.LawEntry.manual_marker_exclusions`). A hit is
+    dropped if any of these phrases appears in the text immediately
+    preceding the marker (within `_MANUAL_EXCLUSION_LOOKBACK` chars,
+    whitespace-normalised). This is a per-document, human-audited exception
+    list — never a general pattern.
+    """
     raw_hits: list[_Hit] = []
 
     for m in _ISSUANCE_RE.finditer(text):
@@ -253,6 +266,21 @@ def _collect_hits(text: str) -> list[_Hit]:
     for m in _PRIMARY_RE.finditer(text):
         num = _parse_digit_number(m.group())
         raw_hits.append(_Hit(m.start(), m.end(), num, "primary", m.group()))
+
+    if manual_marker_exclusions:
+        filtered: list[_Hit] = []
+        for h in raw_hits:
+            context = _normalise_spaces(
+                text[max(0, h.pos - _MANUAL_EXCLUSION_LOOKBACK): h.pos]
+            )
+            if any(phrase in context for phrase in manual_marker_exclusions):
+                logger.info(
+                    "Manually excluded marker %r at pos=%d (preceding context: %r)",
+                    h.raw, h.pos, context,
+                )
+                continue
+            filtered.append(h)
+        raw_hits = filtered
 
     # Sort: by position; for ties prefer longer match (more specific)
     raw_hits.sort(key=lambda h: (h.pos, -(h.end - h.pos)))
@@ -284,7 +312,7 @@ def run(law_entry: LawEntry) -> tuple[list[ArticleRecord], SplitReport]:
         )
 
     text = clean_path.read_text(encoding="utf-8")
-    hits = _collect_hits(text)
+    hits = _collect_hits(text, law_entry.manual_marker_exclusions)
 
     if not hits:
         logger.error("[%s] No article markers found — cannot split.", law_entry.law_id)

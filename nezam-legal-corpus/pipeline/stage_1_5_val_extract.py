@@ -82,7 +82,7 @@ def run(law_entry: LawEntry, extraction_source: str = "unknown") -> ConfidenceRe
     acd = round(arabic_char_density(text), 4)
     cs = round(replacement_char_density(text), 4)
 
-    markers = count_article_markers(text)
+    markers = count_article_markers(text, law_entry.manual_marker_exclusions)
     expected = law_entry.expected_article_count
     amd = round(markers / expected, 4) if expected > 0 else 0.0
 

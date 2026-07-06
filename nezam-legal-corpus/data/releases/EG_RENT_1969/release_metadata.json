@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "law_id": "EG_RENT_1969",
+  "law_name_ar": "قانون إيجار الأماكن وتنظيم العلاقة بين المؤجرين والمستأجرين",
+  "law_number": "52 لسنة 1969",
+  "year": 1969,
+  "exported_at": "2026-07-06T08:46:23.528184+00:00",
+  "is_current_version": true,
+  "statistics": {
+    "total_articles": 48,
+    "active_articles": 48,
+    "issuance_articles": 0,
+    "repealed_articles": 0,
+    "total_chunks": 62,
+    "total_article_words": 7081,
+    "total_chunk_words": 7501,
+    "avg_words_per_article": 147.5,
+    "avg_words_per_chunk": 121.0,
+    "article_categories": {
+      "تنظيمية": 15,
+      "تعريف": 1,
+      "حق": 7,
+      "التزام": 9,
+      "إجراء": 7,
+      "انتقالية": 4,
+      "عقوبة": 3,
+      "إصدار": 2
+    }
+  },
+  "enrichment": {
+    "models_used": {
+      "gemini-2.5-flash": 48
+    }
+  },
+  "output_files": {
+    "articles_json": "articles.json",
+    "articles_jsonl": "articles.jsonl",
+    "chunks_json": "chunks.json",
+    "chunks_jsonl": "chunks.jsonl"
+  }
+}

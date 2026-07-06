@@ -11,7 +11,46 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 133,
-    "char_count": 796
+    "char_count": 796,
+    "topic": "نطاق سريان القانون",
+    "keywords": [
+      "الأراضي الفضاء",
+      "الأماكن",
+      "أجزاء الأماكن",
+      "السكني",
+      "عواصم المحافظات",
+      "القرى",
+      "الأجرة المتعاقد عليها",
+      "مصالح الحكومة",
+      "الهيئات العامة"
+    ],
+    "article_summary": "تحدد المادة نطاق سريان أحكام الباب الأول من القانون على الأماكن وأجزائها المعدة للسكنى أو غيرها في عواصم المحافظات والمدن، وتجيز مد نطاق سريانها للقرى بقرار وزاري، مع استثناء الأراضي الفضاء وعدم تأثير القرار على الأجرة المتعاقد عليها مسبقًا. كما تسري أحكام الفصل الثالث على الأماكن المؤجرة للجهات الحكومية والعامة في القرى.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "وزير الإسكان والمرافق",
+      "مجلس المحافظة",
+      "مصالح الحكومة",
+      "المجالس المحلية",
+      "الهيئات العامة",
+      "المؤسسات العامة",
+      "الاتحاد الاشتراكي العربي"
+    ],
+    "concepts": [
+      "regulatory_compliance",
+      "lease_contract",
+      "public_authority",
+      "administrative_authority",
+      "real_property"
+    ],
+    "applicable_to": [
+      "real_estate",
+      "administrative",
+      "civil"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_002",
@@ -25,7 +64,37 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 47,
-    "char_count": 284
+    "char_count": 284,
+    "topic": "استثناءات من نطاق السريان",
+    "keywords": [
+      "المساكن الملحقة بالمرافق",
+      "المساكن التي تشغل بسبب العمل",
+      "تصاريح إشغال مؤقتة",
+      "حالات الطوارئ",
+      "الضرورة",
+      "شروط الانتفاع"
+    ],
+    "article_summary": "تستثني المادة من نطاق سريان أحكام الباب المساكن الملحقة بالمرافق والمنشآت أو التي تشغل بسبب العمل، وكذلك المساكن ذات تصاريح الإشغال المؤقتة لحالات الطوارئ والضرورة، ويصدر وزير الإسكان والمرافق قرارًا بتحديد هذه الحالات وشروط الانتفاع.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "وزير الإسكان والمرافق"
+    ],
+    "concepts": [
+      "regulatory_compliance",
+      "lease_contract",
+      "employment_contract",
+      "administrative_authority",
+      "real_property"
+    ],
+    "applicable_to": [
+      "real_estate",
+      "administrative",
+      "employment"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_003",
@@ -39,7 +108,37 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 36,
-    "char_count": 207
+    "char_count": 207,
+    "topic": "حكم المستأجر والاستيلاء",
+    "keywords": [
+      "مالك العقار",
+      "منزوعة ملكيته",
+      "المستأجر",
+      "قرارات استيلاء",
+      "الجهات المستولية"
+    ],
+    "article_summary": "تعتبر المادة مالك العقار المنزوعة ملكيته مستأجرًا لما يشغله من عقاره، وتعتبر الأماكن المستولى عليها مؤجرة للجهات التي تم الاستيلاء لصالحها.",
+    "article_category": "تعريف",
+    "legal_entities": [
+      "مالك العقار",
+      "الجهات التي تم الاستيلاء لصالحها"
+    ],
+    "concepts": [
+      "legal_definitions",
+      "ownership",
+      "lease_contract",
+      "public_authority",
+      "property_rights"
+    ],
+    "applicable_to": [
+      "real_estate",
+      "administrative",
+      "civil"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_004",
@@ -53,7 +152,42 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 109,
-    "char_count": 612
+    "char_count": 612,
+    "topic": "أولوية استئجار المسكن وتبادل الوحدات",
+    "keywords": [
+      "العامل المنقول",
+      "أولوية الاستئجار",
+      "إعلان المؤجر",
+      "إخلاء المسكن",
+      "تبادل الوحدات السكنية",
+      "قواعد وشروط",
+      "وزير الإسكان والمرافق"
+    ],
+    "article_summary": "تمنح المادة العامل المنقول أولوية استئجار المسكن الذي كان يشغله العامل السابق، وتلزم العامل المنقول بإخلاء مسكنه عند حصوله على مسكن جديد، كما تجيز تبادل الوحدات السكنية بين المستأجرين وفقًا لقواعد وشروط يحددها وزير الإسكان والمرافق.",
+    "article_category": "حق",
+    "legal_entities": [
+      "العامل",
+      "المؤجر",
+      "المالك",
+      "المستأجر",
+      "وزير الإسكان والمرافق"
+    ],
+    "concepts": [
+      "employment_contract",
+      "lease_contract",
+      "property_rights",
+      "administrative_authority",
+      "regulatory_compliance"
+    ],
+    "applicable_to": [
+      "employment",
+      "real_estate",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_005",
@@ -67,7 +201,36 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 38,
-    "char_count": 214
+    "char_count": 214,
+    "topic": "حظر احتجاز المساكن وإبقائها خالية",
+    "keywords": [
+      "احتجاز مسكن",
+      "البلد الواحد",
+      "مسكن دون مقتضى",
+      "مساكن معدة للاستغلال",
+      "خالية",
+      "الأجرة القانونية"
+    ],
+    "article_summary": "تحظر المادة على أي شخص احتجاز أكثر من مسكن واحد دون مقتضى في البلد الواحد، كما تحظر إبقاء المساكن المعدة للاستغلال خالية لمدة تزيد عن ثلاثة أشهر إذا تقدم مستأجر لاستئجارها بالأجرة القانونية.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "شخص",
+      "مستأجر"
+    ],
+    "concepts": [
+      "regulatory_compliance",
+      "property_rights",
+      "lease_contract",
+      "public_policy"
+    ],
+    "applicable_to": [
+      "real_estate",
+      "civil"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_006",
@@ -81,7 +244,40 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 93,
-    "char_count": 551
+    "char_count": 551,
+    "topic": "متطلبات ترخيص البناء وتقدير الأجرة",
+    "keywords": [
+      "إقامة مبنى",
+      "طلب الترخيص",
+      "الجهة الإدارية",
+      "قيمة الأرض",
+      "قيمة المباني",
+      "مواصفات البناء",
+      "مقترحات الأجرة",
+      "توزيع الأجرة",
+      "تكاليف المبنى",
+      "اللائحة التنفيذية"
+    ],
+    "article_summary": "تلزم المادة من يرغب في إقامة مبنى بإرفاق بيان بقيمة الأرض والمباني ومواصفات البناء ومقترحات الأجرة وتوزيعها مع طلب ترخيص البناء، وتعتبر هذه البيانات متممة للمستندات اللازمة للحصول على الترخيص وفقًا لقوانين تنظيم البناء.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "الجهة الإدارية المختصة بشئون التنظيم"
+    ],
+    "concepts": [
+      "licensing",
+      "regulatory_compliance",
+      "administrative_procedure",
+      "real_property",
+      "construction_contract"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_007",
@@ -95,7 +291,41 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 50,
-    "char_count": 307
+    "char_count": 307,
+    "topic": "قرار ترخيص البناء وتقدير الأجرة",
+    "keywords": [
+      "قرار الجهة الإدارية",
+      "إقامة البناء",
+      "تقدير الأجرة الإجمالية",
+      "توزيع الأجرة",
+      "ترخيص البناء",
+      "التعاقد",
+      "المؤجر",
+      "المستأجر"
+    ],
+    "article_summary": "ينص على أن قرار الجهة الإدارية المختصة بالموافقة على إقامة البناء يتضمن تقدير الأجرة الإجمالية للمبنى وتوزيعها على وحداته، ويصدر ترخيص البناء موضحًا به هذا التقدير والتوزيع، وعليه يتم التعاقد بين المؤجر والمستأجر لحين تحديد الأجرة النهائية.",
+    "article_category": "إجراء",
+    "legal_entities": [
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "المؤجر",
+      "المستأجر"
+    ],
+    "concepts": [
+      "licensing",
+      "administrative_procedure",
+      "regulatory_compliance",
+      "lease_contract",
+      "real_property"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate",
+      "civil"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_008",
@@ -109,7 +339,46 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 98,
-    "char_count": 629
+    "char_count": 629,
+    "topic": "تشكيل لجان تحديد الأجرة",
+    "keywords": [
+      "تحديد الأجرة",
+      "توزيع الأجرة",
+      "لجان",
+      "المحافظ المختص",
+      "مهندسون",
+      "ضريبة العقارات المبنية",
+      "الاتحاد الاشتراكي العربي",
+      "ملاك العقارات",
+      "صحة الانعقاد",
+      "أغلبية الأصوات"
+    ],
+    "article_summary": "تتولى لجان يصدر بتشكيلها قرار من المحافظ المختص تحديد أجرة الأماكن وتوزيعها، وتتكون من مهندسين ومختصين بالضرائب وممثلين عن الاتحاد الاشتراكي العربي، وتصدر قراراتها بالأغلبية، ويحدد وزير الإسكان والمرافق قواعد وإجراءات عملها.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "المحافظ المختص",
+      "لجان تحديد الأجرة",
+      "مهندسون",
+      "العاملون المختصون بربط أو تحصيل الضريبة على العقارات المبنية",
+      "الاتحاد الاشتراكي العربي",
+      "ملاك العقارات المبنية",
+      "وزير الإسكان والمرافق"
+    ],
+    "concepts": [
+      "organizational_structure",
+      "administrative_authority",
+      "regulatory_oversight",
+      "administrative_procedure",
+      "real_property"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_009",
@@ -123,7 +392,48 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 133,
-    "char_count": 789
+    "char_count": 789,
+    "topic": "إخطار لجان تحديد الأجرة والتزامات المالك",
+    "keywords": [
+      "مالك البناء",
+      "عقد إيجار",
+      "شغل الوحدة",
+      "إخطار اللجنة",
+      "تحديد الأجرة",
+      "توزيع الأجرة",
+      "مواصفات البناء",
+      "اللائحة التنفيذية",
+      "تسليم العين المؤجرة",
+      "قاضي الأمور المستعجلة"
+    ],
+    "article_summary": "تلزم المادة مالك البناء بإخطار لجنة تحديد الأجرة خلال ثلاثين يومًا من أول عقد إيجار أو شغل للوحدة لتحديد الأجرة وتوزيعها، ويجوز للمستأجر إخطار اللجنة، كما تلتزم اللجنة بالتقدير تلقائيًا أو بناءً على إخطار. وتلزم المادة المالك بتسليم العين صالحة للاستعمال، وتجيز للمستأجر استكمال الأعمال الناقصة بخصم التكاليف بعد ترخيص قضائي.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "مالك البناء",
+      "اللجنة",
+      "المستأجر",
+      "لجنة تنظيم وتوجيه أعمال البناء",
+      "الجهة المختصة بحصر العقارات المبنية",
+      "قاضي الأمور المستعجلة"
+    ],
+    "concepts": [
+      "regulatory_compliance",
+      "administrative_procedure",
+      "lease_contract",
+      "specific_performance",
+      "judicial_procedure",
+      "real_property"
+    ],
+    "applicable_to": [
+      "real_estate",
+      "administrative",
+      "civil",
+      "procedural"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_010",
@@ -137,7 +447,42 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 110,
-    "char_count": 669
+    "char_count": 669,
+    "topic": "أسس تقدير أجرة المبنى",
+    "keywords": [
+      "تقدير أجرة المبنى",
+      "صافي عائد استثمار العقار",
+      "قيمة الأرض",
+      "قيمة المباني",
+      "استهلاك رأس المال",
+      "مصروفات الإصلاحات",
+      "الصيانة",
+      "الإدارة",
+      "الإعفاءات الضريبية",
+      "الضرائب العقارية"
+    ],
+    "article_summary": "تحدد المادة أسس تقدير أجرة المبنى بناءً على صافي عائد استثمار العقار ومقابل استهلاك رأس المال ومصروفات الإصلاح والصيانة والإدارة، مع إضافة الضرائب العقارية الأصلية والإضافية بعد مراعاة الإعفاءات. وتلزم المستأجر بسداد هذه الضرائب والرسوم للمؤجر مع الأجرة الشهرية، ويترتب على عدم سدادها نفس نتائج عدم سداد الأجرة.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "المؤجرين",
+      "المستأجرين"
+    ],
+    "concepts": [
+      "regulatory_compliance",
+      "real_property",
+      "lease_contract",
+      "obligation_source",
+      "penalty"
+    ],
+    "applicable_to": [
+      "real_estate",
+      "civil",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_011",
@@ -151,7 +496,37 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 212,
-    "char_count": 1275
+    "char_count": 1275,
+    "topic": "قواعد تقدير قيمة الأرض والمباني",
+    "keywords": [
+      "قيمة الأرض",
+      "ثمن المثل",
+      "وقت البناء",
+      "قيمة المباني",
+      "سعر السوق",
+      "الأساسات",
+      "التوصيلات الخارجية للمرافق",
+      "المساحة المسموح بالبناء عليها",
+      "قيود الارتفاع",
+      "المساكن المستقلة"
+    ],
+    "article_summary": "تحدد المادة قواعد تقدير قيمة الأرض والمباني وقت البناء، وتوضح كيفية حساب قيمة الأرض والمباني والأساسات والتوصيلات الخارجية للمرافق بناءً على استيفاء الارتفاع أو عدمه، أو شغل جزء من الأرض، مع أحكام خاصة للمساكن المستقلة والمباني ذات الصبغة الخاصة، وتجيز إعادة تحديد الأجرة عند تغيير الوضع الذي بني عليه التقدير.",
+    "article_category": "تنظيمية",
+    "legal_entities": [],
+    "concepts": [
+      "real_property",
+      "regulatory_compliance",
+      "property_rights",
+      "legal_definitions"
+    ],
+    "applicable_to": [
+      "real_estate",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_012",
@@ -165,7 +540,31 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 58,
-    "char_count": 311
+    "char_count": 311,
+    "topic": "إعادة تقدير قيمة الأرض",
+    "keywords": [
+      "إعادة تقدير قيمة الأرض",
+      "تعلية البناء",
+      "إنشاء المباني الأصلية",
+      "مقابل التحسين",
+      "أجرة المباني المستجدة"
+    ],
+    "article_summary": "تنص المادة على إعادة تقدير قيمة الأرض عند تعلية البناء إذا تمت التعلية بعد خمس سنوات من إنشاء المباني الأصلية، أو إذا طرأ على العقار ما يستوجب تطبيق قوانين مقابل التحسين، ويكون التقدير في هذه الحالة لتحديد أجرة المباني المستجدة فقط.",
+    "article_category": "تنظيمية",
+    "legal_entities": [],
+    "concepts": [
+      "real_property",
+      "regulatory_compliance",
+      "property_rights"
+    ],
+    "applicable_to": [
+      "real_estate",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_013",
@@ -179,7 +578,46 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 80,
-    "char_count": 480
+    "char_count": 480,
+    "topic": "الطعن على قرارات لجان تحديد الأجرة",
+    "keywords": [
+      "قرارات لجان تحديد الأجرة",
+      "نافذة",
+      "نهائية",
+      "الطعن",
+      "المحكمة الابتدائية",
+      "ميعاد الطعن",
+      "إخطار المستأجرين",
+      "قبول الطعن",
+      "إعادة تقدير الأجرة",
+      "حكم ملزم"
+    ],
+    "article_summary": "تنص المادة على أن قرارات لجان تحديد الأجرة نافذة رغم الطعن عليها وتصبح نهائية بعد فوات الميعاد، ويتم الطعن عليها أمام المحكمة الابتدائية خلال ثلاثين يومًا من الإخطار، ويترتب على قبول الطعن إعادة تقدير أجرة جميع الوحدات المشمولة بالقرار، ويكون الحكم ملزمًا للمالك والمستأجرين.",
+    "article_category": "إجراء",
+    "legal_entities": [
+      "لجان تحديد الأجرة",
+      "المحكمة الابتدائية",
+      "قلم كتاب المحكمة",
+      "المالك",
+      "المستأجرين"
+    ],
+    "concepts": [
+      "judicial_procedure",
+      "dispute_resolution",
+      "binding_force",
+      "administrative_authority",
+      "enforcement",
+      "real_property"
+    ],
+    "applicable_to": [
+      "procedural",
+      "real_estate",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_014",
@@ -193,7 +631,40 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 48,
-    "char_count": 248
+    "char_count": 248,
+    "topic": "طعن أول مستأجر على قرار الأجرة",
+    "keywords": [
+      "العين مؤجرة",
+      "قرار لجنة تحديد الأجرة",
+      "أول مستأجر",
+      "الطعن",
+      "تاريخ نفاذ العقد",
+      "أثر الحكم",
+      "أجرة الوحدة"
+    ],
+    "article_summary": "تجيز المادة لأول مستأجر لعين لم تكن مؤجرة وقت صدور قرار لجنة تحديد الأجرة، الطعن على هذا القرار خلال ثلاثين يومًا من تاريخ نفاذ عقده، ويقتصر أثر الحكم الصادر في الطعن على أجرة الوحدة التي يشغلها الطاعن فقط.",
+    "article_category": "حق",
+    "legal_entities": [
+      "لجنة تحديد الأجرة",
+      "مستأجر",
+      "الطاعن"
+    ],
+    "concepts": [
+      "judicial_procedure",
+      "dispute_resolution",
+      "lease_contract",
+      "data_subject_rights",
+      "real_property"
+    ],
+    "applicable_to": [
+      "procedural",
+      "real_estate",
+      "civil"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_015",
@@ -207,7 +678,40 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 68,
-    "char_count": 389
+    "char_count": 389,
+    "topic": "تسوية فروق الأجرة",
+    "keywords": [
+      "المستأجر",
+      "تحديد الأجرة بالزيادة",
+      "العقد",
+      "أداء الفرق",
+      "أقساط شهرية",
+      "إخلاء العين المؤجرة",
+      "المؤجر",
+      "رد فرق الأجرة",
+      "تحديد الأجرة بالنقصان"
+    ],
+    "article_summary": "تلزم المادة المستأجر بسداد فرق الأجرة بالزيادة على أقساط شهرية أو دفعة واحدة عند الإخلاء، كما تلزم المؤجر برد فرق الأجرة للمستأجر إذا تم تحديدها بأقل مما هو منصوص عليه في العقد بنفس الطريقة.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "المستأجر",
+      "المؤجر"
+    ],
+    "concepts": [
+      "lease_contract",
+      "compensation",
+      "obligation_source",
+      "performance",
+      "regulatory_compliance"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_016",
@@ -221,7 +725,43 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 73,
-    "char_count": 424
+    "char_count": 424,
+    "topic": "عقود الإيجار الكتابية وبياناتها",
+    "keywords": [
+      "عقود الإيجار",
+      "كتابة",
+      "المؤجر",
+      "ترخيص البناء",
+      "الأجرة الإجمالية",
+      "الوحدة المؤجرة",
+      "المستأجر",
+      "إثبات واقعة التأجير",
+      "طرق الإثبات",
+      "حظر إبرام أكثر من عقد"
+    ],
+    "article_summary": "تلزم المادة بإبرام عقود الإيجار كتابة اعتبارًا من تاريخ العمل بالقانون، وتلزم المؤجر بإثبات بيانات ترخيص البناء والأجرة المقدرة في العقد، وتجيز للمستأجر إثبات واقعة التأجير بكافة الطرق عند المخالفة، وتحظر على المالك إبرام أكثر من عقد إيجار واحد للمبنى أو الوحدة.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "المؤجر",
+      "المستأجر",
+      "المالك"
+    ],
+    "concepts": [
+      "lease_contract",
+      "written_evidence",
+      "contract_formation",
+      "regulatory_compliance",
+      "evidence_burden"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate",
+      "procedural"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_017",
@@ -235,7 +775,40 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 48,
-    "char_count": 257
+    "char_count": 257,
+    "topic": "حظر اقتضاء مبالغ إضافية ومقدم إيجار",
+    "keywords": [
+      "المؤجر",
+      "وساطة",
+      "مقابل",
+      "أتعاب",
+      "تحرير العقد",
+      "مبلغ إضافي",
+      "عقد الإيجار",
+      "تأمين",
+      "أجرة",
+      "حظر"
+    ],
+    "article_summary": "تحظر المادة على المؤجر، بالذات أو بالوساطة، اقتضاء أي مقابل أو أتعاب أو مبالغ إضافية خارج نطاق عقد الإيجار بخلاف التأمين والأجرة، ويسري هذا الحظر على المستأجر أيضًا، كما تحظر على المؤجر اقتضاء مقدم إيجار بأي صورة.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "المؤجر",
+      "المستأجر"
+    ],
+    "concepts": [
+      "lease_contract",
+      "regulatory_compliance",
+      "public_policy",
+      "contract_formation"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_018",
@@ -249,7 +822,37 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 59,
-    "char_count": 324
+    "char_count": 324,
+    "topic": "تحديد مقدار التأمين واسترداد الزيادة",
+    "keywords": [
+      "مقدار التأمين",
+      "المستأجر",
+      "أجرة شهرين",
+      "عقود الإيجار القائمة",
+      "استرداد الزيادة",
+      "خصم من الأجرة",
+      "إخلاء العين المؤجرة",
+      "نهاية العقد"
+    ],
+    "article_summary": "تحدد المادة مقدار التأمين الذي يدفعه المستأجر بما لا يزيد عن أجرة شهرين، وتسري على العقود القائمة، وتمنح المستأجر الحق في استرداد الزيادة بخصمها من الأجرة على مدار سنة أو حتى نهاية العقد أو الإخلاء، دون الحاجة للجوء إلى القضاء.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "المستأجر"
+    ],
+    "concepts": [
+      "lease_contract",
+      "regulatory_compliance",
+      "compensation",
+      "dispute_resolution"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_019",
@@ -263,7 +866,46 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 155,
-    "char_count": 891
+    "char_count": 891,
+    "topic": "الوفاء بالأجرة وإجراءات الإيداع",
+    "keywords": [
+      "الوفاء بالأجرة",
+      "المؤجر",
+      "موعد السداد",
+      "إيصال",
+      "سند المخالصة",
+      "إخطار المؤجر",
+      "إيداع الأجرة",
+      "خزانة مأمورية العوائد",
+      "الجهة الإدارية",
+      "إبراء الذمة"
+    ],
+    "article_summary": "تلزم المادة بالوفاء بالأجرة كاملة للمؤجر في الموعد المحدد بإيصال، وفي حال امتناع المؤجر عن الاستلام، يجوز للمستأجر إخطاره ثم إيداع الأجرة في خزانة مأمورية العوائد أو الجهة الإدارية المختصة، ويعتبر إيصال الإيداع مبرئًا لذمة المستأجر، وتلتزم الجهة المودع لديها بصرف الأجرة للمؤجر فور طلبه.",
+    "article_category": "إجراء",
+    "legal_entities": [
+      "المؤجر",
+      "المستأجر",
+      "مأمورية العوائد المختصة",
+      "الجهة الإدارية",
+      "وزير الإسكان والمرافق"
+    ],
+    "concepts": [
+      "performance",
+      "obligation_source",
+      "lease_contract",
+      "administrative_procedure",
+      "regulatory_compliance"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate",
+      "administrative",
+      "procedural"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_020",
@@ -277,7 +919,48 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 125,
-    "char_count": 662
+    "char_count": 662,
+    "topic": "حماية حقوق ومزايا المستأجر",
+    "keywords": [
+      "حرمان المستأجر",
+      "حقوق",
+      "ميزة",
+      "قاضي الأمور المستعجلة",
+      "إعادة الحق",
+      "حساب المؤجر",
+      "خصم من الأجرة",
+      "التزام المؤجر مرهق",
+      "توزيع التكلفة",
+      "وزير الإسكان والمرافق"
+    ],
+    "article_summary": "تحظر المادة حرمان المستأجر من أي حق أو ميزة، وتجيز لقاضي الأمور المستعجلة الإذن للمستأجر بإعادة الحق أو الميزة على حساب المؤجر، مع إمكانية توزيع التكلفة بين الطرفين إذا أصبح التزام المؤجر مرهقًا. كما يجوز لجهة تحدد بقرار وزاري تنفيذ الأعمال اللازمة على نفقة المالك وتحصيلها إداريًا.",
+    "article_category": "حق",
+    "legal_entities": [
+      "المستأجر",
+      "قاضي الأمور المستعجلة",
+      "المؤجر",
+      "المالك",
+      "وزير الإسكان والمرافق",
+      "الجهة التي تحدد بقرار من وزير الإسكان والمرافق"
+    ],
+    "concepts": [
+      "data_subject_rights",
+      "lease_contract",
+      "judicial_procedure",
+      "administrative_procedure",
+      "compensation",
+      "enforcement"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate",
+      "procedural",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_021",
@@ -291,7 +974,41 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 82,
-    "char_count": 462
+    "char_count": 462,
+    "topic": "استمرار عقد الإيجار بعد وفاة المستأجر",
+    "keywords": [
+      "عقد إيجار المسكن",
+      "وفاة المستأجر",
+      "ترك العين",
+      "الزوجة",
+      "الأولاد",
+      "الوالدان",
+      "أقارب المستأجر",
+      "الدرجة الثالثة",
+      "استمرار عقد الإيجار",
+      "الإقامة"
+    ],
+    "article_summary": "تنص المادة على عدم انتهاء عقد إيجار المسكن بوفاة المستأجر أو تركه إذا بقي فيه زوجه أو أولاده أو والداه المقيمون معه، أو أقاربه حتى الدرجة الثالثة بشرط إقامتهم لمدة سنة سابقة، ويلزم المؤجر بتحرير عقد إيجار لهم، ويلزم شاغلو المسكن بالتضامن بكافة أحكام العقد.",
+    "article_category": "حق",
+    "legal_entities": [
+      "المستأجر",
+      "المؤجر"
+    ],
+    "concepts": [
+      "lease_contract",
+      "contract_termination",
+      "property_rights",
+      "joint_liability"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate",
+      "family"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_022",
@@ -305,7 +1022,45 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 31,
-    "char_count": 172
+    "char_count": 172,
+    "topic": "سريان عقود الإيجار على المالك الجديد",
+    "keywords": [
+      "استثناء",
+      "القانون المدني",
+      "عقود الإيجار القائمة",
+      "المالك الجديد للعقار",
+      "سند الإيجار",
+      "تاريخ ثابت",
+      "انتقال الملكية"
+    ],
+    "article_summary": "تستثني المادة من حكم القانون المدني سريان عقود الإيجار القائمة على المالك الجديد للعقار، حتى لو لم يكن لسند الإيجار تاريخ ثابت رسمي سابق على تاريخ انتقال الملكية.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "المالك الجديد للعقار"
+    ],
+    "concepts": [
+      "lease_contract",
+      "property_transfer",
+      "binding_force",
+      "contract_validity",
+      "real_property"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": [
+      {
+        "ref_text": "المادة 604",
+        "article_numbers": [
+          604
+        ],
+        "same_law": true
+      }
+    ]
   },
   {
     "article_id": "EG_RENT_1969_023",
@@ -319,7 +1074,56 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 159,
-    "char_count": 862
+    "char_count": 862,
+    "topic": "أسباب إخلاء المكان المؤجر",
+    "keywords": [
+      "الأماكن المؤجرة مفروشة",
+      "إخلاء المكان",
+      "انتهاء المدة",
+      "الوفاء بالأجرة",
+      "تكليف",
+      "كتاب موصى عليه",
+      "إعلان على يد محضر",
+      "أداء الأجرة وفوائدها",
+      "مصاريف رسمية",
+      "تكرار الامتناع"
+    ],
+    "article_summary": "تحدد المادة الأسباب التي يجوز للمؤجر بموجبها طلب إخلاء المكان غير المفروش، وتشمل عدم وفاء المستأجر بالأجرة بعد التكليف وتكرار الامتناع، أو التأجير من الباطن أو التنازل أو الترك للغير بدون إذن كتابي من المالك، أو استعمال المكان بطريقة تخالف شروط الإيجار أو تضر بمصلحة المؤجر.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "المؤجر",
+      "المستأجر",
+      "المالك",
+      "المحكمة"
+    ],
+    "concepts": [
+      "lease_contract",
+      "contract_termination",
+      "non_performance",
+      "penalty",
+      "specific_performance",
+      "dispute_resolution"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate",
+      "procedural"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": [
+      {
+        "ref_text": "المواد 4 ، 21 ، 26 ، 27",
+        "article_numbers": [
+          4,
+          21,
+          26,
+          27
+        ],
+        "same_law": true
+      }
+    ]
   },
   {
     "article_id": "EG_RENT_1969_024",
@@ -333,7 +1137,38 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 32,
-    "char_count": 168
+    "char_count": 168,
+    "topic": "زيادة الوحدات السكنية وتأثيرها على الأجرة",
+    "keywords": [
+      "المالك",
+      "زيادة عدد الوحدات السكنية",
+      "المبنى المؤجر",
+      "الإضافة",
+      "التعلية",
+      "عقد الإيجار",
+      "حق المستأجر",
+      "إنقاص الأجرة"
+    ],
+    "article_summary": "تجيز المادة للمالك زيادة عدد الوحدات السكنية في المبنى المؤجر بالإضافة أو التعلية، حتى لو كان عقد الإيجار يمنع ذلك، مع عدم الإخلال بحق المستأجر في إنقاص الأجرة إذا كان لذلك مقتضى.",
+    "article_category": "حق",
+    "legal_entities": [
+      "المالك",
+      "المستأجر"
+    ],
+    "concepts": [
+      "property_rights",
+      "lease_contract",
+      "contract_modification",
+      "real_property"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_025",
@@ -347,7 +1182,44 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 119,
-    "char_count": 700
+    "char_count": 700,
+    "topic": "استهلاك المياه والتزامات الشاغلين",
+    "keywords": [
+      "استهلاك المياه",
+      "شاغلي الأماكن",
+      "وزير الإسكان والمرافق",
+      "تركيب عدادات",
+      "نفقة الشاغلين",
+      "سداد قيمة الاستهلاك",
+      "المؤجر",
+      "عداد خاص",
+      "تخفيض الإيجار الشهري",
+      "تأخير سداد قيمة المياه"
+    ],
+    "article_summary": "تحدد المادة أن قيمة استهلاك المياه تكون على عاتق شاغلي الأماكن وفقًا لقرار وزاري، وتمنحهم الحق في تركيب عدادات على نفقتهم، ويلزمون بسداد القيمة للمؤجر. وفي العقارات التي لا يلتزم فيها الشاغلون، تكون القيمة عليهم بشرط تركيب المؤجر لعداد خاص على نفقته، مع تخفيض الإيجار الشهري، ويترتب على التأخير في السداد نفس آثار التأخير في سداد الأجرة.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "شاغلي الأماكن",
+      "وزير الإسكان والمرافق",
+      "المالك",
+      "المؤجر"
+    ],
+    "concepts": [
+      "regulatory_compliance",
+      "lease_contract",
+      "obligation_source",
+      "penalty",
+      "real_property"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_026",
@@ -361,7 +1233,47 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 108,
-    "char_count": 621
+    "char_count": 621,
+    "topic": "تأجير الشقق المفروشة",
+    "keywords": [
+      "المالك",
+      "شقة مفروشة",
+      "عقار",
+      "المستأجر",
+      "مواطني الجمهورية العربية المتحدة",
+      "إقامة بالخارج",
+      "تأجير من الباطن",
+      "إخلاء",
+      "المستأجر الأصلي",
+      "المؤجر الأصلي"
+    ],
+    "article_summary": "تمنح المادة المالك حق تأجير شقة مفروشة واحدة في كل عقار يملكه، وتجيز للمستأجر المقيم بالخارج مؤقتًا تأجير مكانه مفروشًا أو غير مفروش، مع إلزام المستأجر من الباطن بالإخلاء خلال ثلاثة أشهر. كما تجيز لوزير الإسكان والمرافق وضع قواعد لتأجير الوحدات المفروشة لأغراض السياحة، وتعتبر تأجير أكثر من وحدة مفروشة عملاً تجاريًا.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "المالك",
+      "المستأجر",
+      "المستأجر من الباطن",
+      "المؤجر الأصلي",
+      "وزير الإسكان والمرافق",
+      "الوزير المختص"
+    ],
+    "concepts": [
+      "lease_contract",
+      "regulatory_compliance",
+      "commercial_agency",
+      "property_rights",
+      "administrative_authority"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate",
+      "commercial",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_027",
@@ -375,7 +1287,39 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 25,
-    "char_count": 154
+    "char_count": 154,
+    "topic": "تأجير الأماكن المفروشة في المصايف والمشاتي",
+    "keywords": [
+      "الملاك",
+      "المستأجرين",
+      "المصايف",
+      "المشاتي",
+      "وزير الإسكان والمرافق",
+      "تأجير الأماكن مفروشة",
+      "شروط"
+    ],
+    "article_summary": "تجيز المادة للملاك والمستأجرين في المصايف والمشاتي التي يحددها وزير الإسكان والمرافق تأجير الأماكن مفروشة وفقًا للشروط التي ينص عليها قراره.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "الملاك",
+      "المستأجرين",
+      "وزير الإسكان والمرافق"
+    ],
+    "concepts": [
+      "lease_contract",
+      "regulatory_compliance",
+      "administrative_authority",
+      "real_property"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_028",
@@ -389,7 +1333,35 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 25,
-    "char_count": 146
+    "char_count": 146,
+    "topic": "أجرة إضافية عند تأجير المستأجر مفروشًا",
+    "keywords": [
+      "المستأجر",
+      "تأجير المكان المؤجر مفروشًا",
+      "المالك",
+      "أجرة إضافية",
+      "الأجرة القانونية",
+      "مدة التأجير مفروشًا"
+    ],
+    "article_summary": "تنص المادة على استحقاق المالك أجرة إضافية تعادل 70% من الأجرة القانونية عن مدة تأجير المستأجر للمكان مفروشًا، في جميع الأحوال التي يجوز فيها ذلك.",
+    "article_category": "حق",
+    "legal_entities": [
+      "المستأجر",
+      "المالك"
+    ],
+    "concepts": [
+      "lease_contract",
+      "compensation",
+      "property_rights"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_029",
@@ -403,7 +1375,43 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 41,
-    "char_count": 259
+    "char_count": 259,
+    "topic": "تعديل أوضاع تأجير الأماكن المفروشة",
+    "keywords": [
+      "الملاك",
+      "المستأجرين",
+      "أماكن مفروشة",
+      "تعديل الأوضاع",
+      "أحكام سابقة",
+      "تاريخ العمل بالقانون",
+      "انقضاء الأجل",
+      "تسليم المكان",
+      "المالك",
+      "المستأجر الأصلي"
+    ],
+    "article_summary": "تلزم المادة الملاك والمستأجرين المؤجرين لأماكن مفروشة بتعديل أوضاعهم وفقًا للأحكام السابقة خلال سنة من تاريخ العمل بالقانون، وبانقضاء هذا الأجل يسلم المكان إلى المالك أو المستأجر الأصلي حسب الأحوال.",
+    "article_category": "انتقالية",
+    "legal_entities": [
+      "الملاك",
+      "المستأجرين",
+      "المالك",
+      "المستأجر الأصلي"
+    ],
+    "concepts": [
+      "regulatory_compliance",
+      "lease_contract",
+      "enforcement",
+      "real_property"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_030",
@@ -417,7 +1425,40 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 62,
-    "char_count": 352
+    "char_count": 352,
+    "topic": "نطاق سريان أحكام المنشآت الآيلة للسقوط والترميم",
+    "keywords": [
+      "المباني",
+      "المنشآت",
+      "سقوط",
+      "خطر",
+      "الأرواح",
+      "الأموال",
+      "ترميم",
+      "صيانة",
+      "سلامة",
+      "حالة جيدة"
+    ],
+    "article_summary": "تسري أحكام هذا الباب على المباني والمنشآت المعرضة لخطر السقوط أو التي تحتاج إلى ترميم أو صيانة لتأمين سلامتها أو الحفاظ عليها، ويحدد وزير الإسكان والمرافق بقراراته أعمال الترميم والصيانة وحدودها.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "وزير الإسكان والمرافق"
+    ],
+    "concepts": [
+      "regulatory_compliance",
+      "real_property",
+      "public_policy",
+      "administrative_authority",
+      "technical_standards"
+    ],
+    "applicable_to": [
+      "real_estate",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_031",
@@ -431,7 +1472,40 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 54,
-    "char_count": 335
+    "char_count": 335,
+    "topic": "معاينة وفحص المباني الآيلة للسقوط",
+    "keywords": [
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "معاينة",
+      "فحص المباني",
+      "المنشآت",
+      "المحافظة على الأرواح والأموال",
+      "الهدم الكلي",
+      "الهدم الجزئي",
+      "التدعيم",
+      "الترميم",
+      "الصيانة"
+    ],
+    "article_summary": "تتولى الجهة الإدارية المختصة بشئون التنظيم معاينة وفحص المباني والمنشآت لتقرير الإجراءات اللازمة للمحافظة على الأرواح والأموال، مثل الهدم أو التدعيم أو الترميم أو الصيانة، ويتضمن التقرير تحديد مدة التنفيذ وما إذا كان يستوجب إخلاء المبنى مؤقتًا.",
+    "article_category": "إجراء",
+    "legal_entities": [
+      "الجهة الإدارية المختصة بشئون التنظيم"
+    ],
+    "concepts": [
+      "administrative_procedure",
+      "regulatory_oversight",
+      "public_authority",
+      "real_property",
+      "enforcement"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_032",
@@ -445,7 +1519,51 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 59,
-    "char_count": 339
+    "char_count": 339,
+    "topic": "تشكيل لجان دراسة تقارير المباني",
+    "keywords": [
+      "مدينة",
+      "قرية",
+      "مجلس محلي",
+      "لجنة",
+      "المحافظ المختص",
+      "دراسة التقارير",
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "المباني",
+      "إصدار قرارات",
+      "وزير الإسكان والمرافق"
+    ],
+    "article_summary": "تنص المادة على تشكيل لجنة أو أكثر في كل مدينة أو قرية ذات مجلس محلي بقرار من المحافظ المختص، لدراسة تقارير الجهة الإدارية المختصة بشئون التنظيم بشأن المباني وإصدار قراراتها، ويحدد وزير الإسكان والمرافق كيفية تشكيل هذه اللجان وقواعد وإجراءات عملها.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "مجلس محلي",
+      "المحافظ المختص",
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "وزير الإسكان والمرافق"
+    ],
+    "concepts": [
+      "organizational_structure",
+      "administrative_authority",
+      "regulatory_oversight",
+      "administrative_procedure",
+      "real_property"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": [
+      {
+        "ref_text": "المادة 30",
+        "article_numbers": [
+          30
+        ],
+        "same_law": true
+      }
+    ]
   },
   {
     "article_id": "EG_RENT_1969_033",
@@ -459,7 +1577,48 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 94,
-    "char_count": 537
+    "char_count": 537,
+    "topic": "إعلان قرارات اللجنة لذوي الشأن",
+    "keywords": [
+      "قرار اللجنة",
+      "الطريق الإداري",
+      "ذوي الشأن",
+      "الملاك",
+      "شاغلي العقار",
+      "أصحاب الحقوق",
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "إعلان",
+      "غيبة منقطعة",
+      "عدم الاستدلال"
+    ],
+    "article_summary": "تنص المادة على إعلان قرار اللجنة بالطريق الإداري لذوي الشأن من الملاك وشاغلي العقار وأصحاب الحقوق، وفي حال تعذر الإعلان، يتم لصق نسخة من القرار في مكان ظاهر بالمنشأة وفي لوحات الإعلانات الرسمية كنقطة الشرطة أو مقر العمدة أو المجلس المحلي.",
+    "article_category": "إجراء",
+    "legal_entities": [
+      "اللجنة",
+      "الملاك",
+      "شاغلي العقار",
+      "أصحاب الحقوق",
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "نقطة الشرطة",
+      "عمدة الناحية",
+      "المجلس المحلي"
+    ],
+    "concepts": [
+      "administrative_procedure",
+      "due_process",
+      "enforcement",
+      "public_authority",
+      "real_property"
+    ],
+    "applicable_to": [
+      "administrative",
+      "procedural",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_034",
@@ -473,7 +1632,40 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 32,
-    "char_count": 173
+    "char_count": 173,
+    "topic": "الطعن على قرارات اللجنة",
+    "keywords": [
+      "ذوي الشأن",
+      "الطعن",
+      "قرار اللجنة",
+      "موعد",
+      "إعلان القرار",
+      "المحكمة الابتدائية",
+      "العقار"
+    ],
+    "article_summary": "تمنح المادة لكل ذي شأن الحق في الطعن على قرار اللجنة أمام المحكمة الابتدائية الكائن في دائرتها العقار، وذلك في موعد لا يجاوز خمسة عشر يومًا من تاريخ إعلان القرار إليه.",
+    "article_category": "حق",
+    "legal_entities": [
+      "ذوي الشأن",
+      "اللجنة",
+      "المحكمة الابتدائية"
+    ],
+    "concepts": [
+      "judicial_procedure",
+      "dispute_resolution",
+      "data_subject_rights",
+      "administrative_penalty",
+      "real_property"
+    ],
+    "applicable_to": [
+      "procedural",
+      "administrative",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_035",
@@ -487,7 +1679,35 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 25,
-    "char_count": 139
+    "char_count": 139,
+    "topic": "تنفيذ قرار اللجنة النهائي",
+    "keywords": [
+      "ذوي الشأن",
+      "تنفيذ قرار اللجنة",
+      "قرار نهائي",
+      "المدة المحددة",
+      "تنظيم المباني"
+    ],
+    "article_summary": "تلزم المادة ذوي الشأن بتنفيذ قرار اللجنة النهائي في المدة المحددة لتنفيذه، مع عدم الإخلال بأحكام قانون تنظيم المباني.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "ذوي الشأن",
+      "اللجنة"
+    ],
+    "concepts": [
+      "enforcement",
+      "regulatory_compliance",
+      "administrative_penalty",
+      "real_property"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_036",
@@ -501,7 +1721,45 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 105,
-    "char_count": 610
+    "char_count": 610,
+    "topic": "إخطار المالك بأعمال الترميم وزيادة الأجرة",
+    "keywords": [
+      "المالك",
+      "أعمال الترميم",
+      "الصيانة",
+      "إخطار الجهة الإدارية",
+      "اعتماد المبالغ",
+      "اللائحة التنفيذية",
+      "البت في الطلب",
+      "الملاك",
+      "المستأجرين",
+      "تقاضي الأجرة"
+    ],
+    "article_summary": "تلزم المادة المالك بإخطار الجهة الإدارية المختصة بعد إتمام أعمال الترميم أو الصيانة لطلب اعتماد المبالغ المنفقة، وتلتزم الجهة بالبت في الطلب وإخطار الملاك والمستأجرين. ويحق للمالك زيادة الأجرة السنوية بنسبة 12% من قيمة الأعمال بعد إبلاغه بالقرار، بما لا يجاوز 50% من القيمة الإيجارية، ويترتب على عدم سداد هذه الزيادة نفس آثار عدم سداد الأجرة.",
+    "article_category": "التزام",
+    "legal_entities": [
+      "المالك",
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "الملاك",
+      "المستأجرين"
+    ],
+    "concepts": [
+      "regulatory_compliance",
+      "administrative_procedure",
+      "lease_contract",
+      "compensation",
+      "penalty",
+      "real_property"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate",
+      "civil"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_037",
@@ -515,7 +1773,48 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 78,
-    "char_count": 485
+    "char_count": 485,
+    "topic": "قروض ترميم وصيانة المباني",
+    "keywords": [
+      "وزارة الإسكان والمرافق",
+      "المؤسسات العامة",
+      "وزير الإسكان والمرافق",
+      "جهات أخرى",
+      "إقراض",
+      "ملاك المباني",
+      "ترميم",
+      "صيانة",
+      "شروط وقواعد الإقراض",
+      "وزير الخزانة"
+    ],
+    "article_summary": "تجيز المادة لوزارة الإسكان والمرافق والمؤسسات العامة، أو بقرار من وزير الإسكان والمرافق، إقراض ملاك المباني لترميمها وصيانتها، وتصدر شروط وقواعد الإقراض بقرار وزاري. وتعفى القروض من الضرائب والرسوم وتحصل بالحجز الإداري، ويكون لها امتياز على العين التي تم ترميمها أو صيانتها.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "وزارة الإسكان والمرافق",
+      "المؤسسات العامة",
+      "وزير الإسكان والمرافق",
+      "وزير الخزانة",
+      "ملاك المباني",
+      "المقاولين",
+      "المهندسين"
+    ],
+    "concepts": [
+      "loan_contract",
+      "administrative_authority",
+      "regulatory_compliance",
+      "lien",
+      "enforcement",
+      "real_property"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate",
+      "civil"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_038",
@@ -529,7 +1828,48 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 140,
-    "char_count": 824
+    "char_count": 824,
+    "topic": "إخلاء المبنى المؤقت للترميم وحقوق الشاغلين",
+    "keywords": [
+      "أعمال الترميم",
+      "الصيانة",
+      "إخلاء المبنى مؤقتًا",
+      "شاغليه",
+      "محضر إداري",
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "إخطار",
+      "تنفيذ بالطريق الإداري",
+      "حق العودة",
+      "موافقة المالك"
+    ],
+    "article_summary": "تنظم المادة إجراءات إخلاء المبنى مؤقتًا للترميم أو الصيانة، حيث يتم إخطار الشاغلين وتنفيذ الإخلاء إداريًا عند عدم الامتثال. وتمنح الشاغلين حق العودة بعد الترميم، وتضاف الأجرة خلال فترة الإخلاء إلى تكاليف الإصلاح. وتعتبر العين في حيازة المستأجر قانونًا خلال هذه المدة، ولا يجوز للمالك تغيير معالمها، ما لم يبد المستأجر رغبته في إنهاء العقد.",
+    "article_category": "إجراء",
+    "legal_entities": [
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "شاغلي البناء",
+      "المالك",
+      "رئيس المحكمة الابتدائية المختصة",
+      "المستأجر"
+    ],
+    "concepts": [
+      "administrative_procedure",
+      "enforcement",
+      "data_subject_rights",
+      "real_property",
+      "lease_contract",
+      "provisional_measures",
+      "dispute_resolution"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate",
+      "civil",
+      "procedural"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_039",
@@ -543,7 +1883,46 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 109,
-    "char_count": 644
+    "char_count": 644,
+    "topic": "إخلاء وهدم المباني في حالات الخطر الداهم",
+    "keywords": [
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "الخطر الداهم",
+      "إخلاء البناء",
+      "المباني المجاورة",
+      "السكان",
+      "الطريق الإداري",
+      "احتياطيات",
+      "تدابير",
+      "انهيار عاجل",
+      "هدم البناء"
+    ],
+    "article_summary": "تجيز المادة للجهة الإدارية المختصة إخلاء المباني والسكان إداريًا في حالات الخطر الداهم، واتخاذ التدابير اللازمة، مع الحق في الإخلاء الفوري عند الانهيار العاجل. كما يجوز لها هدم البناء بحكم من قاضي الأمور المستعجلة في الضرورة القصوى، وللمستأجر حق شغل وحدة في العقار المعاد بناؤه وفقًا لقرار وزاري.",
+    "article_category": "إجراء",
+    "legal_entities": [
+      "الجهة الإدارية المختصة بشئون التنظيم",
+      "قاضي الأمور المستعجلة",
+      "المحكمة",
+      "المستأجر",
+      "وزير الإسكان والمرافق"
+    ],
+    "concepts": [
+      "administrative_procedure",
+      "enforcement",
+      "public_authority",
+      "provisional_measures",
+      "real_property",
+      "data_subject_rights"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate",
+      "procedural"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_040",
@@ -557,7 +1936,37 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 25,
-    "char_count": 153
+    "char_count": 153,
+    "topic": "اختصاص المحاكم في منازعات القانون",
+    "keywords": [
+      "المحاكم العادية",
+      "الفصل في المنازعات",
+      "تطبيق أحكام القانون",
+      "رفع الدعاوى",
+      "المحكمة الابتدائية",
+      "العقار"
+    ],
+    "article_summary": "تختص المحاكم العادية دون غيرها بالفصل في المنازعات الناشئة عن تطبيق أحكام هذا القانون، وترفع الدعاوى إلى المحكمة الابتدائية الكائن في دائرتها العقار.",
+    "article_category": "تنظيمية",
+    "legal_entities": [
+      "المحاكم العادية",
+      "المحكمة الابتدائية"
+    ],
+    "concepts": [
+      "jurisdiction",
+      "dispute_resolution",
+      "judicial_procedure",
+      "enforcement"
+    ],
+    "applicable_to": [
+      "procedural",
+      "civil",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_041",
@@ -571,7 +1980,39 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 71,
-    "char_count": 420
+    "char_count": 420,
+    "topic": "استمرار لجان تقدير القيمة الإيجارية",
+    "keywords": [
+      "لجان تقدير القيمة الإيجارية",
+      "تشكيل",
+      "القانون رقم 46 لسنة 1962",
+      "القانون رقم 133 لسنة 1963",
+      "حالات معروضة",
+      "العمل بأحكام هذا القانون",
+      "قرارات صادرة",
+      "ميعاد التظلم",
+      "ميعاد الطعن",
+      "تاريخ نفاذ هذا القانون"
+    ],
+    "article_summary": "تستمر لجان تقدير القيمة الإيجارية بتشكيلها السابق في أعمالها حتى الانتهاء من الحالات المعروضة عليها عند العمل بهذا القانون، ويكون ميعاد الطعن على قراراتها التي لم ينقض ميعاد التظلم منها ثلاثين يومًا من تاريخ نفاذ هذا القانون.",
+    "article_category": "انتقالية",
+    "legal_entities": [
+      "لجان تقدير القيمة الإيجارية"
+    ],
+    "concepts": [
+      "regulatory_oversight",
+      "administrative_authority",
+      "judicial_procedure"
+    ],
+    "applicable_to": [
+      "administrative",
+      "real_estate",
+      "procedural"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_042",
@@ -585,7 +2026,37 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 38,
-    "char_count": 225
+    "char_count": 225,
+    "topic": "إحالة التظلمات للمحاكم الابتدائية",
+    "keywords": [
+      "مجالس المراجعة",
+      "القانون رقم 46 لسنة 1962",
+      "التظلمات المعروضة",
+      "العمل بأحكام هذا القانون",
+      "المحاكم الابتدائية",
+      "العقار",
+      "بغير رسوم"
+    ],
+    "article_summary": "تلزم المادة مجالس المراجعة المنصوص عليها في القانون رقم 46 لسنة 1962 بإحالة التظلمات المعروضة عليها عند العمل بهذا القانون إلى المحاكم الابتدائية الكائن في دائرتها العقار، وذلك بغير رسوم وبالحالة التي تكون عليها.",
+    "article_category": "انتقالية",
+    "legal_entities": [
+      "مجالس المراجعة",
+      "المحاكم الابتدائية"
+    ],
+    "concepts": [
+      "judicial_procedure",
+      "dispute_resolution",
+      "administrative_procedure"
+    ],
+    "applicable_to": [
+      "procedural",
+      "administrative",
+      "real_estate"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_043",
@@ -599,7 +2070,39 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 68,
-    "char_count": 426
+    "char_count": 426,
+    "topic": "استمرار العمل بقوانين الإيجار السابقة",
+    "keywords": [
+      "استمرار العمل",
+      "أحكام محددة للأجرة",
+      "أحكام مقررة على مخالفتها",
+      "القانون رقم 121 لسنة 1947",
+      "القانون رقم 169 لسنة 1961",
+      "القانون رقم 46 لسنة 1962",
+      "القانون رقم 7 لسنة 1965",
+      "قوانين معدلة",
+      "نطاق سريان"
+    ],
+    "article_summary": "تنص المادة على استمرار العمل بالأحكام المحددة للأجرة والأحكام المقررة على مخالفتها في القوانين السابقة المتعلقة بإيجار الأماكن وتنظيم العلاقة بين المؤجرين والمستأجرين، وقوانين الإعفاءات الضريبية وتخفيض الإيجارات، وذلك بالنسبة لنطاق سريان كل منها.",
+    "article_category": "انتقالية",
+    "legal_entities": [
+      "المؤجرين",
+      "المستأجرين"
+    ],
+    "concepts": [
+      "regulatory_compliance",
+      "lease_contract",
+      "real_property"
+    ],
+    "applicable_to": [
+      "civil",
+      "real_estate",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": []
   },
   {
     "article_id": "EG_RENT_1969_044",
@@ -613,7 +2116,45 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 36,
-    "char_count": 172
+    "char_count": 172,
+    "topic": "عقوبات مخالفة أحكام محددة",
+    "keywords": [
+      "عقوبة",
+      "حبس",
+      "ثلاثة أشهر",
+      "غرامة",
+      "مائتي جنيه",
+      "مخالفة أحكام المواد"
+    ],
+    "article_summary": "تعاقب المادة بالحبس مدة لا تزيد على ثلاثة أشهر وبغرامة لا تجاوز مائتي جنيه، أو بإحدى هاتين العقوبتين، كل من يخالف أحكام المواد 4 و5 و7 و9 فقرة أولى و16 و18 و26 و29 من هذا القانون.",
+    "article_category": "عقوبة",
+    "legal_entities": [],
+    "concepts": [
+      "penalty",
+      "fine",
+      "imprisonment",
+      "regulatory_compliance",
+      "criminal_liability"
+    ],
+    "applicable_to": [
+      "criminal",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": [
+      {
+        "ref_text": "المواد 4 و5 و7 و9",
+        "article_numbers": [
+          4,
+          5,
+          7,
+          9
+        ],
+        "same_law": true
+      }
+    ]
   },
   {
     "article_id": "EG_RENT_1969_045",
@@ -627,7 +2168,50 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 43,
-    "char_count": 229
+    "char_count": 229,
+    "topic": "عقوبة مخالفة المادة 17 والإعفاء منها",
+    "keywords": [
+      "عقوبة",
+      "حبس",
+      "ستة شهور",
+      "غرامة",
+      "خمسمائة جنيه",
+      "مخالفة أحكام المادة 17",
+      "مؤجر",
+      "مستأجر",
+      "وسيط",
+      "إعفاء من العقوبة"
+    ],
+    "article_summary": "تعاقب المادة بالحبس مدة لا تزيد على ستة أشهر وبغرامة لا تجاوز خمسمائة جنيه، أو بإحدى هاتين العقوبتين، كل من يخالف أحكام المادة 17 سواء كان مؤجرًا أو مستأجرًا أو وسيطًا، ويعفى المستأجر والوسيط من العقوبة إذا أبلغا أو اعترفا بالجريمة.",
+    "article_category": "عقوبة",
+    "legal_entities": [
+      "مؤجر",
+      "مستأجر",
+      "وسيط"
+    ],
+    "concepts": [
+      "penalty",
+      "fine",
+      "imprisonment",
+      "criminal_liability",
+      "regulatory_compliance"
+    ],
+    "applicable_to": [
+      "criminal",
+      "administrative"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": [
+      {
+        "ref_text": "المادة 17",
+        "article_numbers": [
+          17
+        ],
+        "same_law": true
+      }
+    ]
   },
   {
     "article_id": "EG_RENT_1969_046",
@@ -641,7 +2225,54 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 69,
-    "char_count": 389
+    "char_count": 389,
+    "topic": "عقوبة مخالفة المادة 35 وتنفيذ الحكم إداريًا",
+    "keywords": [
+      "عقوبة",
+      "حبس",
+      "أسبوع",
+      "غرامة",
+      "عشرة جنيهات",
+      "ترميم المنشأة",
+      "هدمها",
+      "إزالتها",
+      "المحكمة",
+      "مخالفة حكم المادة 35"
+    ],
+    "article_summary": "تعاقب المادة بالحبس لمدة لا تزيد على أسبوع وبغرامة لا تتجاوز عشرة جنيهات، أو بإحدى هاتين العقوبتين، بالإضافة إلى الحكم بترميم المنشأة أو هدمها أو إزالتها، كل من يخالف حكم المادة 35. وفي حال عدم تنفيذ صاحب الشأن للحكم، يجوز للجهة الإدارية المختصة تنفيذه على نفقته وتحصيل التكاليف إداريًا.",
+    "article_category": "عقوبة",
+    "legal_entities": [
+      "المحكمة",
+      "صاحب الشأن",
+      "الجهة الإدارية المختصة بشئون التنظيم"
+    ],
+    "concepts": [
+      "penalty",
+      "fine",
+      "imprisonment",
+      "enforcement",
+      "administrative_penalty",
+      "criminal_liability",
+      "real_property"
+    ],
+    "applicable_to": [
+      "criminal",
+      "administrative",
+      "real_estate",
+      "procedural"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": [
+      {
+        "ref_text": "المادة 35",
+        "article_numbers": [
+          35
+        ],
+        "same_law": true
+      }
+    ]
   },
   {
     "article_id": "EG_RENT_1969_047",
@@ -655,7 +2286,41 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 43,
-    "char_count": 228
+    "char_count": 228,
+    "topic": "إلغاء قوانين سابقة",
+    "keywords": [
+      "إلغاء",
+      "القانون رقم 121 لسنة 1947",
+      "القانون رقم 46 لسنة 1962",
+      "القانون رقم 7 لسنة 1965",
+      "قوانين معدلة",
+      "القانون رقم 605 لسنة 1954",
+      "المنشآت الآيلة للسقوط",
+      "نص مخالف"
+    ],
+    "article_summary": "تلغي المادة، مع مراعاة حكم المادة 43، القوانين أرقام 121 لسنة 1947 و46 لسنة 1962 و7 لسنة 1965 والقوانين المعدلة لها، بالإضافة إلى القانون رقم 605 لسنة 1954 بشأن المنشآت الآيلة للسقوط، وكل نص يخالف أحكام هذا القانون.",
+    "article_category": "إصدار",
+    "legal_entities": [],
+    "concepts": [
+      "legal_definitions",
+      "regulatory_compliance"
+    ],
+    "applicable_to": [
+      "administrative",
+      "civil"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": [
+      {
+        "ref_text": "المادة 43",
+        "article_numbers": [
+          43
+        ],
+        "same_law": true
+      }
+    ]
   },
   {
     "article_id": "EG_RENT_1969_048",
@@ -669,6 +2334,290 @@
     "marker_kind": "primary",
     "split_source": "regex",
     "word_count": 3535,
-    "char_count": 20347
+    "char_count": 20347,
+    "topic": "نشر القانون وسريانه",
+    "keywords": [
+      "نشر القانون",
+      "الجريدة الرسمية",
+      "تاريخ النشر",
+      "وزير الإسكان والمرافق",
+      "إصدار اللوائح",
+      "القرارات اللازمة",
+      "تنفيذ القانون",
+      "خاتم الدولة",
+      "رئيس الجمهورية",
+      "مجلس الأمة"
+    ],
+    "article_summary": "تنص المادة على نشر القانون في الجريدة الرسمية والعمل به من تاريخ نشره، وتلزم وزير الإسكان والمرافق بإصدار اللوائح والقرارات اللازمة لتنفيذه، وتختتم بختم الدولة وتاريخ الإصدار.",
+    "article_category": "إصدار",
+    "legal_entities": [
+      "وزير الإسكان والمرافق",
+      "رئيس الجمهورية",
+      "مجلس الأمة"
+    ],
+    "concepts": [
+      "enforcement",
+      "regulatory_compliance",
+      "administrative_authority",
+      "legal_definitions"
+    ],
+    "applicable_to": [
+      "administrative",
+      "procedural"
+    ],
+    "enrichment_model": "gemini-2.5-flash",
+    "enrichment_error": null,
+    "enrichment_status": "completed",
+    "explicit_cross_refs": [
+      {
+        "ref_text": "المادتين 6 ، 7",
+        "article_numbers": [
+          6,
+          7
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 8",
+        "article_numbers": [
+          8
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 9",
+        "article_numbers": [
+          9
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 10",
+        "article_numbers": [
+          10
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 11",
+        "article_numbers": [
+          11
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 12",
+        "article_numbers": [
+          12
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 13",
+        "article_numbers": [
+          13
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 14",
+        "article_numbers": [
+          14
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 15",
+        "article_numbers": [
+          15
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 16",
+        "article_numbers": [
+          16
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 17",
+        "article_numbers": [
+          17
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 18",
+        "article_numbers": [
+          18
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 19",
+        "article_numbers": [
+          19
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 20",
+        "article_numbers": [
+          20
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 21",
+        "article_numbers": [
+          21
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 22",
+        "article_numbers": [
+          22
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 23",
+        "article_numbers": [
+          23
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المواد 21، 26، 27",
+        "article_numbers": [
+          26,
+          27
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 24",
+        "article_numbers": [
+          24
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 25",
+        "article_numbers": [
+          25
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 28",
+        "article_numbers": [
+          28
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 29",
+        "article_numbers": [
+          29
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 30",
+        "article_numbers": [
+          30
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 31",
+        "article_numbers": [
+          31
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 32",
+        "article_numbers": [
+          32
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 33",
+        "article_numbers": [
+          33
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 34",
+        "article_numbers": [
+          34
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 35",
+        "article_numbers": [
+          35
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 36",
+        "article_numbers": [
+          36
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 37",
+        "article_numbers": [
+          37
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 38",
+        "article_numbers": [
+          38
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 39",
+        "article_numbers": [
+          39
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 40",
+        "article_numbers": [
+          40
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المواد 41 42 43",
+        "article_numbers": [
+          41,
+          42,
+          43
+        ],
+        "same_law": true
+      },
+      {
+        "ref_text": "المادة 44",
+        "article_numbers": [
+          44
+        ],
+        "same_law": true
+      }
+    ]
   }
 ]

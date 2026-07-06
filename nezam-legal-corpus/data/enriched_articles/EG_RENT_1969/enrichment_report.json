@@ -1,0 +1,12 @@
+{
+  "law_id": "EG_RENT_1969",
+  "total_articles": 48,
+  "enriched": 48,
+  "skipped_cache": 0,
+  "failed": 0,
+  "total_cost_usd": 0.01844525,
+  "enriched_at": "2026-07-06T08:46:23.485304+00:00",
+  "model": "gemini-2.5-flash",
+  "batch_size": 150,
+  "total_api_calls": 1
+}

@@ -1,58 +1,18 @@
 {
   "law_id": "EG_RENT_1969",
-  "articles_checked": 98,
-  "passed": false,
-  "error_count": 1,
-  "warning_count": 5,
+  "articles_checked": 48,
+  "passed": true,
+  "error_count": 0,
+  "warning_count": 1,
   "issues": [
     {
-      "code": "E002",
-      "severity": "error",
-      "name": "DUPLICATE_ARTICLE",
-      "description": "Article 35 appears 2 times: ['EG_RENT_1969_084', 'EG_RENT_1969_098']",
-      "article_number": 35,
-      "article_id": null
-    },
-    {
       "code": "E005",
       "severity": "warning",
       "name": "OVERSIZED_ARTICLE",
-      "description": "Article 48 has 2810 words (median=68, ceiling=500) — review manually: may be a merged split or a genuine long article",
+      "description": "Article 48 has 3535 words (median=68, ceiling=500) — review manually: may be a merged split or a genuine long article",
       "article_number": 48,
       "article_id": "EG_RENT_1969_048"
-    },
-    {
-      "code": "E005",
-      "severity": "warning",
-      "name": "OVERSIZED_ARTICLE",
-      "description": "Article 35 has 723 words (median=68, ceiling=500) — review manually: may be a merged split or a genuine long article",
-      "article_number": 35,
-      "article_id": "EG_RENT_1969_049"
-    },
-    {
-      "code": "E005",
-      "severity": "warning",
-      "name": "OVERSIZED_ARTICLE",
-      "description": "Article 48 has 2808 words (median=68, ceiling=500) — review manually: may be a merged split or a genuine long article",
-      "article_number": 48,
-      "article_id": "EG_RENT_1969_097"
-    },
-    {
-      "code": "E005",
-      "severity": "warning",
-      "name": "OVERSIZED_ARTICLE",
-      "description": "Article 35 has 633 words (median=68, ceiling=500) — review manually: may be a merged split or a genuine long article",
-      "article_number": 35,
-      "article_id": "EG_RENT_1969_098"
-    },
-    {
-      "code": "W001",
-      "severity": "warning",
-      "name": "OVER_COUNT",
-      "description": "Found 98 articles but expected 48 (204.2% of expected) — check for false marker matches",
-      "article_number": null,
-      "article_id": null
     }
   ],
-  "validated_at": "2026-07-05T06:50:04.645282+00:00"
+  "validated_at": "2026-07-06T08:43:44.571587+00:00"
 }

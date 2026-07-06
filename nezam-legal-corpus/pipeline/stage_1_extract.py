@@ -93,6 +93,70 @@ def _normalize_presentation_forms(text: str) -> tuple[str, bool]:
     return text, False
 
 
+_MIN_DUPLICATE_HALF_MARKERS = 5  # require at least this many markers per half to trust the signal
+
+
+def _detect_and_strip_full_duplication(text: str, law_id: str) -> tuple[str, dict | None]:
+    """
+    Detect whole-document duplication in extracted text and strip the
+    duplicate second copy.
+
+    Gemini OCR occasionally emits the entire document's text twice within a
+    single response (a known LLM repetition failure mode for long verbatim
+    extraction tasks) — the two copies are near-identical but not always
+    byte-identical (minor OCR spelling/dash variance between the two
+    generations), so a character-diff approach is unreliable. Instead this
+    uses the article-marker sequence (the same hit-collector Stage 2 uses)
+    as a structural fingerprint: if the ordered list of article numbers
+    splits into two exactly-matching halves of roughly equal length, the
+    text is almost certainly a full duplicate and the second half is
+    dropped, keeping only the first (original) copy.
+
+    This check runs unconditionally in Stage 1 (regardless of extraction
+    source) because the failure mode is in the OCR generation, not in any
+    per-law text — any law's Gemini OCR fallback could hit it.
+
+    Returns (possibly-truncated text, info dict or None if no duplication found).
+    """
+    from pipeline.stage_2_split import _collect_hits
+
+    hits = _collect_hits(text)
+    n = len(hits)
+    if n < _MIN_DUPLICATE_HALF_MARKERS * 2 or n % 2 != 0:
+        return text, None
+
+    half = n // 2
+    first_numbers = [h.number for h in hits[:half]]
+    second_numbers = [h.number for h in hits[half:]]
+    if first_numbers != second_numbers:
+        return text, None
+
+    split_pos = hits[half].pos
+    first_segment_len = split_pos
+    second_segment_len = len(text) - split_pos
+    # Sanity guard: the two segments should be roughly the same length —
+    # a real duplication produces near-equal halves; a coincidental marker
+    # repeat pattern in a genuinely different-length document should not.
+    len_ratio = second_segment_len / max(1, first_segment_len)
+    if not (0.6 <= len_ratio <= 1.5):
+        return text, None
+
+    truncated = text[:split_pos].rstrip()
+    info = {
+        "original_chars": len(text),
+        "truncated_chars": len(truncated),
+        "duplicate_marker_count": half,
+        "split_position": split_pos,
+    }
+    logger.warning(
+        "[%s] Detected full-document duplication in extracted text "
+        "(%d markers repeated identically) — stripping second copy: "
+        "%d chars → %d chars.",
+        law_id, half, info["original_chars"], info["truncated_chars"],
+    )
+    return truncated, info
+
+
 def _extract_pymupdf(pdf_path: Path) -> tuple[str, int]:
     doc = fitz.open(str(pdf_path))
     pages: list[str] = []
@@ -233,6 +297,14 @@ def run(
                             doc.close()
                         except Exception:
                             page_count = 0
+
+        # Applies regardless of source (cache/pymupdf/gemini_ocr/plaintext) —
+        # the repetition failure mode lives in OCR generation, so any cached
+        # output from before this check existed is also corrected here,
+        # with no extra Gemini cost since it works on already-extracted text.
+        raw_text, dup_info = _detect_and_strip_full_duplication(raw_text, law_entry.law_id)
+        if dup_info is not None:
+            extraction_source = f"{extraction_source}+dedup_stripped"
 
         out_txt.write_text(raw_text, encoding="utf-8")
         logger.info("[%s] Raw text saved → %s (%d chars)", law_entry.law_id, out_txt.name, len(raw_text))

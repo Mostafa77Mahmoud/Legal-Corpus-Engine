@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_RENT_1969",
+  "law_name_ar": "قانون إيجار الأماكن وتنظيم العلاقة بين المؤجرين والمستأجرين",
+  "assembled_at": "2026-07-06T08:46:23.525914+00:00",
+  "total_articles_in": 48,
+  "total_articles_out": 48,
+  "total_chunks_in": 62,
+  "total_chunks_out": 62,
+  "duplicates_removed": 0,
+  "repealed_articles": 0,
+  "repealed_flagged": 0,
+  "is_current_version": true
+}

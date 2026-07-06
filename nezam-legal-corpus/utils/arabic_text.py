@@ -78,7 +78,9 @@ def replacement_char_density(text: str) -> float:
     return replacement_count / len(text)
 
 
-def count_article_markers(text: str) -> int:
+def count_article_markers(
+    text: str, manual_marker_exclusions: list[str] | None = None
+) -> int:
     """
     Count distinct article markers supporting all known Egyptian law PDF/TXT formats:
 
@@ -93,6 +95,11 @@ def count_article_markers(text: str) -> int:
     article marker. Import is deferred to avoid a module-load cycle, since
     ``stage_2_split`` is a pipeline module and this is a low-level util.
 
+    *manual_marker_exclusions*: optional per-law human-reviewed exclusion
+    list (see ``config.law_registry.LawEntry.manual_marker_exclusions``),
+    forwarded so Stage 1.5's confidence count matches Stage 2's final split
+    count for laws with a documented exclusion.
+
     The splitter's patterns are anchored to line-start and exclude
     mid-sentence cross-references (e.g. "المادة 604 من القانون المدنى" or
     "المادة (143) من هذا القانون"), and dedupe by *article number* rather
@@ -103,7 +110,9 @@ def count_article_markers(text: str) -> int:
     """
     from pipeline.stage_2_split import _collect_hits
 
-    numbers: set[int] = {hit.number for hit in _collect_hits(text)}
+    numbers: set[int] = {
+        hit.number for hit in _collect_hits(text, manual_marker_exclusions)
+    }
     numbers.update(_to_int_digits(m) for m in _ART_ABBREV.findall(text))
     return len(numbers)
 

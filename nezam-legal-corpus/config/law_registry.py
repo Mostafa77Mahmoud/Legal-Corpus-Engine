@@ -13,6 +13,21 @@ class LawEntry:
     expected_chapter_headings: int = 0
     txt_filename: str | None = None   # plain-text source takes priority over PDF
     notes: str = ""
+    # Human-reviewed exclusion list for Stage 2 splitting: each entry is a
+    # short phrase that must appear IMMEDIATELY BEFORE a matched article
+    # marker for that specific marker occurrence to be dropped (merged into
+    # the preceding article's body instead of becoming its own article).
+    #
+    # This exists for genuine free-narrative citations inside explanatory
+    # memoranda ("مذكرة إيضاحية") that read like real article headers to the
+    # general splitter regex (line-start, no cross-reference trailer such as
+    # "من هذا القانون") but are not — e.g. "...فقد قضت المادة 35 بأن...".
+    # Such cases cannot be generalised without overfitting; each entry here
+    # must be a documented, human-reviewed exception for ONE specific
+    # document, never a general pattern. Add new entries only after a human
+    # has confirmed (via docs/DIAGNOSTIC_NOTE_*.md or equivalent) that the
+    # occurrence is a genuine narrative citation, not a missed general bug.
+    manual_marker_exclusions: list[str] = field(default_factory=list)
 
 
 LAW_REGISTRY: dict[str, LawEntry] = {
@@ -139,7 +154,18 @@ LAW_REGISTRY: dict[str, LawEntry] = {
               "PDF مصدره alberonsy.com — جودة OCR متوسطة، يُتوقع Gemini OCR fallback. "
               "expected_chapter_headings=0 لتجنب عقوبة SHC حتى تأكيد العدد الفعلي. "
               "expected_article_count=48 مؤكد من نهاية النص الفعلية بعد إصلاح باغ "
-              "عد المواد (كان 36 تقديراً أولياً خاطئاً).",
+              "عد المواد (كان 36 تقديراً أولياً خاطئاً). "
+              "راجعها المستخدم كمراجع بشري في 2026-07-06 — وجد سببين منفصلين: "
+              "(1) عيب عام في Gemini OCR كرر النص المستخرج بالكامل مرتين (مواد 1-48 "
+              "ظهرت مرتين شبه متطابقتين بفروق OCR طفيفة) — أُصلح عبر كاشف تكرار عام "
+              "في stage_1_extract.py يطبَّق على كل القوانين، ليس خاصًا بهذا القانون. "
+              "(2) داخل النسخة الأصلية الواحدة، المادة 35 مذكورة مرة إضافية بصياغة "
+              "سردية حرة في المذكرة الإيضاحية ('فقد قضت المادة 35 بأن يكون...') بلا "
+              "محدد استشهاد عام (لا 'من هذا القانون' ولا 'من المشروع') — هذه حالة "
+              "بيانات فردية موثقة، استُبعدت يدويًا عبر manual_marker_exclusions أدناه "
+              "(وليست باغًا عامًا يستحق تغيير الـ regex العام). انظر "
+              "docs/DIAGNOSTIC_NOTE_EG_RENT_1969_EG_LABOR_2025.md.",
+        manual_marker_exclusions=["فقد قضت"],
     ),
     "EG_LABOR_2025": LawEntry(
         law_id="EG_LABOR_2025",
