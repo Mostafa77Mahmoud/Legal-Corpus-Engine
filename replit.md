@@ -1,36 +1,37 @@
-# [Project name]
+# Nezam Legal Corpus
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An automated pipeline that turns raw PDF/TXT sources of Egyptian laws into a structured, machine-readable legal corpus (article splitting, metadata enrichment, chunking, export to MongoDB/JSON) to power Arabic legal AI applications, alongside a small Node/TypeScript workspace (API server + component preview sandbox).
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
+- `PORT=8080 pnpm --filter @workspace/api-server run dev` — Express API server (workflow: "API Server")
+- `PORT=5000 BASE_PATH=/ pnpm --filter @workspace/mockup-sandbox run dev` — component/canvas preview server (workflow: "Frontend"); currently just a scaffold, not an end-user UI
+- `cd nezam-legal-corpus && PRIMARY_MODEL=gemini-2.5-flash python run_batch.py <LAW_ID> --stages 1 1.3 1.5 2 2.5 3 3.7 4 5 6 7` — run the legal-corpus pipeline for one law (workflow: "Nezam Pipeline")
+- `pnpm run typecheck` — typecheck across all Node packages
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Python deps are managed via `pyproject.toml` / `uv.lock` (run `uv sync` after pulling changes); Node deps via `pnpm install`
+- Env: `GEMINI_API_KEYS` (Nezam pipeline, Gemini calls); `PRIMARY_MODEL` is set per-workflow
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Node workspace: pnpm workspaces, Node.js 24, TypeScript 5.9, Express 5 API server, Vite-based component preview sandbox
+- Python pipeline (`nezam-legal-corpus/`): Python 3.11, PyMuPDF, Google Gemini (`google-genai`/`google-generativeai`), rich (CLI tables), pytest
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/api-server` — Express API (routes under `src/routes`, currently just a health check)
+- `artifacts/mockup-sandbox` — Vite component/canvas preview server
+- `nezam-legal-corpus/` — the legal corpus pipeline: `pipeline/` (stage scripts), `config/` (law registry, settings, taxonomy), `data/` (raw PDFs + pipeline outputs), `docs/` (stage-by-stage design docs, see `docs/00_PROJECT_OVERVIEW.md`), `run_batch.py` / `run_pilot.py` (entry points)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Nezam pipeline is a 9-stage process (Stage 1 → 7, see `docs/00_PROJECT_OVERVIEW.md`): extraction → Arabic cleanup → confidence scoring → article splitting → split validation → metadata enrichment → chunking → human review export → rule validation → assembly → export (Mongo + JSON).
+- The Node "Frontend" workflow currently serves only the component preview sandbox — there is no built end-user web app yet in this repo.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Nezam pipeline: ingests Egyptian law PDFs/TXT and produces structured article + chunk records for legal AI (retrieval, contract analysis, compliance checking).
+- Node workspace: early-stage scaffold (API server with only a health route; no product UI yet).
 
 ## User preferences
 
@@ -38,7 +39,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- `nezam-legal-corpus/data/raw_pdfs/` (source PDFs) is not committed to the repo (likely size/copyright), so on a fresh clone/import the "Nezam Pipeline" workflow's default law (`EG_RENT_1969`) will report FAILED — it can't find its source PDF even though earlier pipeline stages are already cached in `data/releases/EG_RENT_1969/`. To re-run it, add the PDF back to `data/raw_pdfs/EG_RENT_1969.pdf`, or edit the workflow command to target a different law ID.
+- After importing/cloning, run both `pnpm install` (Node) and `uv sync` (Python) — the repo mixes both toolchains.
 
 ## Pointers
 
