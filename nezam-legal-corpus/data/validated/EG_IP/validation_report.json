@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_IP",
+  "law_name_ar": "قانون حماية حقوق الملكية الفكرية",
+  "validated_at": "2026-07-13T11:39:55.613948+00:00",
+  "passed": true,
+  "total_articles": 206,
+  "total_chunks": 217,
+  "error_count": 0,
+  "warning_count": 0,
+  "quality_gate": "PASS",
+  "issues": [],
+  "summary_by_code": {}
+}

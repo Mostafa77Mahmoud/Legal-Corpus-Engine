@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_IP",
+  "total_articles": 206,
+  "total_chunks": 217,
+  "single_chunk_articles": 197,
+  "multi_chunk_articles": 9,
+  "avg_chunk_words": 82.2,
+  "max_chunk_words": 278,
+  "min_chunk_words": 12,
+  "semantic_chunks": 0,
+  "rule_based_chunks": 217,
+  "chunked_at": "2026-07-13T11:39:55.506212+00:00"
+}

@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_IP",
+  "articles_found": 206,
+  "expected_article_count": 206,
+  "issuance_count": 0,
+  "main_count": 206,
+  "orphan_text_chars": 91,
+  "marker_kinds": {
+    "primary": 206
+  },
+  "split_source": "regex",
+  "split_at": "2026-07-13T11:10:40.698483+00:00"
+}

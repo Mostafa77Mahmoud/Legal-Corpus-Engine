@@ -50,9 +50,14 @@ LAW_REGISTRY: dict[str, LawEntry] = {
         law_number="25 لسنة 1968",
         year=1968,
         pdf_filename="EG_EVIDENCE.pdf",
-        expected_article_count=99,
+        expected_article_count=162,
         repealed_articles=[],
         expected_chapter_headings=8,
+        notes="expected_article_count صُحِّح من 99 (تقدير أولي) إلى 162 بعد التأكد "
+              "برمجيًا من تسلسل 'مادة (N):' كامل بلا ثغرات وبلا تكرار من 1 إلى 162 في "
+              "نص الاستخراج الفعلي (Stage 1 gemini_ocr)، مع تأكيد أن المادة 162 هي "
+              "آخر مادة فعلية (يليها هوامش تأريخية للتعديلات فقط، لا مواد جديدة). "
+              "expected_chapter_headings=8 كان صحيحًا مسبقًا (8 أبواب مطابقة).",
     ),
     "EG_ESIGN": LawEntry(
         law_id="EG_ESIGN",
@@ -199,9 +204,17 @@ LAW_REGISTRY: dict[str, LawEntry] = {
         law_number="82 لسنة 2002",
         year=2002,
         pdf_filename="EG_IP.pdf",
-        expected_article_count=188,
+        txt_filename="EG_IP.txt",
+        expected_article_count=206,
         repealed_articles=[],
-        expected_chapter_headings=18,
+        expected_chapter_headings=8,
+        notes="مصدر نص خام (Legla/9- القانون رقم 82 لسنة 2002...txt) — لا يحتاج OCR. "
+              "expected_article_count صُحِّح من 188 (تقدير أولي) إلى 206 بعد التأكد "
+              "برمجيًا من تسلسل 'مادة N:' كامل بلا ثغرات وبلا تكرار من 1 إلى 206 عبر "
+              "الأربعة كتب (براءات الاختراع، العلامات التجارية، حق المؤلف، الأصناف "
+              "النباتية). expected_chapter_headings صُحِّح من 18 إلى 8 (3 أبواب تحت "
+              "الكتاب الأول الضمني + بابان تحت الكتاب الثاني + عنواني الكتاب الثالث "
+              "والرابع بلا أبواب فرعية) بعد عدّ فعلي لأسطر 'الباب/الكتاب' في النص الخام.",
     ),
 }
 

@@ -1,0 +1,14 @@
+{
+  "law_id": "EG_EVIDENCE",
+  "articles_found": 165,
+  "expected_article_count": 162,
+  "issuance_count": 2,
+  "main_count": 163,
+  "orphan_text_chars": 498,
+  "marker_kinds": {
+    "ordinal": 2,
+    "paren_digit": 163
+  },
+  "split_source": "regex",
+  "split_at": "2026-07-13T11:56:32.498054+00:00"
+}

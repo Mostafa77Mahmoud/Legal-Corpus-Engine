@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "law_id": "EG_IP",
+  "law_name_ar": "قانون حماية حقوق الملكية الفكرية",
+  "law_number": "82 لسنة 2002",
+  "year": 2002,
+  "exported_at": "2026-07-13T11:39:55.637897+00:00",
+  "is_current_version": true,
+  "statistics": {
+    "total_articles": 206,
+    "active_articles": 206,
+    "issuance_articles": 0,
+    "repealed_articles": 0,
+    "total_chunks": 217,
+    "total_article_words": 17511,
+    "total_chunk_words": 17841,
+    "avg_words_per_article": 85.0,
+    "avg_words_per_chunk": 82.2,
+    "article_categories": {
+      "تعريف": 21,
+      "التزام": 29,
+      "حق": 41,
+      "تنظيمية": 32,
+      "إجراء": 72,
+      "عقوبة": 8,
+      "انتقالية": 2,
+      "أخرى": 1
+    }
+  },
+  "enrichment": {
+    "models_used": {
+      "gemini-2.5-flash": 206
+    }
+  },
+  "output_files": {
+    "articles_json": "articles.json",
+    "articles_jsonl": "articles.jsonl",
+    "chunks_json": "chunks.json",
+    "chunks_jsonl": "chunks.jsonl"
+  }
+}
