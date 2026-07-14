@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_EVIDENCE",
+  "total_articles": 165,
+  "total_chunks": 165,
+  "single_chunk_articles": 165,
+  "multi_chunk_articles": 0,
+  "avg_chunk_words": 41.0,
+  "max_chunk_words": 165,
+  "min_chunk_words": 5,
+  "semantic_chunks": 0,
+  "rule_based_chunks": 165,
+  "chunked_at": "2026-07-14T11:14:37.362437+00:00"
+}

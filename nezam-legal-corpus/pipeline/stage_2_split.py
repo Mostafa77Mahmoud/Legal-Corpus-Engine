@@ -130,10 +130,20 @@ _MADA_WORD = r"(?:مادة|ماده|المادة|الماده)"
 # reference phrases.
 _NOT_LAW_REFERENCE = r"(?![ \t\n]*من\s+(?:هذا\s+|ذلك\s+)?(?:القانون|المشروع))"
 
+# Optional "مكرر" (bis) suffix — Egyptian legislative convention for inserting
+# a new article after an existing one without renumbering the whole law
+# (e.g. "المادة 148 مكرر", "148 مكررا", "148 مكرر أ", "148 مكرر ب"). Consumed
+# as part of the marker itself (not left as leading article-body text), and
+# an optional trailing sub-letter distinguishes multiple bis articles inserted
+# after the same base number. Tolerates an extra stray paren on either side,
+# since OCR sometimes emits "(148) مكررا)" instead of "(148 مكررا)".
+_BIS_WORD = r"مكرر[ةا]?"
+_BIS_SUFFIX = rf"(?:\s*\)?\s*{_BIS_WORD}(?:\s+[أ-ي](?=[\s:\)]))?\s*\)?)?"
+
 # مادة (١) / مادة ( 5 ) — paren-digit articles
 # Line-start anchor prevents matching cross-references like "وفقاً لمادة (8)"
 _PAREN_DIGIT_RE = re.compile(
-    rf"{_MD}{_MADA_WORD}\s*\(\s*{_DIGITS}+\s*\){_NOT_LAW_REFERENCE}",
+    rf"{_MD}{_MADA_WORD}\s*\(\s*{_DIGITS}+\s*\){_BIS_SUFFIX}{_NOT_LAW_REFERENCE}",
     re.MULTILINE,
 )
 
@@ -153,7 +163,7 @@ _PAREN_DIGIT_RE = re.compile(
 #                          Rejects cross-references like:
 #                            "المادة 143 من هذا القانون"
 _PRIMARY_RE = re.compile(
-    rf"{_MD}{_MADA_WORD}\s+{_DIGITS}+(?![\d٠-٩۰-۹])(?![ \t\n]*[،,]){_NOT_LAW_REFERENCE}",
+    rf"{_MD}{_MADA_WORD}\s+{_DIGITS}+(?![\d٠-٩۰-۹])(?![ \t\n]*[،,]){_BIS_SUFFIX}{_NOT_LAW_REFERENCE}",
     re.MULTILINE,
 )
 
@@ -167,7 +177,7 @@ class _Hit(NamedTuple):
     pos: int       # character start position in text
     end: int       # character end position
     number: int    # parsed article number (1-based)
-    kind: str      # "ordinal" | "paren_digit" | "primary"
+    kind: str      # "ordinal" | "paren_digit" | "primary" | "bis"
     raw: str       # matched marker text (for debugging)
 
 
@@ -183,7 +193,7 @@ class ArticleRecord:
     text: str                      # article body (cleaned)
     is_repealed: bool
     sequence_index: int            # 1-based position in document order
-    marker_kind: str               # "ordinal" | "paren_digit" | "primary"
+    marker_kind: str               # "ordinal" | "paren_digit" | "primary" | "bis"
     split_source: str              # "regex" | "llm"
     word_count: int
     char_count: int
@@ -261,11 +271,13 @@ def _collect_hits(
 
     for m in _PAREN_DIGIT_RE.finditer(text):
         num = _parse_digit_number(m.group())
-        raw_hits.append(_Hit(m.start(), m.end(), num, "paren_digit", m.group()))
+        kind = "bis" if "مكرر" in m.group() else "paren_digit"
+        raw_hits.append(_Hit(m.start(), m.end(), num, kind, m.group()))
 
     for m in _PRIMARY_RE.finditer(text):
         num = _parse_digit_number(m.group())
-        raw_hits.append(_Hit(m.start(), m.end(), num, "primary", m.group()))
+        kind = "bis" if "مكرر" in m.group() else "primary"
+        raw_hits.append(_Hit(m.start(), m.end(), num, kind, m.group()))
 
     if manual_marker_exclusions:
         filtered: list[_Hit] = []

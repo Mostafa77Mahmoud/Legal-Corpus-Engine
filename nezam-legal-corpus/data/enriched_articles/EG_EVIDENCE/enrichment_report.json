@@ -1,0 +1,12 @@
+{
+  "law_id": "EG_EVIDENCE",
+  "total_articles": 165,
+  "enriched": 165,
+  "skipped_cache": 0,
+  "failed": 0,
+  "total_cost_usd": 0.04003375,
+  "enriched_at": "2026-07-14T11:14:37.353541+00:00",
+  "model": "gemini-2.5-flash",
+  "batch_size": 150,
+  "total_api_calls": 2
+}

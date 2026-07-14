@@ -77,11 +77,18 @@ def run(
     repealed_set = set(law_entry.repealed_articles)
 
     # ── E002: duplicate article numbers within main articles ─────────────────
-    seen_numbers: dict[int, list[str]] = {}
+    # A base article plus one or more "مكرر" (bis) articles sharing the same
+    # base number (e.g. "148" and "148 مكرر") is a legitimate Egyptian
+    # legislative convention for inserting an article without renumbering —
+    # not a duplicate. Only flag when more than one non-bis article shares a
+    # number (a genuine duplicate/split error).
+    seen_numbers: dict[int, list[ArticleRecord]] = {}
     for a in main_articles:
-        seen_numbers.setdefault(a.article_number, []).append(a.article_id)
-    for num, ids in seen_numbers.items():
-        if len(ids) > 1:
+        seen_numbers.setdefault(a.article_number, []).append(a)
+    for num, arts in seen_numbers.items():
+        non_bis = [a for a in arts if a.marker_kind != "bis"]
+        if len(non_bis) > 1:
+            ids = [a.article_id for a in non_bis]
             issues.append(ValidationIssue(
                 code="E002", severity="error", name="DUPLICATE_ARTICLE",
                 description=f"Article {num} appears {len(ids)} times: {ids}",

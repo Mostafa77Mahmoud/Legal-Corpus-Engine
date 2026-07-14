@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "law_id": "EG_EVIDENCE",
+  "law_name_ar": "قانون الإثبات في المواد المدنية والتجارية",
+  "law_number": "25 لسنة 1968",
+  "year": 1968,
+  "exported_at": "2026-07-14T11:14:37.403587+00:00",
+  "is_current_version": true,
+  "statistics": {
+    "total_articles": 165,
+    "active_articles": 163,
+    "issuance_articles": 2,
+    "repealed_articles": 0,
+    "total_chunks": 165,
+    "total_article_words": 6765,
+    "total_chunk_words": 6765,
+    "avg_words_per_article": 41.0,
+    "avg_words_per_chunk": 41.0,
+    "article_categories": {
+      "التزام": 17,
+      "تنظيمية": 40,
+      "إجراء": 81,
+      "تعريف": 3,
+      "حق": 11,
+      "عقوبة": 11,
+      "إصدار": 2
+    }
+  },
+  "enrichment": {
+    "models_used": {
+      "gemini-2.5-flash": 165
+    }
+  },
+  "output_files": {
+    "articles_json": "articles.json",
+    "articles_jsonl": "articles.jsonl",
+    "chunks_json": "chunks.json",
+    "chunks_jsonl": "chunks.jsonl"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_EVIDENCE",
+  "law_name_ar": "قانون الإثبات في المواد المدنية والتجارية",
+  "validated_at": "2026-07-14T11:14:37.390189+00:00",
+  "passed": true,
+  "total_articles": 165,
+  "total_chunks": 165,
+  "error_count": 0,
+  "warning_count": 0,
+  "quality_gate": "PASS",
+  "issues": [],
+  "summary_by_code": {}
+}

@@ -7,8 +7,9 @@
   "orphan_text_chars": 498,
   "marker_kinds": {
     "ordinal": 2,
-    "paren_digit": 163
+    "paren_digit": 162,
+    "bis": 1
   },
   "split_source": "regex",
-  "split_at": "2026-07-14T10:47:05.427309+00:00"
+  "split_at": "2026-07-14T11:11:36.869726+00:00"
 }

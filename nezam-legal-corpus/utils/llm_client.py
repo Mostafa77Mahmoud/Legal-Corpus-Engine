@@ -38,8 +38,11 @@ Model attention is strongest at the beginning and end of long contexts.
 """
 
 import logging
+import tempfile
 import time
 from pathlib import Path
+
+import fitz
 
 from google import genai
 from google.genai import types
@@ -341,6 +344,104 @@ def _upload_pdf_with_key(client: genai.Client, pdf_path: Path) -> object:
 
 # ── ocr_pdf ───────────────────────────────────────────────────────────────────
 
+# Truncation detection thresholds (see `_looks_truncated` docstring).
+_MIN_CHARS_PER_PAGE = 150
+_MIN_PAGES_FOR_COVERAGE_CHECK = 10
+_OCR_CHUNK_PAGES = 15  # pages per sub-PDF when falling back to page-chunked OCR
+
+
+def _looks_truncated(text: str, finish_reason: object, page_count: int) -> bool:
+    """
+    Detect an incomplete Gemini OCR extraction using two independent signals
+    (either is sufficient):
+
+    1. finish_reason == MAX_TOKENS — the model was cut off by the output
+       token budget mid-generation. Confirmed reproducible on a 104-page
+       scanned PDF (EG_COMMERCIAL): candidates_token_count landed at 65,493
+       of the 65,536 max, stopping mid-sentence.
+    2. Coverage heuristic — for documents with enough pages to make the
+       ratio meaningful, characters-extracted-per-page falling far below any
+       verbatim OCR extraction observed on this project (~1,500+ chars/page
+       for real legal-Arabic text; the EG_COMMERCIAL failure produced ~65
+       chars/page) indicates the model stopped early even when it reported
+       finish_reason == STOP. The threshold is set conservatively low to
+       avoid false positives on genuinely sparse documents.
+
+    Generic to any PDF — no per-law logic.
+    """
+    reason_name = getattr(finish_reason, "name", str(finish_reason))
+    if reason_name == "MAX_TOKENS":
+        return True
+    if page_count >= _MIN_PAGES_FOR_COVERAGE_CHECK:
+        chars_per_page = len(text) / page_count
+        if chars_per_page < _MIN_CHARS_PER_PAGE:
+            return True
+    return False
+
+
+def _extract_pdf_page_range(pdf_path: Path, start: int, end: int) -> Path:
+    """Write pages [start, end) (0-indexed, end exclusive) to a temp PDF file."""
+    src = fitz.open(str(pdf_path))
+    sub = fitz.open()
+    sub.insert_pdf(src, from_page=start, to_page=end - 1)
+    fd, tmp_name = tempfile.mkstemp(suffix=".pdf")
+    import os
+    os.close(fd)
+    tmp_path = Path(tmp_name)
+    sub.save(str(tmp_path))
+    sub.close()
+    src.close()
+    return tmp_path
+
+
+def _ocr_pdf_chunked(
+    pdf_path: Path,
+    prompt: str,
+    cost_tracker: CostTracker,
+    stage: str,
+    law_id: str,
+    model_name: str,
+    page_count: int,
+) -> str:
+    """
+    Fallback for large PDFs whose single-call OCR extraction was detected as
+    truncated (see `_looks_truncated`). Splits the PDF into fixed-size page
+    ranges and OCRs each range independently with the same prompt/system
+    instruction (unchanged), then concatenates the results in page order.
+
+    Generic — applies to any PDF, not specific to any one law.
+    """
+    logger.info(
+        "[%s] Page-chunked OCR: %d pages in chunks of %d.",
+        law_id, page_count, _OCR_CHUNK_PAGES,
+    )
+    chunk_texts: list[str] = []
+    tmp_paths: list[Path] = []
+    try:
+        for start in range(0, page_count, _OCR_CHUNK_PAGES):
+            end = min(start + _OCR_CHUNK_PAGES, page_count)
+            chunk_path = _extract_pdf_page_range(pdf_path, start, end)
+            tmp_paths.append(chunk_path)
+            logger.info("[%s] OCR chunk: pages %d-%d of %d…", law_id, start + 1, end, page_count)
+            chunk_text, chunk_finish = _ocr_pdf_once(
+                chunk_path, prompt, cost_tracker, stage, law_id, model_name,
+            )
+            if getattr(chunk_finish, "name", None) == "MAX_TOKENS":
+                logger.warning(
+                    "[%s] Chunk pages %d-%d still hit MAX_TOKENS at %d pages/chunk "
+                    "— this chunk's extraction may still be incomplete.",
+                    law_id, start + 1, end, _OCR_CHUNK_PAGES,
+                )
+            chunk_texts.append(chunk_text)
+    finally:
+        for p in tmp_paths:
+            try:
+                p.unlink()
+            except Exception:
+                pass
+    return "\n\n".join(chunk_texts)
+
+
 def ocr_pdf(
     pdf_path: Path,
     prompt: str,
@@ -361,6 +462,42 @@ def ocr_pdf(
 
     If generation hits 429, the key is marked rate-limited and the entire
     operation restarts with a new key (re-upload included).
+
+    If the single-call extraction comes back truncated (see
+    `_looks_truncated`), transparently retries using page-chunked OCR
+    (`_ocr_pdf_chunked`) — a generic fallback for any large PDF, not
+    specific to any one law.
+    """
+    text, finish_reason = _ocr_pdf_once(pdf_path, prompt, cost_tracker, stage, law_id, model_name)
+
+    try:
+        page_count = fitz.open(str(pdf_path)).page_count
+    except Exception:
+        page_count = 0
+
+    if not _looks_truncated(text, finish_reason, page_count):
+        return text
+
+    logger.warning(
+        "[%s] Detected incomplete OCR extraction (finish_reason=%s, %d chars over %d pages) "
+        "— retrying with page-chunked OCR.",
+        law_id, getattr(finish_reason, "name", finish_reason), len(text), page_count,
+    )
+    return _ocr_pdf_chunked(pdf_path, prompt, cost_tracker, stage, law_id, model_name, page_count)
+
+
+def _ocr_pdf_once(
+    pdf_path: Path,
+    prompt: str,
+    cost_tracker: CostTracker,
+    stage: str,
+    law_id: str,
+    model_name: str = PRIMARY_MODEL,
+) -> tuple[str, object]:
+    """
+    Single-shot OCR of *pdf_path* (whole file or an already-sliced chunk).
+    Returns (extracted_text, finish_reason). All key-rotation/retry behavior
+    is unchanged from the original single-call `ocr_pdf` implementation.
     """
     manager = _km.get_manager()
 
@@ -419,7 +556,8 @@ def ocr_pdf(
                     output_cost_per_1m=GEMINI_FLASH_OUTPUT_COST_PER_1M,
                     api_key_suffix=key_suffix,
                 )
-                return response.text
+                finish_reason = response.candidates[0].finish_reason if response.candidates else None
+                return response.text, finish_reason
 
             except Exception as exc:
                 if _is_rate_limit(exc):
