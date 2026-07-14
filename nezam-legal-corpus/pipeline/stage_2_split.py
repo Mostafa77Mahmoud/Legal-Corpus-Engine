@@ -103,7 +103,10 @@ _ORD_ALT = (
 # Optional Markdown prefix (Gemini OCR wraps markers in ### headings)
 # Matches both plain "مادة ١" and "### مادة ١"
 # Use [ \t]* not \s* to avoid consuming newlines (which would corrupt split boundaries)
-_MD = r"^#{0,6}[ \t]*"
+# Also tolerates 0-2 stray punctuation characters directly before the marker word
+# (e.g. OCR emitting ":مادة (372)" at a genuine line start) — bounded repetition,
+# fixed punctuation class only, never matches free text.
+_MD = r"^#{0,6}[ \t]*[:؛.,\-()]{0,2}[ \t]*"
 
 # (المادة الاولي) / (المادة الثانية) / ( المادة الاولي ) … — issuance articles
 # Optional whitespace after "(" and before ")" — Gemini OCR sometimes inserts

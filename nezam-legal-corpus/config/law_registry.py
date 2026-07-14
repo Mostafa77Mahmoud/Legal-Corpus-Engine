@@ -109,7 +109,10 @@ LAW_REGISTRY: dict[str, LawEntry] = {
         law_number="17 لسنة 1999",
         year=1999,
         pdf_filename="EG_COMMERCIAL.pdf",
-        expected_article_count=700,
+        # Corrected from initial 700 placeholder estimate after full-text OCR
+        # extraction succeeded: regex marker count over the complete 104-page
+        # document is 549 (articles 1-549, no gaps, no duplicates).
+        expected_article_count=549,
         repealed_articles=[],
         expected_chapter_headings=60,
     ),
