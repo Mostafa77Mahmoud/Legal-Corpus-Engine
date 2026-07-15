@@ -17,9 +17,13 @@ _MULTI_NEWLINE = re.compile(r"\n{3,}")
 _REPLACEMENT_CHAR = re.compile(r"\ufffd")
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
-# Arabic ordinal words (masculine and feminine)
+# Arabic ordinal words (masculine and feminine).
+# "الأول" also matches the hamza-less "الاول" spelling, since Stage 1.3
+# cleanup's hamza normalisation (أإآٱ → ا) turns "الأول" into "الاول" in the
+# text this counter runs on — the original hamza spelling is still accepted
+# for callers that run it on pre-cleanup text.
 _ORDINALS = (
-    r"الأول[ىة]?|الثاني[ة]?|الثالث[ة]?|الرابع[ة]?|الخامس[ة]?"
+    r"ال[أا]ول[ىة]?|الثاني[ة]?|الثالث[ة]?|الرابع[ة]?|الخامس[ة]?"
     r"|السادس[ة]?|السابع[ة]?|الثامن[ة]?|التاسع[ة]?|العاشر[ة]?"
     r"|الحادي\s+عشر[ة]?|الثاني\s+عشر[ة]?|الثالث\s+عشر[ة]?|الرابع\s+عشر[ة]?"
     r"|الخامس\s+عشر[ة]?|السادس\s+عشر[ة]?|السابع\s+عشر[ة]?|الثامن\s+عشر[ة]?"
@@ -128,14 +132,18 @@ def _to_int_digits(raw: str) -> int:
 
 def count_structural_headings(text: str) -> int:
     """
-    Count chapter/section headings in plain or parenthesised form:
+    Count chapter/section heading OCCURRENCES (positions in the text, not
+    distinct heading strings) in plain or parenthesised form:
       - Plain:  الفصل الأول / الباب الثاني
       - Paren:  (الفصل الأول) / (الباب الحادي عشر)
+
+    Uses raw occurrence counts rather than a set: nested subdivisions (e.g.
+    الفصل) restart their own ordinal numbering under each parent heading
+    (e.g. الباب), so the same heading text (e.g. "الفصل الثاني") legitimately
+    recurs multiple times as distinct headings across different parents.
+    Deduplicating by text would collapse those into a single count.
     """
-    hits: set[str] = set()
-    hits.update(_HEAD_PLAIN.findall(text))
-    hits.update(_HEAD_PAREN.findall(text))
-    return len(hits)
+    return len(_HEAD_PLAIN.findall(text)) + len(_HEAD_PAREN.findall(text))
 
 
 def strip_txt_boilerplate(text: str) -> str:

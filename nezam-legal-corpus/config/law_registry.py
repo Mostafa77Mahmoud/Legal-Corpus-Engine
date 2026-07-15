@@ -114,7 +114,15 @@ LAW_REGISTRY: dict[str, LawEntry] = {
         # document is 549 (articles 1-549, no gaps, no duplicates).
         expected_article_count=549,
         repealed_articles=[],
-        expected_chapter_headings=60,
+        # Corrected from unverified 60 placeholder after fixing two counter bugs
+        # in count_structural_headings (utils/arabic_text.py): (1) it deduplicated
+        # heading occurrences via set() instead of counting positions — نظام
+        # الفصل/الفرع يعيد ترقيمه تحت كل باب، فنفس النص (مثل "الفصل الثاني")
+        # يتكرر شرعًا كعنوان مختلف عدة مرات؛ (2) "الأول" ordinal didn't match the
+        # hamza-less "الاول" spelling produced by Stage 1.3 hamza normalisation.
+        # After both fixes, raw occurrence count over the full 104-page extracted
+        # text is 32 (6 الباب + 18 الفصل + 8 الفرع؛ لا القسم ولا الكتاب في هذا القانون).
+        expected_chapter_headings=32,
     ),
     "EG_CIVIL_CODE": LawEntry(
         law_id="EG_CIVIL_CODE",

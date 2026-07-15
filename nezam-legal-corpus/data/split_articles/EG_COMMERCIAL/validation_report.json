@@ -1,0 +1,50 @@
+{
+  "law_id": "EG_COMMERCIAL",
+  "articles_checked": 547,
+  "passed": false,
+  "error_count": 5,
+  "warning_count": 0,
+  "issues": [
+    {
+      "code": "E003",
+      "severity": "error",
+      "name": "SEQUENCE_GAP",
+      "description": "Article 155 missing and not in repealed_articles (neighbours present — likely a split error)",
+      "article_number": 155,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 156 expected but not found in split output",
+      "article_number": 156,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 157 expected but not found in split output",
+      "article_number": 157,
+      "article_id": null
+    },
+    {
+      "code": "E001",
+      "severity": "error",
+      "name": "MISSING_ARTICLE",
+      "description": "Article 158 expected but not found in split output",
+      "article_number": 158,
+      "article_id": null
+    },
+    {
+      "code": "E003",
+      "severity": "error",
+      "name": "SEQUENCE_GAP",
+      "description": "Article 159 missing and not in repealed_articles (neighbours present — likely a split error)",
+      "article_number": 159,
+      "article_id": null
+    }
+  ],
+  "validated_at": "2026-07-15T10:59:31.567421+00:00"
+}
