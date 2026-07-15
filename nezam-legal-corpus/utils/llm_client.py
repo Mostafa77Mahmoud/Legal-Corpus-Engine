@@ -539,6 +539,30 @@ def _ocr_pdf_once(
                     config=ocr_config,
                 )
                 usage = response.usage_metadata
+                finish_reason = response.candidates[0].finish_reason if response.candidates else None
+
+                # Defensive check: google-genai can return response.text as None
+                # (or an empty string) for a "successful" call (no exception raised).
+                # Treat that the same as a transient error — retryable, not a valid
+                # extraction — instead of letting None propagate into the caller's
+                # str-join and crash with "sequence item ...: expected str instance,
+                # NoneType found".
+                if response.text is None or not response.text.strip():
+                    cost_tracker.record_key_failure(key_suffix)
+                    if gen_attempt < GEMINI_MAX_RETRIES - 1:
+                        logger.warning(
+                            "[%s] Gemini OCR returned empty response.text (attempt %d, finish_reason=%s). Retrying in %.1fs.",
+                            stage, gen_attempt + 1, getattr(finish_reason, "name", finish_reason), transient_backoff,
+                        )
+                        time.sleep(transient_backoff)
+                        transient_backoff = min(transient_backoff * 2, 60.0)
+                        continue
+                    raise RuntimeError(
+                        f"[{law_id}] Gemini OCR returned empty/None response.text after "
+                        f"{GEMINI_MAX_RETRIES} attempts (finish_reason="
+                        f"{getattr(finish_reason, 'name', finish_reason)})."
+                    )
+
                 manager.record_request(pinned_key, success=True)
 
                 try:
@@ -556,7 +580,6 @@ def _ocr_pdf_once(
                     output_cost_per_1m=GEMINI_FLASH_OUTPUT_COST_PER_1M,
                     api_key_suffix=key_suffix,
                 )
-                finish_reason = response.candidates[0].finish_reason if response.candidates else None
                 return response.text, finish_reason
 
             except Exception as exc:
