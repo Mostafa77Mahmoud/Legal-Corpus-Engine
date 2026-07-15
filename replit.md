@@ -4,13 +4,13 @@ An automated pipeline that turns raw PDF/TXT sources of Egyptian laws into a str
 
 ## Run & Operate
 
-- `PORT=8080 pnpm --filter @workspace/api-server run dev` — Express API server (workflow: "API Server")
-- `PORT=5000 BASE_PATH=/ pnpm --filter @workspace/mockup-sandbox run dev` — component/canvas preview server (workflow: "Frontend"); currently just a scaffold, not an end-user UI
-- `cd nezam-legal-corpus && PRIMARY_MODEL=gemini-2.5-flash python run_batch.py <LAW_ID> --stages 1 1.3 1.5 2 2.5 3 3.7 4 5 6 7` — run the legal-corpus pipeline for one law (workflow: "Nezam Pipeline")
+- `pnpm --filter @workspace/api-server run dev` — Express API server, port 8080 (workflow: "artifacts/api-server: API Server", managed by `artifacts/api-server/.replit-artifact/artifact.toml`); health check at `/api/healthz`
+- `pnpm --filter @workspace/mockup-sandbox run dev` — component/canvas preview server, port 8081 (workflow: "artifacts/mockup-sandbox: Component Preview Server", managed by `artifacts/mockup-sandbox/.replit-artifact/artifact.toml`); currently just a scaffold, not an end-user UI
+- `cd nezam-legal-corpus && PRIMARY_MODEL=gemini-2.5-flash python run_batch.py <LAW_ID> --stages 1 1.3 1.5 2 2.5 3 3.7 4 5 6 7` — run the legal-corpus pipeline for one law; this is a manual batch job, not a server, so the "Nezam Pipeline" workflow just prints the command rather than auto-running it
 - `pnpm run typecheck` — typecheck across all Node packages
 - `pnpm run build` — typecheck + build all packages
 - Python deps are managed via `pyproject.toml` / `uv.lock` (run `uv sync` after pulling changes); Node deps via `pnpm install`
-- Env: `GEMINI_API_KEYS` (Nezam pipeline, Gemini calls); `PRIMARY_MODEL` is set per-workflow
+- Env: `GEMINI_API_KEYS` secret is configured (Nezam pipeline, Gemini calls); `PRIMARY_MODEL` defaults to `gemini-3.5-flash` via `[userenv.shared]` in `.replit`, override per-run
 
 ## Stack
 
