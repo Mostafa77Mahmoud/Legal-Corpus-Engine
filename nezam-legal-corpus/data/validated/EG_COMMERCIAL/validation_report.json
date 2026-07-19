@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_COMMERCIAL",
+  "law_name_ar": "قانون التجارة",
+  "validated_at": "2026-07-19T09:14:22.346069+00:00",
+  "passed": true,
+  "total_articles": 552,
+  "total_chunks": 556,
+  "error_count": 0,
+  "warning_count": 0,
+  "quality_gate": "PASS",
+  "issues": [],
+  "summary_by_code": {}
+}

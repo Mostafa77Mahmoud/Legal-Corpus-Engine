@@ -1,0 +1,14 @@
+{
+  "law_id": "EG_COMMERCIAL",
+  "articles_found": 552,
+  "expected_article_count": 549,
+  "issuance_count": 3,
+  "main_count": 549,
+  "orphan_text_chars": 514,
+  "marker_kinds": {
+    "ordinal": 3,
+    "paren_digit": 549
+  },
+  "split_source": "regex",
+  "split_at": "2026-07-19T09:14:22.086999+00:00"
+}

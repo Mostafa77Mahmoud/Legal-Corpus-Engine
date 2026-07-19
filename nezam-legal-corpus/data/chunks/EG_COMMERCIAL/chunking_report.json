@@ -1,0 +1,13 @@
+{
+  "law_id": "EG_COMMERCIAL",
+  "total_articles": 552,
+  "total_chunks": 556,
+  "single_chunk_articles": 548,
+  "multi_chunk_articles": 4,
+  "avg_chunk_words": 60.4,
+  "max_chunk_words": 259,
+  "min_chunk_words": 8,
+  "semantic_chunks": 0,
+  "rule_based_chunks": 556,
+  "chunked_at": "2026-07-19T09:14:22.281585+00:00"
+}

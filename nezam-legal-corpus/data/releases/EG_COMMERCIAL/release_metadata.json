@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "law_id": "EG_COMMERCIAL",
+  "law_name_ar": "قانون التجارة",
+  "law_number": "17 لسنة 1999",
+  "year": 1999,
+  "exported_at": "2026-07-19T09:14:22.390017+00:00",
+  "is_current_version": true,
+  "statistics": {
+    "total_articles": 552,
+    "active_articles": 549,
+    "issuance_articles": 3,
+    "repealed_articles": 0,
+    "total_chunks": 556,
+    "total_article_words": 33471,
+    "total_chunk_words": 33581,
+    "avg_words_per_article": 60.6,
+    "avg_words_per_chunk": 60.4,
+    "article_categories": {
+      "تعريف": 40,
+      "تنظيمية": 215,
+      "حق": 61,
+      "إجراء": 92,
+      "التزام": 133,
+      "عقوبة": 9,
+      "إصدار": 2
+    }
+  },
+  "enrichment": {
+    "models_used": {
+      "gemini-2.5-flash": 552
+    }
+  },
+  "output_files": {
+    "articles_json": "articles.json",
+    "articles_jsonl": "articles.jsonl",
+    "chunks_json": "chunks.json",
+    "chunks_jsonl": "chunks.jsonl"
+  }
+}
